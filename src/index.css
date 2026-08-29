@@ -1,0 +1,142 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --font-inter: 'Plus Jakarta Sans', 'Inter', sans-serif;
+    --background: 224 20% 97%;
+    --foreground: 224 25% 8%;
+    --card: 0 0% 100%;
+    --card-foreground: 224 25% 8%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 224 25% 8%;
+    --primary: 221 83% 53%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 224 14% 90%;
+    --secondary-foreground: 224 20% 15%;
+    --muted: 224 14% 93%;
+    --muted-foreground: 224 10% 48%;
+    --accent: 262 83% 58%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 224 13% 88%;
+    --input: 224 13% 88%;
+    --ring: 221 83% 53%;
+    --chart-1: 25 95% 53%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
+    --radius: 0.625rem;
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 25 95% 53%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 25 95% 53%;
+  }
+
+  .dark {
+    --background: 220 20% 7%;
+    --foreground: 220 10% 95%;
+    --card: 220 18% 10%;
+    --card-foreground: 220 10% 95%;
+    --popover: 220 18% 10%;
+    --popover-foreground: 220 10% 95%;
+    --primary: 25 95% 53%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 220 14% 16%;
+    --secondary-foreground: 220 10% 90%;
+    --muted: 220 14% 14%;
+    --muted-foreground: 220 10% 55%;
+    --accent: 220 14% 16%;
+    --accent-foreground: 220 10% 95%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 220 14% 18%;
+    --input: 220 14% 18%;
+    --ring: 25 95% 53%;
+    --chart-1: 25 95% 53%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
+    --sidebar-background: 220 20% 7%;
+    --sidebar-foreground: 220 10% 90%;
+    --sidebar-primary: 25 95% 53%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 14% 14%;
+    --sidebar-accent-foreground: 220 10% 90%;
+    --sidebar-border: 220 14% 18%;
+    --sidebar-ring: 25 95% 53%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  body {
+    @apply bg-background text-foreground font-inter;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-font-smoothing: antialiased;
+    overscroll-behavior: none;
+    min-height: 100dvh;
+    min-height: 100svh;
+  }
+
+  button, nav, a {
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: manipulation;
+  }
+
+  /* iOS safe area support */
+  .h-safe-area-inset-bottom {
+    height: env(safe-area-inset-bottom, 0px);
+  }
+
+  /* Keep inputs at 16px on phones so iOS does not zoom the page */
+  @media (max-width: 640px) {
+    input, select, textarea {
+      font-size: 16px !important;
+    }
+  }
+}
+
+/* Scrollbar styles — outside @layer so they override platform defaults */
+.nec-scroll {
+  scrollbar-width: auto !important;
+  scrollbar-color: #64748b #cbd5e1 !important;
+}
+.nec-scroll::-webkit-scrollbar {
+  width: 14px !important;
+  height: 14px !important;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.nec-scroll::-webkit-scrollbar-track {
+  background: #cbd5e1 !important;
+  border-radius: 6px;
+}
+.nec-scroll::-webkit-scrollbar-thumb {
+  background: #64748b !important;
+  border-radius: 6px;
+  border: 2px solid #cbd5e1;
+  min-width: 14px;
+  min-height: 14px;
+}
+.nec-scroll::-webkit-scrollbar-thumb:hover {
+  background: #475569 !important;
+}
+.nec-scroll::-webkit-scrollbar-corner {
+  background: #cbd5e1 !important;
+}

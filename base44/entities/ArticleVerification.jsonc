@@ -1,0 +1,143 @@
+{
+  "name": "ArticleVerification",
+  "type": "object",
+  "properties": {
+    "calculator_id": {
+      "type": "string",
+      "description": "Calculator ID from data/nec/audit.js"
+    },
+    "article_ref": {
+      "type": "string",
+      "description": "NEC article/table reference (e.g. '220.12', 'Table 250.122')"
+    },
+    "nec_year": {
+      "type": "string",
+      "enum": [
+        "2017",
+        "2020"
+      ],
+      "description": "NEC code year this verification applies to"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending_review",
+        "ai_reviewed_pending_human_approval",
+        "verified",
+        "needs_correction"
+      ],
+      "default": "pending_review",
+      "description": "Verification status \u2014 only admins may set to 'verified'"
+    },
+    "rule_name": {
+      "type": "string",
+      "description": "Short human-readable name for this rule/table (e.g. 'General Lighting Load \u2014 3 VA/sq ft')"
+    },
+    "value_used": {
+      "type": "string",
+      "description": "Exact value the app uses from this reference (e.g. '3 VA/sq ft', '1500 VA', '125%')"
+    },
+    "source_edition": {
+      "type": "string",
+      "description": "Edition used as verification source (e.g. 'NFPA 70-2017')"
+    },
+    "source_type": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "manual_codebook_review",
+        "licensed_source"
+      ],
+      "default": "pending",
+      "description": "How this reference was verified"
+    },
+    "source_excerpt": {
+      "type": "string",
+      "description": "Pasted NEC article/table text or excerpt used as the verification source"
+    },
+    "verified_by": {
+      "type": "string",
+      "description": "Name of person or organization that verified this reference"
+    },
+    "verified_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date verification was completed"
+    },
+    "local_amendment": {
+      "type": "boolean",
+      "default": false,
+      "description": "Flag if a local jurisdiction amendment may override this value"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Reviewer notes (e.g. 'Confirmed against 2017 NEC \u00a7220.12 text, page 70-79')"
+    },
+    "ai_review_status": {
+      "type": "string",
+      "enum": [
+        "not_run",
+        "match",
+        "mismatch",
+        "uncertain"
+      ],
+      "default": "not_run",
+      "description": "AI comparison result between app value and source excerpt"
+    },
+    "ai_confidence": {
+      "type": "number",
+      "description": "AI confidence score 0\u2013100"
+    },
+    "ai_explanation": {
+      "type": "string",
+      "description": "AI explanation of match/mismatch finding"
+    },
+    "ai_suggested_correction": {
+      "type": "string",
+      "description": "AI suggested correction if mismatch or uncertain"
+    },
+    "ai_fields_affected": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Fields the AI identified as affected by any discrepancy"
+    },
+    "ai_reviewed_at": {
+      "type": "string",
+      "description": "ISO timestamp of last AI review run"
+    },
+    "human_approved_by": {
+      "type": "string",
+      "description": "Admin who approved verification after AI review"
+    },
+    "human_approved_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date admin approved the verification"
+    }
+  },
+  "required": [
+    "calculator_id",
+    "article_ref",
+    "nec_year"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": null,
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

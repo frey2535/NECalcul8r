@@ -1,0 +1,81 @@
+{
+  "name": "User",
+  "type": "object",
+  "properties": {
+    "role": {
+      "type": "string",
+      "description": "The role of the user in the app",
+      "enum": [
+        "admin",
+        "user"
+      ]
+    },
+    "access_status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "trial",
+        "expired",
+        "disabled"
+      ],
+      "default": "trial",
+      "description": "Current access status"
+    },
+    "access_type": {
+      "type": "string",
+      "enum": [
+        "permanent",
+        "trial",
+        "paid",
+        "buildrpro_included",
+        "app_store"
+      ],
+      "default": "trial",
+      "description": "How access was granted"
+    },
+    "trial_start_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date when the user's trial started"
+    },
+    "trial_end_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date when the user's trial ends"
+    },
+    "purchase_source": {
+      "type": "string",
+      "enum": [
+        "manual",
+        "stripe",
+        "base44_payments",
+        "app_store",
+        "buildrpro",
+        "admin"
+      ],
+      "description": "How the user obtained access"
+    },
+    "subscription_status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "cancelled",
+        "past_due",
+        "unpaid",
+        "trialing"
+      ],
+      "description": "For paid/subscription users"
+    },
+    "buildrpro_company_id": {
+      "type": "string",
+      "description": "BuildrPro company/account ID for buildrpro_included users"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Admin-only notes about this user's access"
+    }
+  },
+  "required": [
+    "role"
+  ]
+}

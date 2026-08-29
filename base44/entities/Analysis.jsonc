@@ -1,0 +1,170 @@
+{
+  "name": "Analysis",
+  "type": "object",
+  "properties": {
+    "project_name": {
+      "type": "string",
+      "description": "Name of the project being analyzed"
+    },
+    "nec_year": {
+      "type": "string",
+      "enum": [
+        "2017",
+        "2020"
+      ],
+      "description": "NEC code year used for analysis"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "uploading",
+        "analyzing",
+        "completed",
+        "error"
+      ],
+      "default": "uploading",
+      "description": "Current status of the analysis"
+    },
+    "file_urls": {
+      "type": "array",
+      "description": "Uploaded blueprint file URLs",
+      "items": {
+        "type": "string"
+      }
+    },
+    "file_names": {
+      "type": "array",
+      "description": "Original file names",
+      "items": {
+        "type": "string"
+      }
+    },
+    "total_violations": {
+      "type": "number",
+      "default": 0
+    },
+    "total_missing_docs": {
+      "type": "number",
+      "default": 0
+    },
+    "violations": {
+      "type": "array",
+      "description": "List of code violations found",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "severity": {
+            "type": "string",
+            "enum": [
+              "critical",
+              "major",
+              "minor"
+            ]
+          },
+          "nec_year": {
+            "type": "string"
+          },
+          "nec_article": {
+            "type": "string"
+          },
+          "violation_description": {
+            "type": "string"
+          },
+          "sheet_number": {
+            "type": "string"
+          },
+          "room_number": {
+            "type": "string"
+          },
+          "area_description": {
+            "type": "string"
+          },
+          "location_detail": {
+            "type": "string"
+          },
+          "recommendation": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "missing_documents": {
+      "type": "array",
+      "description": "List of missing required documents",
+      "items": {
+        "type": "object",
+        "properties": {
+          "document_name": {
+            "type": "string"
+          },
+          "nec_article": {
+            "type": "string"
+          },
+          "reason_required": {
+            "type": "string"
+          },
+          "severity": {
+            "type": "string",
+            "enum": [
+              "critical",
+              "major",
+              "minor"
+            ]
+          }
+        }
+      }
+    },
+    "summary": {
+      "type": "string",
+      "description": "Overall analysis summary"
+    }
+  },
+  "required": [
+    "project_name",
+    "nec_year"
+  ],
+  "rls": {
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}
