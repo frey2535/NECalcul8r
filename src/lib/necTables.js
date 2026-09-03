@@ -360,7 +360,7 @@ export const NEC_TABLES = [
       ["76–80", "—", "—", "0.41", "168–176"],
       ["81–85", "—", "—", "0.29", "177–185"],
     ],
-    note: "NEC Table 310.15(B)(2)(a): Multiply base ampacity by correction factor for ambient temperatures other than 30°C (86°F). Dashes (—) indicate the temperature exceeds the conductor's rating.",
+    note: "Multiply base ampacity by the temperature correction factor for ambient temperatures other than 30°C (86°F). Dashes (—) indicate the temperature exceeds the conductor's rating. 2017 reference: Table 310.15(B)(2)(a). 2020+ reference: Table 310.15(B)(1).",
   },
   {
     id: "310_15_c_1_bundling",
