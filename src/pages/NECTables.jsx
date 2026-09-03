@@ -2,11 +2,10 @@ import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { Search, BookOpen, ChevronDown, ChevronUp, FlaskConical } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { NEC_TABLES } from "@/lib/necTables";
+import { NEC_TABLES, resolveNecTable } from "@/lib/necTables";
 import NECTableDisplay from "@/components/calculator/NECTableDisplay";
 import { cn } from "@/lib/utils";
 import { useNECYear } from "@/context/NECYearContext";
-import { getNecData } from "@/data/nec";
 
 const GROUPS = [
   { label: "Branch & Feeder Circuits", sub: "Article 210 / 215", prefix: "210", emoji: "🔌" },
@@ -27,45 +26,9 @@ const GROUPS = [
   { label: "Annex D Examples", sub: "NEC 2017 Annex D — Worked Calculations", prefix: "annex_d", emoji: "📝" },
 ];
 
-// Resolves a table's rows through the centralized NEC year data when the
-// table declares a `dynamicSource` — same object the live calculators use
-// (getNecData(year).OCCUPANCY_UNIT_LOADS), so the Tables tab and the
-// calculators can never drift apart for Table 220.12.
-function resolveDynamicRows(t, year) {
-  if (!t.dynamicSource) return t;
-  const nec = getNecData(year);
-  const source = nec[t.dynamicSource] || {};
-  const pending = new Set(t.dynamicPendingKeys || []);
-  const rows = Object.keys(source).map(key => {
-    const label = t.dynamicLabels?.[key] || key;
-    const isPending = pending.has(key) && year !== "2017";
-    return [
-      isPending ? `${label} (pending verification)` : label,
-      `${source[key]}`,
-    ];
-  });
-  return { ...t, rows };
-}
-
-function resolveTableForYear(t, year) {
-  const dynamicResolved = resolveDynamicRows(t, year);
-  const yearArticle = dynamicResolved.yearRefs?.[year];
-  if (!yearArticle) return dynamicResolved;
-
-  const baseTitle = dynamicResolved.title
-    .replace(/^NEC\s+\d{4}\s+—\s+/, "")
-    .replace(/^NEC\s+/, "");
-  return {
-    ...dynamicResolved,
-    article: `NEC ${year} ${yearArticle}`,
-    title: `NEC ${year} — ${baseTitle}`,
-    note: dynamicResolved.yearNotes?.[year] || dynamicResolved.note,
-  };
-}
-
 function TableRow({ t, year }) {
   const [open, setOpen] = useState(false);
-  const resolved = resolveTableForYear(t, year);
+  const resolved = resolveNecTable(t, year);
   return (
     <div className={cn(
       "rounded-xl border transition-all overflow-hidden shadow-sm hover:shadow-md",

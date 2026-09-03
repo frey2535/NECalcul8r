@@ -3,6 +3,8 @@
  * Each entry: { id, article, title, headers, rows, note? }
  */
 
+import { getNecData } from "@/data/nec";
+
 export const NEC_TABLES = [
 
   // ─── Article 210 / 215 ───────────────────────────────────────────
@@ -1308,19 +1310,46 @@ export function getTableById(id) {
   return NEC_TABLES.find(t => t.id === id);
 }
 
+function resolveDynamicRows(t, necYear) {
+  if (!t.dynamicSource || !necYear) return t;
+  const nec = getNecData(necYear);
+  const source = nec[t.dynamicSource] || {};
+  const pending = new Set(t.dynamicPendingKeys || []);
+  const rows = Object.keys(source).map(key => {
+    const label = t.dynamicLabels?.[key] || key;
+    const isPending = pending.has(key) && necYear !== "2017";
+    return [
+      isPending ? `${label} (pending verification)` : label,
+      `${source[key]}`,
+    ];
+  });
+  return { ...t, rows };
+}
+
+export function resolveNecTable(t, necYear = null) {
+  const dynamicResolved = resolveDynamicRows(t, necYear);
+  const yearArticle = necYear ? dynamicResolved.yearRefs?.[necYear] : null;
+  if (!yearArticle) return dynamicResolved;
+
+  const baseTitle = dynamicResolved.title
+    .replace(/^NEC\s+\d{4}\s+—\s+/, "")
+    .replace(/^NEC\s+/, "");
+  const articleBase = String(yearArticle)
+    .replace(/^NEC\s+\d{4}\s+/, "")
+    .replace(/^NEC\s+/, "");
+  return {
+    ...dynamicResolved,
+    article: `NEC ${necYear} ${articleBase}`,
+    title: `NEC ${necYear} — ${baseTitle}`,
+    note: dynamicResolved.yearNotes?.[necYear] || dynamicResolved.note,
+  };
+}
+
 /** Lookup helper: get multiple tables by id array, optionally prefixing article with year */
 export function getTablesById(ids, necYear = null) {
   const tables = ids.map(id => NEC_TABLES.find(t => t.id === id)).filter(Boolean);
   if (!necYear) return tables;
-  return tables.map(t => {
-    const yearArticle = t.yearRefs?.[necYear];
-    const articleBase = (yearArticle || t.article.replace(/^NEC\s+\d{4}\s+/, "").replace(/^NEC\s+/, "")).replace(/^NEC\s+/, "");
-    return {
-      ...t,
-      article: `NEC ${necYear} ${articleBase}`,
-      title: `NEC ${necYear} — ${t.title.replace(/^NEC\s+\d{4}\s+—\s+/, "").replace(/^NEC\s+/, "")}`,
-    };
-  });
+  return tables.map(t => resolveNecTable(t, necYear));
 }
 
 /** Build a year-prefixed NEC reference string, e.g. "NEC 2023 210.19" */
