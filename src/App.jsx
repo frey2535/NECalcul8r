@@ -2,7 +2,7 @@ import React, { Suspense, lazy } from "react";
 import { Toaster } from "@/components/ui/toaster"
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
-import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, Navigate, useLocation } from 'react-router-dom';
 import Login from '@/pages/Login';
 import Register from '@/pages/Register';
 import ForgotPassword from '@/pages/ForgotPassword';
@@ -37,6 +37,7 @@ const CodebookMatrix = lazy(() => import('@/pages/admin/CodebookMatrix'));
 const CalculatorVerification = lazy(() => import('@/pages/admin/CalculatorVerification'));
 const Landing = lazy(lazyRetry(() => import('@/pages/Landing'), 'Landing'));
 const Profile = lazy(() => import('@/pages/Profile'));
+const Purchase = lazy(() => import('@/pages/Purchase'));
 const PrivacyPolicy = lazy(() => import('@/pages/PrivacyPolicy'));
 const TermsOfService = lazy(() => import('@/pages/TermsOfService'));
 
@@ -50,6 +51,7 @@ function PageLoader() {
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin, user } = useAuth();
+  const location = useLocation();
   const trialStatus = useTrialStatus(user);
 
   if (isLoadingPublicSettings || isLoadingAuth) {
@@ -65,7 +67,7 @@ const AuthenticatedApp = () => {
   }
 
   // Block access if trial expired or disabled (admins are always allowed)
-  if (!trialStatus.canAccess && trialStatus.status !== 'unknown') {
+  if (!trialStatus.canAccess && trialStatus.status !== 'unknown' && location.pathname !== "/purchase") {
     return <TrialExpiredScreen user={user} status={trialStatus.status} blockReason={trialStatus.blockReason} />;
   }
 
@@ -89,6 +91,7 @@ const AuthenticatedApp = () => {
             <Route path="/new-analysis" element={<NewAnalysis />} />
             <Route path="/results" element={<Results />} />
             <Route path="/profile" element={<Profile />} />
+            <Route path="/purchase" element={<Purchase />} />
             <Route element={<AdminRoute />}>
               <Route path="/admin/users" element={<UserManagement />} />
               <Route path="/admin/audit" element={<DeveloperAudit />} />

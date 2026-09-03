@@ -22,12 +22,44 @@ export const commerce = {
   hasCompanyCheckout: isSupabaseConfigured && Boolean(companyPriceId),
 
   /**
+   * @param {{
+   *   accountType?: string,
+   *   customerTierId?: string,
+   *   calculatorTierId?: string,
+   *   priceId?: string,
+   *   quantity?: number,
+   *   successUrl?: string,
+   *   cancelUrl?: string
+   * }} options
+   */
+  async startCheckout(options = {}) {
+    const {
+      accountType = "individual",
+      customerTierId,
+      calculatorTierId,
+      priceId,
+      quantity = 1,
+      successUrl,
+      cancelUrl,
+    } = options;
+    return redirectToCheckout({
+      mode: "subscription",
+      accountType,
+      customerTierId,
+      calculatorTierId,
+      priceId,
+      quantity,
+      successUrl: successUrl || `${window.location.origin}/`,
+      cancelUrl: cancelUrl || `${window.location.origin}/purchase`,
+    });
+  },
+
+  /**
    * @param {{ successUrl?: string, cancelUrl?: string }} options
    */
   async startIndividualCheckout(options = {}) {
     const { successUrl, cancelUrl } = options;
-    return redirectToCheckout({
-      mode: "subscription",
+    return this.startCheckout({
       accountType: "individual",
       priceId: individualPriceId,
       successUrl: successUrl || `${window.location.origin}/`,
@@ -40,8 +72,7 @@ export const commerce = {
    */
   async startCompanyCheckout(options = {}) {
     const { seats = 1, successUrl, cancelUrl } = options;
-    return redirectToCheckout({
-      mode: "subscription",
+    return this.startCheckout({
       accountType: "company",
       priceId: companyPriceId,
       quantity: seats,

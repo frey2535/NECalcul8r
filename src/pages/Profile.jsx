@@ -40,21 +40,6 @@ export default function Profile() {
     }
   };
 
-  const handlePurchase = async () => {
-    setBillingError("");
-    if (!base44.commerce?.hasIndividualCheckout) {
-      window.location.href = "mailto:sales@nec-suite.com?subject=NECalcul8r Purchase";
-      return;
-    }
-    setBillingLoading(true);
-    try {
-      await base44.commerce.startIndividualCheckout();
-    } catch (error) {
-      setBillingError(error.message || "Could not open checkout. Please contact sales.");
-      setBillingLoading(false);
-    }
-  };
-
   const handleBillingPortal = async () => {
     setBillingError("");
     setBillingLoading(true);
@@ -116,15 +101,13 @@ export default function Profile() {
       </Link>
 
       <div className="rounded-2xl bg-card border border-border/60 shadow-sm overflow-hidden">
-        <button
-          type="button"
-          onClick={handlePurchase}
-          disabled={billingLoading}
-          className="w-full flex items-center gap-3 px-5 py-4 text-sm font-semibold text-foreground hover:bg-muted active:bg-muted/80 disabled:opacity-60 transition-colors"
+        <Link
+          to="/purchase"
+          className="w-full flex items-center gap-3 px-5 py-4 text-sm font-semibold text-foreground hover:bg-muted active:bg-muted/80 transition-colors"
         >
           <ShoppingCart className="w-4 h-4 text-muted-foreground" />
-          {base44.commerce?.hasIndividualCheckout ? "Subscribe / Purchase Access" : "Contact Sales to Purchase"}
-        </button>
+          Purchase Now
+        </Link>
         {base44.commerce?.isConfigured && (
           <button
             type="button"
