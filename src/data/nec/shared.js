@@ -411,6 +411,23 @@ export const HVAC_OCPD_MULTIPLIER = 1.75; // 440.22(A)
 // than 83% of the service or feeder disconnect rating.
 export const DWELLING_SERVICE_CONDUCTOR_FACTOR = 0.83;
 
+// NEC Table 310.12 — Single-Phase Dwelling Services and Feeders.
+// Applies to 100A through 400A dwelling services/feeders when no adjustment or
+// correction factors are required.
+export const DWELLING_SERVICE_CONDUCTOR_TABLE = [
+  { rating: 100, copper: "4", aluminum: "2" },
+  { rating: 110, copper: "3", aluminum: "1" },
+  { rating: 125, copper: "2", aluminum: "1/0" },
+  { rating: 150, copper: "1", aluminum: "2/0" },
+  { rating: 175, copper: "1/0", aluminum: "3/0" },
+  { rating: 200, copper: "2/0", aluminum: "4/0" },
+  { rating: 225, copper: "3/0", aluminum: "250" },
+  { rating: 250, copper: "4/0", aluminum: "300" },
+  { rating: 300, copper: "250", aluminum: "350" },
+  { rating: 350, copper: "350", aluminum: "500" },
+  { rating: 400, copper: "400", aluminum: "600" },
+];
+
 // ─── Welder Duty Cycle: NEC 630.11 ───────────────────────────────
 export const WELDER_DUTY_CYCLE_TABLE = [
   { dc: 100, mult: 1.00 }, { dc: 90, mult: 0.95 }, { dc: 80, mult: 0.89 },

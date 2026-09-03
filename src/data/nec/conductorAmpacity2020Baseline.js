@@ -27,6 +27,10 @@ export function runConductorAmpacity2020Baseline(calcFn = calcConductorAmpacity)
       AMPACITY_BUNDLE_ARTICLE: NEC_2020.AMPACITY_BUNDLE_ARTICLE,
       DWELLING_SERVICE_ARTICLE: NEC_2020.DWELLING_SERVICE_ARTICLE,
       DWELLING_SERVICE_CONDUCTOR_FACTOR: NEC_2020.DWELLING_SERVICE_CONDUCTOR_FACTOR,
+      TABLE_310_12_100_CU: NEC_2020.DWELLING_SERVICE_CONDUCTOR_TABLE.find((row) => row.rating === 100)?.copper,
+      TABLE_310_12_200_AL: NEC_2020.DWELLING_SERVICE_CONDUCTOR_TABLE.find((row) => row.rating === 200)?.aluminum,
+      TABLE_310_12_400_CU: NEC_2020.DWELLING_SERVICE_CONDUCTOR_TABLE.find((row) => row.rating === 400)?.copper,
+      TABLE_310_12_400_AL: NEC_2020.DWELLING_SERVICE_CONDUCTOR_TABLE.find((row) => row.rating === 400)?.aluminum,
     }),
     tests: [
       {
@@ -39,6 +43,10 @@ export function runConductorAmpacity2020Baseline(calcFn = calcConductorAmpacity)
           AMPACITY_BUNDLE_ARTICLE: "310.15(C)(1)",
           DWELLING_SERVICE_ARTICLE: "310.12",
           DWELLING_SERVICE_CONDUCTOR_FACTOR: 0.83,
+          TABLE_310_12_100_CU: "4",
+          TABLE_310_12_200_AL: "4/0",
+          TABLE_310_12_400_CU: "400",
+          TABLE_310_12_400_AL: "600",
         },
       },
     ],
