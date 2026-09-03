@@ -21,9 +21,33 @@ VITE_SUPABASE_URL=
 VITE_SUPABASE_ANON_KEY=
 VITE_STRIPE_INDIVIDUAL_PRICE_ID=
 VITE_STRIPE_COMPANY_PRICE_ID=
+VITE_STRIPE_PRICE_MATRIX_JSON=
 ```
 
 Do not expose Stripe secret keys, Supabase service-role keys, Google service-account credentials, or Apple shared secrets in Vite env vars. Those belong only in Supabase Edge Function secrets.
+
+`VITE_STRIPE_PRICE_MATRIX_JSON` maps every visible purchase package to a Stripe price ID:
+
+```json
+{
+  "individual:calc_0_10": { "priceId": "price_...", "priceLabel": "$9/mo" },
+  "individual:calc_11_20": { "priceId": "price_...", "priceLabel": "$19/mo" },
+  "individual:calc_21_30": { "priceId": "price_...", "priceLabel": "$29/mo" },
+  "individual:calc_31_plus": { "priceId": "price_...", "priceLabel": "$39/mo" },
+  "company_0_10:calc_0_10": { "priceId": "price_...", "priceLabel": "$49/mo" },
+  "company_0_10:calc_11_20": { "priceId": "price_...", "priceLabel": "$99/mo" },
+  "company_0_10:calc_21_30": { "priceId": "price_...", "priceLabel": "$149/mo" },
+  "company_0_10:calc_31_plus": { "priceId": "price_...", "priceLabel": "$199/mo" },
+  "company_10_30:calc_0_10": { "priceId": "price_...", "priceLabel": "$129/mo" },
+  "company_10_30:calc_11_20": { "priceId": "price_...", "priceLabel": "$249/mo" },
+  "company_10_30:calc_21_30": { "priceId": "price_...", "priceLabel": "$369/mo" },
+  "company_10_30:calc_31_plus": { "priceId": "price_...", "priceLabel": "$499/mo" },
+  "company_30_plus:calc_0_10": { "priceId": "price_...", "priceLabel": "$299/mo" },
+  "company_30_plus:calc_11_20": { "priceId": "price_...", "priceLabel": "$549/mo" },
+  "company_30_plus:calc_21_30": { "priceId": "price_...", "priceLabel": "$799/mo" },
+  "company_30_plus:calc_31_plus": { "priceId": "price_...", "priceLabel": "$999/mo" }
+}
+```
 
 ## Supabase database
 
