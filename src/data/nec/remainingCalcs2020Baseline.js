@@ -32,6 +32,10 @@ const STRIP_2020 = {
   service_sizing: ["SPD_required", "outdoor_disconnect"],
 };
 
+const FILTER_2020 = {
+  egc_sizing: (tests) => tests.filter((test) => !["egc_5000_al_2017", "egc_6000_al_2017"].includes(test.id)),
+};
+
 function stripTests(tests, keys) {
   if (!keys?.length) return tests;
   return tests.map((t) => {
@@ -39,6 +43,11 @@ function stripTests(tests, keys) {
     for (const k of keys) delete expected[k];
     return { ...t, expected };
   });
+}
+
+function prepare2020Tests(suite) {
+  const filtered = FILTER_2020[suite.id] ? FILTER_2020[suite.id](suite.tests) : suite.tests;
+  return stripTests(filtered, STRIP_2020[suite.id]);
 }
 
 export function runRemainingCalcs2020Baseline() {
@@ -55,7 +64,7 @@ export function runRemainingCalcs2020Baseline() {
       id: `${s.id}_2020`,
       title: `${s.title} 2020 pending-same`,
       ...runCalcTests({
-        tests: stripTests(s.tests, STRIP_2020[s.id]),
+        tests: prepare2020Tests(s),
         calcFn: s.calcFn,
         nec: NEC_2020,
         tolerance: s.tolerance,
@@ -180,6 +189,18 @@ export function runRemainingCalcs2020Baseline() {
           description: "2020 same #8/#4 upsize; cites 250.122(B)",
           inputs: { ocpd: "100", material: "copper", voltageDropUpsizeRatio: 2 },
           expected: { awg: "8", adjustedAwg: "4", egcUpsizeArticle: "250.122(B)" },
+        },
+        {
+          id: "egc20_5000_al",
+          description: "2020 Table 250.122 high-amperage aluminum correction: 5000 A → 1250 kcmil",
+          inputs: { ocpd: "5000", material: "aluminum" },
+          expected: { awg: "1250", matchedOCPD: 5000 },
+        },
+        {
+          id: "egc20_6000_al",
+          description: "2020 Table 250.122 high-amperage aluminum correction: 6000 A → 1250 kcmil",
+          inputs: { ocpd: "6000", material: "aluminum" },
+          expected: { awg: "1250", matchedOCPD: 6000 },
         },
       ],
     }),

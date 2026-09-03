@@ -8,7 +8,17 @@
  * Label all outputs with "pending verification".
  */
 
+import { EGC_TABLE as _EGC_TABLE } from "./shared";
+
 export const NEC_YEAR = "2026";
+
+// 2026 placeholder carries forward the 2020 Table 250.122 high-amperage
+// aluminum/copper-clad aluminum change until the 2026 source is verified.
+export const EGC_TABLE = _EGC_TABLE.map((row) =>
+  row.ocpd === 5000 || row.ocpd === 6000
+    ? { ...row, aluminum: "1250" }
+    : row
+);
 
 // ─── Table 220.12 — Occupancy Unit Loads (2026) ───────────────────────
 // 2026: ⚠️ PENDING VERIFICATION. Values below are COPIED FROM 2020 as

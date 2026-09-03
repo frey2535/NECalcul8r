@@ -431,6 +431,8 @@ def("conduit_fill", "Conduit Fill Ch.9 Tables 1/4/5", calcConduitFill, [
 def("egc_sizing", "EGC Table 250.122", calcEGCSizing, [
   { id: "egc_100_cu", description: "100 A copper → #8", inputs: { ocpd: "100", material: "copper" }, expected: { awg: "8" } },
   { id: "egc_200_cu", description: "200 A copper → #6", inputs: { ocpd: "200", material: "copper" }, expected: { awg: "6" } },
+  { id: "egc_5000_al_2017", description: "2017 5000 A aluminum → 1200 kcmil", inputs: { ocpd: "5000", material: "aluminum" }, expected: { awg: "1200" } },
+  { id: "egc_6000_al_2017", description: "2017 6000 A aluminum → 1200 kcmil", inputs: { ocpd: "6000", material: "aluminum" }, expected: { awg: "1200" } },
   {
     id: "egc_upsize",
     description: "250.122(B) proportional upsize 2× from #8",
@@ -441,6 +443,8 @@ def("egc_sizing", "EGC Table 250.122", calcEGCSizing, [
 
 def("grounding_electrode", "GEC Table 250.66", calcGECSizing, [
   { id: "gec_2awg", description: "2 AWG or smaller copper → #8", inputs: { serviceSize: "0", material: "copper" }, expected: { gecSize: "8" } },
+  { id: "gec_2awg_al", description: "2 AWG or smaller aluminum → #6", inputs: { serviceSize: "0", material: "aluminum" }, expected: { gecSize: "6" } },
+  { id: "gec_over_1100_al", description: "Over 1100 kcmil aluminum → 250 kcmil", inputs: { serviceSize: "6", material: "aluminum" }, expected: { gecSize: "250 kcmil" } },
   {
     id: "gec_made_electrode",
     description: "250.66(A) made electrode cap #6 Cu",

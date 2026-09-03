@@ -11,6 +11,11 @@ import React from "react";
 import { useRestoredField } from "@/hooks/useCalculatorInputs";
 import { CalcLayout, Field, ResultRow, ResultSection, NoteBox, Select } from "../CalcLayout";
 
+function formatGecSize(size) {
+  const value = String(size || "—");
+  return value.includes("kcmil") || value === "—" ? value : `#${value} AWG`;
+}
+
 export default function GECSizing({ category, necYear = "2023" }) {
   const nec = getNecData(necYear);
   const GEC_TABLE = nec.GEC_TABLE;
@@ -29,15 +34,30 @@ export default function GECSizing({ category, necYear = "2023" }) {
         <ResultSection title="GEC Sizing (NEC Table 250.66)">
           <ResultRow label="Service Conductor Size" value={row?.service || "—"} />
           <ResultRow label="GEC Material" value={material === "copper" ? "Copper" : "Aluminum"} />
-          <ResultRow label="Minimum GEC Size" value={`#${gecSize} AWG`} highlight />
+          <ResultRow label="Minimum GEC Size" value={formatGecSize(gecSize)} highlight />
           {electrodeNote && <ResultRow label="Electrode Type Note" value={electrodeNote} sub="250.66(C)" />}
         </ResultSection>
         <ResultSection title="Full Table 250.66">
-          {GEC_TABLE.map((r, i) => (
-            <ResultRow key={i} label={r.service}
-              value={material === "copper" ? `#${r.copper} AWG` : `#${r.aluminum} AWG`}
-              highlight={i === parseInt(serviceSize)} />
-          ))}
+          <div className="overflow-x-auto rounded-xl border border-border/60">
+            <table className="w-full text-sm">
+              <thead className="bg-muted/70 text-muted-foreground">
+                <tr>
+                  <th className="text-left font-semibold px-3 py-2">Service conductor</th>
+                  <th className="text-left font-semibold px-3 py-2">Copper GEC</th>
+                  <th className="text-left font-semibold px-3 py-2">Aluminum GEC</th>
+                </tr>
+              </thead>
+              <tbody>
+                {GEC_TABLE.map((r, i) => (
+                  <tr key={r.service} className={i === parseInt(serviceSize) ? "bg-blue-50 dark:bg-blue-950/30 font-semibold" : ""}>
+                    <td className="px-3 py-2 border-t border-border/60">{r.service}</td>
+                    <td className="px-3 py-2 border-t border-border/60">{formatGecSize(r.copper)}</td>
+                    <td className="px-3 py-2 border-t border-border/60">{formatGecSize(r.aluminum)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </ResultSection>
         <FormulaBox steps={steps} formulas={FORMULAS} />
         {TABLES.map(t => <NECTableDisplay key={t.id} title={t.article} headers={t.headers} rows={t.rows} note={t.note} compact />)}

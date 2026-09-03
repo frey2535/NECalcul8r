@@ -9,7 +9,17 @@
  * - Emergency disconnect marking requirements refined (230.85)
  */
 
+import { EGC_TABLE as _EGC_TABLE } from "./shared";
+
 export const NEC_YEAR = "2023";
+
+// 2023 carries forward the 2020 Table 250.122 high-amperage aluminum/copper-clad
+// aluminum change: 5000A and 6000A require 1250 kcmil.
+export const EGC_TABLE = _EGC_TABLE.map((row) =>
+  row.ocpd === 5000 || row.ocpd === 6000
+    ? { ...row, aluminum: "1250" }
+    : row
+);
 
 // ─── GFCI Requirements (NEC 210.8) ──────────────────────────────────
 // 2023: Retained 2020 scope. Additional clarifications for 250V in dwelling
