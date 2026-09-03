@@ -47,9 +47,25 @@ function resolveDynamicRows(t, year) {
   return { ...t, rows };
 }
 
+function resolveTableForYear(t, year) {
+  const dynamicResolved = resolveDynamicRows(t, year);
+  const yearArticle = dynamicResolved.yearRefs?.[year];
+  if (!yearArticle) return dynamicResolved;
+
+  const baseTitle = dynamicResolved.title
+    .replace(/^NEC\s+\d{4}\s+—\s+/, "")
+    .replace(/^NEC\s+/, "");
+  return {
+    ...dynamicResolved,
+    article: `NEC ${year} ${yearArticle}`,
+    title: `NEC ${year} — ${baseTitle}`,
+    note: dynamicResolved.yearNotes?.[year] || dynamicResolved.note,
+  };
+}
+
 function TableRow({ t, year }) {
   const [open, setOpen] = useState(false);
-  const resolved = t.dynamicSource ? resolveDynamicRows(t, year) : t;
+  const resolved = resolveTableForYear(t, year);
   return (
     <div className={cn(
       "rounded-xl border transition-all overflow-hidden shadow-sm hover:shadow-md",
