@@ -31,6 +31,23 @@ cp .env.example .env.local
 
 Without a key, all 41 NEC calculators, tables, history, and admin tools still work. AI blueprint analysis stays disabled.
 
+## Commercial access mode
+
+The app runs in local demo mode by default. Accounts, users, saved projects, and access state are stored in the browser so the GitHub Pages demo works without a backend.
+
+For paid web/app-store distribution, configure Supabase:
+
+```bash
+VITE_SUPABASE_URL=
+VITE_SUPABASE_ANON_KEY=
+VITE_STRIPE_INDIVIDUAL_PRICE_ID=
+VITE_STRIPE_COMPANY_PRICE_ID=
+```
+
+When Supabase env vars are present, the API facade switches to centralized Supabase auth, profiles, organizations, subscriptions, entitlements, and app records. Stripe and app-store purchase verification should be handled by Supabase Edge Functions so secret keys never ship to the browser.
+
+See [`docs/commercial-access.md`](docs/commercial-access.md) and [`supabase/schema.sql`](supabase/schema.sql).
+
 ## What changed vs Base44
 
 - Removed `@base44/sdk` and `@base44/vite-plugin`

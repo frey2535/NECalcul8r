@@ -35,7 +35,15 @@ export function useTrialStatus(user) {
       return { canAccess: true, status: 'active', accessType, daysLeft: Infinity, isExpired: false, isDisabled: false, blockReason: null };
     }
 
-    // Rule 4: buildrpro_included — allowed while company account is active (we trust access_status = active)
+    // Rule 4: externally granted company access — allowed while the entitlement is active
+    if (accessType === 'external_company' || accessType === 'company_seat') {
+      if (accessStatus !== 'active') {
+        return { canAccess: false, status: 'expired', accessType, daysLeft: 0, isExpired: true, isDisabled: false, blockReason: 'company_access_inactive' };
+      }
+      return { canAccess: true, status: 'active', accessType, daysLeft: Infinity, isExpired: false, isDisabled: false, blockReason: null };
+    }
+
+    // Rule 5: buildrpro_included — allowed while company account is active (we trust access_status = active)
     if (accessType === 'buildrpro_included') {
       if (accessStatus !== 'active') {
         return { canAccess: false, status: 'expired', accessType, daysLeft: 0, isExpired: true, isDisabled: false, blockReason: 'buildrpro_inactive' };
@@ -43,15 +51,15 @@ export function useTrialStatus(user) {
       return { canAccess: true, status: 'active', accessType, daysLeft: Infinity, isExpired: false, isDisabled: false, blockReason: null };
     }
 
-    // Rule 5: app_store — allowed if access_status = active (entitlement verified externally)
-    if (accessType === 'app_store') {
+    // Rule 6: app-store access — allowed if a backend-verified entitlement is active
+    if (accessType === 'app_store' || accessType === 'google_play' || accessType === 'apple_app_store') {
       if (accessStatus !== 'active') {
         return { canAccess: false, status: 'expired', accessType, daysLeft: 0, isExpired: true, isDisabled: false, blockReason: 'app_store_inactive' };
       }
       return { canAccess: true, status: 'active', accessType, daysLeft: Infinity, isExpired: false, isDisabled: false, blockReason: null };
     }
 
-    // Rule 6: trial — allowed only until trial_end_date
+    // Rule 7: trial — allowed only until trial_end_date
     if (!user.trial_end_date) {
       // No trial date yet — allow temporarily (backend sets it soon)
       return { canAccess: true, status: 'trial', accessType: 'trial', daysLeft: 30, isExpired: false, isDisabled: false, blockReason: null };
