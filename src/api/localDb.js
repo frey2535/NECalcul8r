@@ -27,7 +27,7 @@ export function makeInviteCode() {
 
 function migrateTenancy(db) {
   if (!Array.isArray(db.orgs)) db.orgs = [];
-  const unassigned = (db.users || []).filter((u) => !u.org_id);
+  const unassigned = (db.users || []).filter((u) => !u.org_id && !u.org_role);
   if (unassigned.length > 0) {
     const org = {
       id: newId("org"),
@@ -42,6 +42,9 @@ function migrateTenancy(db) {
     }
   }
   for (const user of db.users || []) {
+    if (!user.org_id && !user.org_role) {
+      user.org_role = "individual";
+    }
     if (user.org_role === "owner") {
       user.role = "admin";
     } else if (user.role === "admin") {
@@ -112,7 +115,7 @@ export function publicUser(user, db) {
     ...safe,
     org_id: user.org_id || null,
     org_name: org?.name || null,
-    org_role: user.org_role || "member",
+    org_role: user.org_role || (user.org_id ? "member" : "individual"),
     invite_code: canSeeInvite ? org?.invite_code || null : null,
   };
 }

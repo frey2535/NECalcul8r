@@ -194,7 +194,7 @@ function resolveOrg(db, { organizationName, inviteCode }) {
   if (invited) return { org: invited, org_role: "member", role: "user" };
 
   const name = String(organizationName || "").trim();
-  if (!name) throw httpError("Enter a company name, or an invite code from your team.");
+  if (!name) return { org: null, org_role: "individual", role: "user" };
 
   const org = {
     id: newId("org"),
@@ -213,7 +213,7 @@ async function buildUser(db, { email, passwordHash, passwordSalt, organizationNa
     id: newId("user"),
     email,
     full_name: email.split("@")[0],
-    org_id: org.id,
+    org_id: org?.id || null,
     org_role,
     role,
     access_type: isOrgOwner ? "permanent" : "trial",
