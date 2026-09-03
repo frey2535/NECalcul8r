@@ -23,17 +23,15 @@ export default function Register() {
       setError("Passwords do not match");
       return;
     }
-    if (!inviteCode.trim() && !organizationName.trim()) {
-      setError("Enter a company name, or a team invite code.");
-      return;
-    }
     setLoading(true);
     try {
+      const trimmedInviteCode = inviteCode.trim();
+      const trimmedOrganizationName = organizationName.trim();
       const result = await base44.auth.register({
         email,
         password,
-        organizationName: inviteCode.trim() ? undefined : organizationName,
-        inviteCode,
+        organizationName: trimmedInviteCode ? undefined : trimmedOrganizationName || undefined,
+        inviteCode: trimmedInviteCode || undefined,
       });
       if (result?.access_token) {
         base44.auth.setToken(result.access_token);
@@ -50,7 +48,7 @@ export default function Register() {
     <AuthLayout
       icon={UserPlus}
       title="Create your account"
-      subtitle="Each person signs in separately. Saved work stays private to that account."
+      subtitle="Create an individual account, join a team with an invite code, or create a company workspace if you manage users."
       footer={
         <>
           Already have an account?{" "}
@@ -85,22 +83,21 @@ export default function Register() {
           </div>
         </div>
         <div className="space-y-2">
-          <Label htmlFor="org">Company / workspace</Label>
+          <Label htmlFor="org">Company / workspace (optional)</Label>
           <div className="relative">
             <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden="true" />
             <Input
               id="org"
               type="text"
               autoComplete="organization"
-              placeholder="Day One"
+              placeholder="Only if you manage a team"
               value={organizationName}
               onChange={(e) => setOrganizationName(e.target.value)}
               className="pl-10 h-12"
-              required={!inviteCode.trim()}
               disabled={!!inviteCode.trim()}
             />
           </div>
-          <p className="text-[11px] text-muted-foreground">Creates a new team. Skip this if you have an invite code.</p>
+          <p className="text-[11px] text-muted-foreground">Leave blank for an individual account. Enter a company name only if you should manage a team.</p>
         </div>
         <div className="space-y-2">
           <Label htmlFor="invite">Team invite code (optional)</Label>
