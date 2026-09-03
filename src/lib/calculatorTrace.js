@@ -51,6 +51,7 @@ export const FIELD_META = {
   // ── Conductors & Ampacity ─────────────────────────────────────────
   COPPER_AMPACITY:                      { value: "Table values",     source: "Table 310.15(B)(16)", description: "Allowable ampacity for copper conductors in conduit, 60/75/90°C.", usedBy: ["Conductor Ampacity", "Marina Shore Power", "RV Park Load"] },
   ALUMINUM_AMPACITY:                    { value: "Table values",     source: "Table 310.15(B)(16)", description: "Allowable ampacity for aluminum conductors in conduit.", usedBy: ["Conductor Ampacity", "Marina Shore Power", "RV Park Load"] },
+  DWELLING_SERVICE_CONDUCTOR_TABLE:     { value: "100A-400A",        source: "Table 310.12",        description: "Single-phase dwelling service and feeder conductor sizes.", usedBy: ["Conductor Ampacity"] },
   RESISTIVITY:                          { value: "Cu=12.9, Al=21.2",  source: "Ch.9 Table 8",       description: "DC resistance constants (K) for voltage drop calculations by conductor material.", usedBy: ["Voltage Drop", "Marina Shore Power", "RV Park Load"] },
   CONDUCTOR_CM:                         { value: "4,110–1,000,000 CM", source: "Ch.9 Table 8",      description: "Circular mil areas for conductors used in voltage drop calculations.", usedBy: ["Voltage Drop", "Marina Shore Power", "RV Park Load"] },
   OCCUPANCY_UNIT_LOADS:                 { value: "0.25–3.5 VA/ft²",  source: "Table 220.12",      description: "General lighting unit loads by occupancy type.", usedBy: ["Lighting Load", "Commercial Load", "Marina Shore Power"] },
@@ -114,6 +115,7 @@ export const ARTICLE_META = {
   "310.15(B)(16)": { title: "Ampacity Table — Conductors in Conduit", usedBy: ["Conductor Ampacity"] },
   "310.15(B)(2)":  { title: "Temperature Correction Factors",      usedBy: ["Conductor Ampacity"] },
   "310.15(C)(1)":  { title: "Bundling Derating Factors",           usedBy: ["Conductor Ampacity"] },
+  "310.12":        { title: "Single-Phase Dwelling Services and Feeders", usedBy: ["Conductor Ampacity"] },
   "110.14(C)":     { title: "Terminal Temperature Limitations",    usedBy: ["Conductor Ampacity"] },
   "430.22(A)":     { title: "Branch Circuit Conductor — Motor",    usedBy: ["Motor Branch Circuit"] },
   "430.24":        { title: "Motor Feeder Conductor Sizing",       usedBy: ["Motor Feeder"] },
@@ -133,6 +135,7 @@ export const ARTICLE_META = {
   "Table 220.55":  { title: "Demand Factors for Household Ranges", usedBy: ["Dwelling Standard"] },
   "Table 240.6(A)": { title: "Standard Fuse and Breaker Ratings",  usedBy: ["Dwelling Standard", "Dwelling Optional", "Service Sizing"] },
   "Table 310.15(B)(16)": { title: "Allowable Conductor Ampacities", usedBy: ["Conductor Ampacity"] },
+  "Table 310.12":  { title: "Single-Phase Dwelling Services and Feeders", usedBy: ["Conductor Ampacity"] },
   "Table 430.52":  { title: "Motor Branch Circuit OCPD Max Ratings", usedBy: ["Motor Branch Circuit"] },
   "Table 250.66":  { title: "GEC Sizing by Service Conductor",     usedBy: ["GEC Sizing"] },
   "Table 250.122": { title: "EGC Sizing by OCPD Rating",           usedBy: ["EGC Sizing"] },

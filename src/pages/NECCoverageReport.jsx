@@ -1,9 +1,8 @@
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import {
-  CheckCircle2, AlertTriangle, XCircle, FileText, Database, Eye, EyeOff,
+  CheckCircle2, AlertTriangle, FileText, Database, Eye, EyeOff,
   BookOpen, Table, ZapIcon, ShieldAlert, Flag, ChevronDown, ChevronRight, Layers,
 } from "lucide-react";
 import { useMemo, useState } from "react";
@@ -126,7 +125,7 @@ function Table220_12Parity() {
 // ─── Full coverage data ─────────────────────────────────────────────────────
 
 const SHARED_FIELDS = [
-  "COPPER_AMPACITY", "ALUMINUM_AMPACITY", "TEMP_FACTORS", "BUNDLE_FACTORS",
+  "COPPER_AMPACITY", "ALUMINUM_AMPACITY", "DWELLING_SERVICE_CONDUCTOR_TABLE", "TEMP_FACTORS", "BUNDLE_FACTORS",
   "CONDUCTOR_VOLUME", "WIRE_AREAS", "CONDUIT_AREAS", "FILL_LIMITS",
   "FILL_LIMIT_LABELS", "CONDUCTOR_CM", "RESISTIVITY", "GEC_TABLE", "EGC_TABLE",
   "MOTOR_FLC_3PHASE", "MOTOR_FLC_1PHASE", "MOTOR_OCPD_MULTIPLIERS",
@@ -449,9 +448,9 @@ const COVERAGE = [
     name: "Conductor Ampacity (310.15)",
     category: "Wire / Conduit / Sizing",
     sourceFile: "components/calculator/calcs/ConductorAmpacity.jsx",
-    uiArticles: ["Table 310.15(B)(16)", "310.15(B)(2)", "310.15(C)(1)", "110.14(C)"],
-    uiTables: ["310_15_b_16_copper", "310_15_b_16_aluminum", "310_15_b_2_temp_correction", "310_15_c_1_bundling"],
-    calcSharedFields: ["COPPER_AMPACITY", "ALUMINUM_AMPACITY", "TEMP_FACTORS", "BUNDLE_FACTORS"],
+    uiArticles: ["Table 310.15(B)(16)", "310.12", "310.15(B)(2)", "310.15(C)(1)", "110.14(C)"],
+    uiTables: ["310_12_dwelling_service_conductors", "310_15_b_16_copper", "310_15_b_16_aluminum", "310_15_b_2_temp_correction", "310_15_c_1_bundling"],
+    calcSharedFields: ["COPPER_AMPACITY", "ALUMINUM_AMPACITY", "DWELLING_SERVICE_CONDUCTOR_TABLE", "TEMP_FACTORS", "BUNDLE_FACTORS"],
     calcYearFields: [],
     flags: [],
   },

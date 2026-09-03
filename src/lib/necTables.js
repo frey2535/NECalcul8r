@@ -231,6 +231,32 @@ export const NEC_TABLES = [
 
   // ─── Article 310 ─────────────────────────────────────────────────
   {
+    id: "310_12_dwelling_service_conductors",
+    article: "NEC Table 310.12",
+    yearRefs: {
+      "2017": "310.15(B)(7)",
+      "2020": "Table 310.12",
+      "2023": "Table 310.12",
+      "2026": "Table 310.12 (pending)",
+    },
+    title: "Single-Phase Dwelling Services and Feeders",
+    headers: ["Service or Feeder Rating (A)", "Copper (AWG/kcmil)", "Aluminum or Copper-Clad Aluminum (AWG/kcmil)"],
+    rows: [
+      ["100", "4 AWG", "2 AWG"],
+      ["110", "3 AWG", "1 AWG"],
+      ["125", "2 AWG", "1/0 AWG"],
+      ["150", "1 AWG", "2/0 AWG"],
+      ["175", "1/0 AWG", "3/0 AWG"],
+      ["200", "2/0 AWG", "4/0 AWG"],
+      ["225", "3/0 AWG", "250 kcmil"],
+      ["250", "4/0 AWG", "300 kcmil"],
+      ["300", "250 kcmil", "350 kcmil"],
+      ["350", "350 kcmil", "500 kcmil"],
+      ["400", "400 kcmil", "600 kcmil"],
+    ],
+    note: "NEC 310.12 applies to 100A through 400A single-phase dwelling services/feeders when no adjustment or correction factors are required. 2017 used 310.15(B)(7); 2020 moved the rule/table to 310.12.",
+  },
+  {
     id: "310_15_b_16_copper",
     article: "NEC Table 310.15(B)(16) — Copper",
     yearRefs: {

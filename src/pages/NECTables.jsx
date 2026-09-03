@@ -61,10 +61,10 @@ function TableRow({ t, year }) {
       >
         <div className="flex items-start gap-2.5 min-w-0 flex-1">
           <span className="inline-block mt-0.5 text-[10px] font-bold text-blue-600 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-full flex-shrink-0">
-            {t.article}
+            {resolved.article}
           </span>
-          <span className="text-sm font-semibold text-foreground leading-snug">{t.title}</span>
-          {t.dynamicSource && (
+          <span className="text-sm font-semibold text-foreground leading-snug">{resolved.title}</span>
+          {(t.dynamicSource || t.yearRefs) && (
             <span className="inline-flex items-center gap-1 text-[9px] font-bold text-violet-600 bg-violet-50 border border-violet-200 px-1.5 py-0.5 rounded-full flex-shrink-0">
               <FlaskConical className="w-2.5 h-2.5" /> NEC {year}
             </span>

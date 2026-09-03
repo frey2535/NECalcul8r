@@ -5,7 +5,7 @@ import FormulaBox from "../FormulaBox";
 import NECTableDisplay from "../NECTableDisplay";
 import { getTablesById } from "@/lib/necTables";
 import { getNecData } from "@/data/nec";
-import { calcConductorAmpacity, getTempFactor, getBundleFactor } from "./logic/conductorAmpacityCalc";
+import { calcConductorAmpacity } from "./logic/conductorAmpacityCalc";
 
 const FORMULAS = [
   { label: "Corrected Ampacity", formula: "I_adj = I_base × CF_temp × CF_bundle", description: "I_base from the year-owned ampacity table, CF_temp = temperature correction factor, CF_bundle = bundling adjustment factor" },
@@ -15,7 +15,13 @@ const FORMULAS = [
 
 export default function ConductorAmpacity({ category, necYear = "2023" }) {
   const nec = getNecData(necYear);
-  const TABLES = getTablesById(["310_15_b_16_copper", "310_15_b_16_aluminum", "310_15_b_2_temp_correction", "310_15_c_1_bundling"], necYear);
+  const TABLES = getTablesById([
+    ...(nec.DWELLING_SERVICE_ARTICLE === "310.12" ? ["310_12_dwelling_service_conductors"] : []),
+    "310_15_b_16_copper",
+    "310_15_b_16_aluminum",
+    "310_15_b_2_temp_correction",
+    "310_15_c_1_bundling",
+  ], necYear);
   const [v, setV] = useCalculatorInputs({ awg: "12", material: "copper", tempRating: "75", ambient: 30, bundled: 3, useTerminal: "60", isDwellingService: false });
   const set = k => val => setV(p => ({ ...p, [k]: val }));
 
