@@ -34,6 +34,11 @@ jobs:
 
       - name: Build
         run: npm run build
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          VITE_STRIPE_INDIVIDUAL_PRICE_ID: ${{ secrets.VITE_STRIPE_INDIVIDUAL_PRICE_ID }}
+          VITE_STRIPE_COMPANY_PRICE_ID: ${{ secrets.VITE_STRIPE_COMPANY_PRICE_ID }}
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
