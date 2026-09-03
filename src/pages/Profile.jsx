@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { User, Trash2, LogOut, ShieldAlert, Users, FolderOpen, Download } from "lucide-react";
+import { User, Trash2, LogOut, ShieldAlert, Users, FolderOpen, Download, ShoppingCart, CreditCard } from "lucide-react";
 import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { isStandaloneDisplay } from "@/lib/pwa";
@@ -19,6 +19,8 @@ export default function Profile() {
   const [user, setUser] = React.useState(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [billingLoading, setBillingLoading] = useState(false);
+  const [billingError, setBillingError] = useState("");
 
   useEffect(() => {
     base44.auth.me().then(setUser).catch(() => {});
@@ -35,6 +37,32 @@ export default function Profile() {
       await base44.auth.logout();
     } catch {
       setIsDeleting(false);
+    }
+  };
+
+  const handlePurchase = async () => {
+    setBillingError("");
+    if (!base44.commerce?.hasIndividualCheckout) {
+      window.location.href = "mailto:sales@nec-suite.com?subject=NECalcul8r Purchase";
+      return;
+    }
+    setBillingLoading(true);
+    try {
+      await base44.commerce.startIndividualCheckout();
+    } catch (error) {
+      setBillingError(error.message || "Could not open checkout. Please contact sales.");
+      setBillingLoading(false);
+    }
+  };
+
+  const handleBillingPortal = async () => {
+    setBillingError("");
+    setBillingLoading(true);
+    try {
+      await base44.commerce.openBillingPortal();
+    } catch (error) {
+      setBillingError(error.message || "Could not open billing. Please contact sales.");
+      setBillingLoading(false);
     }
   };
 
@@ -86,6 +114,34 @@ export default function Profile() {
           </div>
         </div>
       </Link>
+
+      <div className="rounded-2xl bg-card border border-border/60 shadow-sm overflow-hidden">
+        <button
+          type="button"
+          onClick={handlePurchase}
+          disabled={billingLoading}
+          className="w-full flex items-center gap-3 px-5 py-4 text-sm font-semibold text-foreground hover:bg-muted active:bg-muted/80 disabled:opacity-60 transition-colors"
+        >
+          <ShoppingCart className="w-4 h-4 text-muted-foreground" />
+          {base44.commerce?.hasIndividualCheckout ? "Subscribe / Purchase Access" : "Contact Sales to Purchase"}
+        </button>
+        {base44.commerce?.isConfigured && (
+          <button
+            type="button"
+            onClick={handleBillingPortal}
+            disabled={billingLoading}
+            className="w-full flex items-center gap-3 px-5 py-4 text-sm font-semibold text-foreground hover:bg-muted active:bg-muted/80 disabled:opacity-60 transition-colors border-t border-border/40"
+          >
+            <CreditCard className="w-4 h-4 text-muted-foreground" />
+            Manage Billing
+          </button>
+        )}
+        {billingError && (
+          <div className="px-5 pb-4 text-xs text-destructive">
+            {billingError}
+          </div>
+        )}
+      </div>
 
       {/* Admin link */}
       {user?.role === 'admin' && (
