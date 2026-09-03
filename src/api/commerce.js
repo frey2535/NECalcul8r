@@ -21,7 +21,11 @@ export const commerce = {
   hasIndividualCheckout: isSupabaseConfigured && Boolean(individualPriceId),
   hasCompanyCheckout: isSupabaseConfigured && Boolean(companyPriceId),
 
-  async startIndividualCheckout({ successUrl, cancelUrl } = {}) {
+  /**
+   * @param {{ successUrl?: string, cancelUrl?: string }} options
+   */
+  async startIndividualCheckout(options = {}) {
+    const { successUrl, cancelUrl } = options;
     return redirectToCheckout({
       mode: "subscription",
       accountType: "individual",
@@ -31,7 +35,11 @@ export const commerce = {
     });
   },
 
-  async startCompanyCheckout({ seats = 1, successUrl, cancelUrl } = {}) {
+  /**
+   * @param {{ seats?: number, successUrl?: string, cancelUrl?: string }} options
+   */
+  async startCompanyCheckout(options = {}) {
+    const { seats = 1, successUrl, cancelUrl } = options;
     return redirectToCheckout({
       mode: "subscription",
       accountType: "company",
@@ -42,7 +50,11 @@ export const commerce = {
     });
   },
 
-  async openBillingPortal({ returnUrl } = {}) {
+  /**
+   * @param {{ returnUrl?: string }} options
+   */
+  async openBillingPortal(options = {}) {
+    const { returnUrl } = options;
     const data = await invokeCommerceFunction("create-stripe-portal-session", {
       returnUrl: returnUrl || window.location.href,
     });
@@ -50,7 +62,11 @@ export const commerce = {
     window.location.assign(data.url);
   },
 
-  async grantExternalCompanyAccess({ orgId, seats, expiresAt, accessType = "external_company", note } = {}) {
+  /**
+   * @param {{ orgId?: string, seats?: number, expiresAt?: string, accessType?: string, note?: string }} options
+   */
+  async grantExternalCompanyAccess(options = {}) {
+    const { orgId, seats, expiresAt, accessType = "external_company", note } = options;
     return invokeCommerceFunction("grant-access", {
       orgId,
       seats,
@@ -61,7 +77,11 @@ export const commerce = {
     });
   },
 
-  async verifyGooglePlayPurchase({ productId, purchaseToken } = {}) {
+  /**
+   * @param {{ productId?: string, purchaseToken?: string }} options
+   */
+  async verifyGooglePlayPurchase(options = {}) {
+    const { productId, purchaseToken } = options;
     return invokeCommerceFunction("verify-google-play-purchase", {
       productId,
       purchaseToken,
@@ -69,7 +89,11 @@ export const commerce = {
     });
   },
 
-  async verifyApplePurchase({ receiptData, transactionId } = {}) {
+  /**
+   * @param {{ receiptData?: string, transactionId?: string }} options
+   */
+  async verifyApplePurchase(options = {}) {
+    const { receiptData, transactionId } = options;
     return invokeCommerceFunction("verify-apple-purchase", {
       receiptData,
       transactionId,

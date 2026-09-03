@@ -87,7 +87,7 @@ async function profileFor(authUser) {
       .select("*")
       .single();
     if (createError) throw createError;
-    return mapProfile(created, null, []);
+    return mapProfile(created, null);
   }
 
   let org = null;
@@ -110,7 +110,7 @@ async function profileFor(authUser) {
     .order("created_at", { ascending: false });
   if (entitlementError) throw entitlementError;
 
-  return mapProfile(applyEntitlement(profile, entitlements), org, entitlements);
+  return mapProfile(applyEntitlement(profile, entitlements), org);
 }
 
 function mapProfile(profile, org) {
