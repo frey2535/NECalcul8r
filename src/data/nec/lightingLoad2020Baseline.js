@@ -72,7 +72,13 @@ export function runLightingLoad2020Baseline(calcFn = calcLightingLoad) {
         id: "lt20_dwelling",
         description: "2020 dwelling 3 VA at 220.14(J), 220.42 unchanged numerically",
         inputs: { occupancy: "dwelling", sqft: 10000, voltage: 120, phases: "single" },
-        expected: { occVA: 3, nec_VA: 30000, demand: 12450, lightingArticle: "220.14(J)" },
+        expected: { occVA: 3, nec_VA: 30000, demand: 12450, designVA: 12450, totalAmps: 103.8, numCircuits: 6, lightingArticle: "220.14(J)" },
+      },
+      {
+        id: "lt20_dwelling_4500_demand_amps",
+        description: "2020 dwelling 4,500 ft² — amps/circuits use 220.42 demand load, not raw lighting VA",
+        inputs: { occupancy: "dwelling", sqft: 4500, voltage: 120, phases: "single", actualFixtureW: 0 },
+        expected: { occVA: 3, nec_VA: 13500, demand: 6675, designVA: 6675, totalAmps: 55.6, actualAmps: 55.6, numCircuits: 3, lightingArticle: "220.14(J)" },
       },
     ],
   });

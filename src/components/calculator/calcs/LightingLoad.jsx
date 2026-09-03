@@ -21,7 +21,7 @@ export default function LightingLoad({ category, necYear = "2023" }) {
   const occLabel = OCCUPANCY_LABELS[v.occupancy] || v.occupancy;
   const sqft = parseFloat(v.sqft) || 0;
   const r = calcLightingLoad(v, nec);
-  const { occVA, nec_VA, demand, totalAmps, actualAmps, numCircuits, steps } = r;
+  const { occVA, nec_VA, demand, designVA, totalAmps, actualAmps, numCircuits, steps } = r;
   const actualW = parseFloat(v.actualFixtureW) || 0;
   const useActual = actualW > 0;
 
@@ -32,11 +32,12 @@ export default function LightingLoad({ category, necYear = "2023" }) {
           <ResultRow label="Unit Load" value={`${occVA} VA/sq ft`} sub="NEC Table 220.12" />
           <ResultRow label="Floor Area" value={sqft.toFixed(0)} unit="sq ft" />
           <ResultRow label="Total Required Load" value={nec_VA.toFixed(0)} unit="VA" highlight />
-          <ResultRow label="Required Circuits (@20A)" value={numCircuits} unit="circuits" />
-          <ResultRow label="Total Current Required" value={totalAmps.toFixed(1)} unit="A" />
         </ResultSection>
         <ResultSection title="After Demand Factor (NEC 220.42)">
           <ResultRow label="Demand Load" value={demand.toFixed(0)} unit="VA" highlight />
+          <ResultRow label="Design Load Used" value={(designVA || demand).toFixed(0)} unit="VA" />
+          <ResultRow label="Total Current Required" value={totalAmps.toFixed(1)} unit="A" />
+          <ResultRow label="Required Circuits (@20A)" value={numCircuits} unit="circuits" />
           <ResultRow label="Demand Reduction" value={`${(((nec_VA - demand) / nec_VA) * 100).toFixed(1)}%`} />
         </ResultSection>
         {useActual && (
