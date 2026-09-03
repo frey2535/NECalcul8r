@@ -6,7 +6,7 @@ export function registerServiceWorker() {
     navigator.serviceWorker.addEventListener("controllerchange", () => {
       if (refreshing) return;
       refreshing = true;
-      window.location.reload();
+      reloadFresh();
     });
 
     navigator.serviceWorker.register("/sw.js").then((registration) => {
@@ -33,7 +33,7 @@ export function registerServiceWorker() {
       document.addEventListener("visibilitychange", () => {
         if (document.visibilityState === "visible") registration.update().catch(() => undefined);
       });
-      window.setInterval(() => registration.update().catch(() => undefined), 5 * 60 * 1000);
+      window.setInterval(() => registration.update().catch(() => undefined), 60 * 1000);
     }).catch(() => {
       /* install prompt still works without a worker in some browsers */
     });
@@ -57,7 +57,7 @@ function watchForBuildUpdates() {
       window.dispatchEvent(new CustomEvent("necalcul8r-update-available", {
         detail: {
           source: "build-version",
-          applyUpdate: () => window.location.reload(),
+          applyUpdate: reloadFresh,
         },
       }));
     } catch {
@@ -66,11 +66,22 @@ function watchForBuildUpdates() {
   };
 
   window.setTimeout(check, 10 * 1000);
-  window.setInterval(check, 5 * 60 * 1000);
+  window.setInterval(check, 60 * 1000);
   window.addEventListener("focus", check);
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "visible") check();
   });
+}
+
+function reloadFresh() {
+  try {
+    navigator.serviceWorker?.controller?.postMessage({ type: "NECALCUL8R_CLEAR_CACHES" });
+  } catch {
+    /* cache clearing is best-effort */
+  }
+  const url = new URL(window.location.href);
+  url.searchParams.set("app-update", String(Date.now()));
+  window.location.replace(url.toString());
 }
 
 export function isStandaloneDisplay() {

@@ -20,6 +20,9 @@ self.addEventListener("message", (event) => {
   if (event.data?.type === "NECALCUL8R_SKIP_WAITING") {
     self.skipWaiting();
   }
+  if (event.data?.type === "NECALCUL8R_CLEAR_CACHES") {
+    event.waitUntil(caches.keys().then((keys) => Promise.all(keys.map((key) => caches.delete(key)))));
+  }
 });
 
 self.addEventListener("fetch", (event) => {
@@ -28,11 +31,12 @@ self.addEventListener("fetch", (event) => {
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
   if (url.pathname.startsWith("/@") || url.pathname.startsWith("/node_modules") || url.search.includes("t=")) return;
+  const isAppShell = request.mode === "navigate" || url.pathname === "/" || url.pathname.endsWith(".html") || url.pathname === "/build-version.json";
 
   event.respondWith(
     fetch(request)
       .then((response) => {
-        if (response && response.ok && request.url.startsWith(self.location.origin)) {
+        if (!isAppShell && response && response.ok && request.url.startsWith(self.location.origin)) {
           const copy = response.clone();
           caches.open(CACHE).then((cache) => cache.put(request, copy));
         }
