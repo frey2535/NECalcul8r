@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { ShieldAlert, LogOut, ShoppingCart, Mail, Building2 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
@@ -40,6 +40,13 @@ const BLOCK_CONTENT = {
     showRequest: false,
     showBuildrPro: true,
   },
+  company_access_inactive: {
+    title: "Company Access Inactive",
+    subtitle: "Your company access is no longer active. Contact your company administrator or NECalcul8r support.",
+    showPurchase: true,
+    showRequest: true,
+    showBuildrPro: false,
+  },
   app_store_inactive: {
     title: "App Store Entitlement Inactive",
     subtitle: "Your App Store purchase or subscription is no longer active. Restore your purchase in the App Store.",
@@ -59,6 +66,20 @@ const BLOCK_CONTENT = {
 export default function TrialExpiredScreen({ user, status, blockReason }) {
   const reason = blockReason || (status === 'disabled' ? 'disabled' : 'trial_expired');
   const content = BLOCK_CONTENT[reason] || BLOCK_CONTENT.access_denied_default || BLOCK_CONTENT.trial_expired;
+  const [checkoutError, setCheckoutError] = useState("");
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const canStartCheckout = base44.commerce?.hasIndividualCheckout;
+
+  const handleCheckout = async () => {
+    setCheckoutError("");
+    setCheckoutLoading(true);
+    try {
+      await base44.commerce.startIndividualCheckout();
+    } catch (error) {
+      setCheckoutError(error.message || "Could not start checkout. Please contact support.");
+      setCheckoutLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-6">
@@ -98,12 +119,24 @@ export default function TrialExpiredScreen({ user, status, blockReason }) {
                 <div className="flex-1 min-w-0">
                   <p className="font-bold text-sm">Purchase NEC Suite</p>
                   <p className="text-xs text-blue-100 mt-0.5">Get full access with a one-time purchase or subscription.</p>
-                  <a
-                    href="mailto:sales@nec-suite.com?subject=NEC Suite Purchase"
-                    className="inline-block mt-2 text-xs font-bold bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-lg transition-colors"
-                  >
-                    Contact Sales →
-                  </a>
+                  {canStartCheckout ? (
+                    <button
+                      type="button"
+                      onClick={handleCheckout}
+                      disabled={checkoutLoading}
+                      className="inline-block mt-2 text-xs font-bold bg-white/20 hover:bg-white/30 disabled:opacity-60 px-3 py-1.5 rounded-lg transition-colors"
+                    >
+                      {checkoutLoading ? "Opening checkout..." : "Subscribe online →"}
+                    </button>
+                  ) : (
+                    <a
+                      href="mailto:sales@nec-suite.com?subject=NEC Suite Purchase"
+                      className="inline-block mt-2 text-xs font-bold bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-lg transition-colors"
+                    >
+                      Contact Sales →
+                    </a>
+                  )}
+                  {checkoutError && <p className="text-xs text-red-100 mt-2">{checkoutError}</p>}
                 </div>
               </div>
             </div>
