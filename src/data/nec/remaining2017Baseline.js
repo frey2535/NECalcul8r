@@ -106,7 +106,13 @@ def("lighting_load", "Lighting Load Table 220.12 / 220.42", calcLightingLoad, [
     id: "lt_dwelling_220_42",
     description: "Dwelling 10,000 ft² — 3 VA, 220.42 100/35/25",
     inputs: { occupancy: "dwelling", sqft: 10000, voltage: 120, phases: "single" },
-    expected: { occVA: 3, nec_VA: 30000, demand: 12450 },
+    expected: { occVA: 3, nec_VA: 30000, demand: 12450, designVA: 12450, totalAmps: 103.8, numCircuits: 6 },
+  },
+  {
+    id: "lt_dwelling_4500_demand_amps",
+    description: "Dwelling 4,500 ft² — amps/circuits use 220.42 demand load, not raw Table 220.12 VA",
+    inputs: { occupancy: "dwelling", sqft: 4500, voltage: 120, phases: "single", actualFixtureW: 0 },
+    expected: { occVA: 3, nec_VA: 13500, demand: 6675, designVA: 6675, totalAmps: 55.6, actualAmps: 55.6, numCircuits: 3 },
   },
   {
     id: "lt_hotel_2017",

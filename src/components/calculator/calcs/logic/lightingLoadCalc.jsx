@@ -19,15 +19,10 @@ export function calcLightingLoad(v, nec) {
     : (nec.OCCUPANCY_UNIT_LOAD_DEFAULT ?? 2.0);
   const sqft = Math.max(0, parseFloat(v.sqft) || 0);
   const nec_VA = sqft * occVA;
-  const actualW = parseFloat(v.actualFixtureW) || 0;
+  const actualW = Math.max(0, parseFloat(v.actualFixtureW) || 0);
 
   const voltage = parseFloat(v.voltage) || 277;
   const factor = v.phases === "three" ? 1.732 : 1;
-  const totalAmps = nec_VA / (voltage * factor);
-  const actualAmps = actualW > 0 ? actualW / (voltage * factor) : totalAmps;
-
-  const circuitCapacity = voltage * 20;
-  const numCircuits = nec_VA > 0 ? Math.ceil(nec_VA / circuitCapacity) : 0;
 
   const demandKey = occupancyKey;
   const demandCfg = nec.LIGHTING_DEMAND[demandKey]
@@ -44,6 +39,13 @@ export function calcLightingLoad(v, nec) {
     }
   }
 
+  const designVA = actualW > 0 ? Math.max(demand, actualW) : demand;
+  const totalAmps = designVA / (voltage * factor);
+  const actualAmps = actualW > 0 ? actualW / (voltage * factor) : totalAmps;
+
+  const circuitCapacity = voltage * factor * 20;
+  const numCircuits = designVA > 0 ? Math.ceil(designVA / circuitCapacity) : 0;
+
   const lightingArticle = lightingLoadCite(nec, occupancyKey);
   const demandNote = demandCfg?.tiers
     ? `Table 220.42 ${demandKey} tiers applied`
@@ -52,14 +54,16 @@ export function calcLightingLoad(v, nec) {
   const steps = [
     { label: `NEC Lighting Load (${lightingArticle})`, formula: "VA = sqft × unit load (VA/ft²)", expression: `${sqft} ft² × ${occVA} VA/ft²`, result: Math.round(nec_VA), unit: "VA", note: `${v.occupancy} occupancy` },
     { label: "Demand-Adjusted Load (Table 220.42)", formula: "Demand = tiered demand factors by occupancy", expression: demandNote, result: Math.round(demand), unit: "VA" },
-    { label: "Total Amps", formula: "A = VA ÷ (V × √3)", expression: `${Math.round(nec_VA)} ÷ (${voltage} ${v.phases === "three" ? "× 1.732" : ""})`, result: Math.round(totalAmps * 10) / 10, unit: "A" },
-    { label: "Circuits Needed", formula: "Circuits = ceil(VA ÷ 20A circuit capacity)", expression: `ceil(${Math.round(nec_VA)} ÷ ${circuitCapacity} VA per 20A circuit)`, result: numCircuits },
+    { label: "Design Load", formula: "Design VA = max(demand-adjusted load, actual fixture load)", expression: actualW > 0 ? `max(${Math.round(demand)}, ${Math.round(actualW)})` : `${Math.round(demand)}`, result: Math.round(designVA), unit: "VA" },
+    { label: "Total Amps", formula: "A = design VA ÷ (V × √3)", expression: `${Math.round(designVA)} ÷ (${voltage} ${v.phases === "three" ? "× 1.732" : ""})`, result: Math.round(totalAmps * 10) / 10, unit: "A" },
+    { label: "Circuits Needed", formula: "Circuits = ceil(design VA ÷ 20A circuit capacity)", expression: `ceil(${Math.round(designVA)} ÷ ${Math.round(circuitCapacity)} VA per 20A circuit)`, result: numCircuits },
   ];
   return {
     occVA,
     lightingArticle,
     nec_VA: Math.round(nec_VA),
     demand: Math.round(demand),
+    designVA: Math.round(designVA),
     totalAmps: Math.round(totalAmps * 10) / 10,
     actualAmps: Math.round(actualAmps * 10) / 10,
     numCircuits,
