@@ -28,17 +28,25 @@ export function makeInviteCode() {
 function migrateTenancy(db) {
   if (!Array.isArray(db.orgs)) db.orgs = [];
   const unassigned = (db.users || []).filter((u) => !u.org_id);
-  if (unassigned.length === 0) return db;
-  const org = {
-    id: newId("org"),
-    name: "My company",
-    invite_code: makeInviteCode(),
-    created_date: new Date().toISOString(),
-  };
-  db.orgs.push(org);
-  for (const user of unassigned) {
-    user.org_id = org.id;
-    user.org_role = user.role === "admin" ? "owner" : "member";
+  if (unassigned.length > 0) {
+    const org = {
+      id: newId("org"),
+      name: "My company",
+      invite_code: makeInviteCode(),
+      created_date: new Date().toISOString(),
+    };
+    db.orgs.push(org);
+    for (const user of unassigned) {
+      user.org_id = org.id;
+      user.org_role = user.role === "admin" ? "owner" : "member";
+    }
+  }
+  for (const user of db.users || []) {
+    if (user.org_role === "owner") {
+      user.role = "admin";
+    } else if (user.role === "admin") {
+      user.role = "user";
+    }
   }
   return db;
 }
@@ -99,7 +107,7 @@ export function publicUser(user, db) {
   const { passwordHash, passwordSalt, sessionToken, ...safe } = user;
   const source = db || (typeof window !== "undefined" ? loadDb() : { orgs: [] });
   const org = (source.orgs || []).find((o) => o.id === user.org_id);
-  const canSeeInvite = user.org_role === "owner" || user.role === "admin";
+  const canSeeInvite = user.org_role === "owner";
   return {
     ...safe,
     org_id: user.org_id || null,
