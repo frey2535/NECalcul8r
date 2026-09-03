@@ -20,6 +20,7 @@ import AdminRoute from '@/components/AdminRoute';
 import { useTrialStatus } from '@/hooks/useTrialStatus';
 import TrialExpiredScreen from '@/components/TrialExpiredScreen';
 import InstallAppPrompt from '@/components/InstallAppPrompt';
+import UpdateAvailablePrompt from '@/components/UpdateAvailablePrompt';
 
 // Lazy-loaded route components
 const NECCalculator = lazy(() => import('@/pages/NECCalculator'));
@@ -113,6 +114,7 @@ function App() {
           <Router>
             <AuthenticatedApp />
             <InstallAppPrompt />
+            <UpdateAvailablePrompt />
           </Router>
           <Toaster />
         </QueryClientProvider>

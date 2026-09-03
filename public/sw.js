@@ -1,7 +1,6 @@
-const CACHE = "necalcul8r-shell-v1";
+const CACHE = "necalcul8r-shell-v2";
 
 self.addEventListener("install", (event) => {
-  self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE).then((cache) =>
       cache.addAll(["/manifest.json", "/icon-192.png", "/icon-512.png", "/apple-touch-icon.png"]).catch(() => undefined)
@@ -15,6 +14,12 @@ self.addEventListener("activate", (event) => {
       Promise.all(keys.filter((key) => key !== CACHE).map((key) => caches.delete(key)))
     ).then(() => self.clients.claim())
   );
+});
+
+self.addEventListener("message", (event) => {
+  if (event.data?.type === "NECALCUL8R_SKIP_WAITING") {
+    self.skipWaiting();
+  }
 });
 
 self.addEventListener("fetch", (event) => {
