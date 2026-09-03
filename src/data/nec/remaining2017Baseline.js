@@ -443,6 +443,8 @@ def("egc_sizing", "EGC Table 250.122", calcEGCSizing, [
 
 def("grounding_electrode", "GEC Table 250.66", calcGECSizing, [
   { id: "gec_2awg", description: "2 AWG or smaller copper → #8", inputs: { serviceSize: "0", material: "copper" }, expected: { gecSize: "8" } },
+  { id: "gec_2awg_al", description: "2 AWG or smaller aluminum → #6", inputs: { serviceSize: "0", material: "aluminum" }, expected: { gecSize: "6" } },
+  { id: "gec_over_1100_al", description: "Over 1100 kcmil aluminum → 250 kcmil", inputs: { serviceSize: "6", material: "aluminum" }, expected: { gecSize: "250 kcmil" } },
   {
     id: "gec_made_electrode",
     description: "250.66(A) made electrode cap #6 Cu",

@@ -5,6 +5,11 @@
 // AWG size ordering from smallest to largest — used for comparing conductor sizes
 const AWG_ORDER = ["14", "12", "10", "8", "6", "4", "3", "2", "1", "1/0", "2/0", "3/0", "4/0", "250", "300", "350", "400", "500", "600", "700", "750", "800", "900", "1000", "1200", "1250"];
 
+function formatConductorSize(size) {
+  const value = String(size || "—");
+  return value.includes("kcmil") || value === "—" ? value : `#${value} AWG`;
+}
+
 /**
  * EGC Sizing — NEC Table 250.122
  * @param {object} v - inputs: ocpd (string), material, voltageDropUpsizeRatio (optional number)
@@ -76,16 +81,16 @@ export function calcGECSizing(v, nec) {
       gecSize = maxSize;
       electrodeNote = `Made electrode (rod/pipe/plate) — GEC capped at #${maxSize} AWG per 250.66(C)`;
     } else {
-      electrodeNote = `Made electrode — table value #${gecSize} AWG is already within the 250.66(C) cap (#${maxSize} AWG)`;
+      electrodeNote = `Made electrode — table value ${formatConductorSize(gecSize)} is already within the 250.66(C) cap (#${maxSize} AWG)`;
     }
   }
 
   const steps = [
     { label: "Service Conductor Size", formula: "Service = selected conductor size", expression: `Service: ${row?.service || "—"}`, result: row?.service || "—" },
-    { label: "GEC Size (Table 250.66)", formula: "GEC = Table 250.66 lookup by service conductor & material", expression: `Table 250.66 → ${row?.service || "—"} → ${v.material === "copper" ? "Cu" : "Al"} #${gecSize}`, result: `#${gecSize} AWG` },
+    { label: "GEC Size (Table 250.66)", formula: "GEC = Table 250.66 lookup by service conductor & material", expression: `Table 250.66 → ${row?.service || "—"} → ${v.material === "copper" ? "Cu" : "Al"} ${formatConductorSize(gecSize)}`, result: formatConductorSize(gecSize) },
   ];
   if (electrodeType === "made_electrode") {
-    steps.push({ label: "Made Electrode Cap (250.66(C))", formula: "GEC_made = min(GEC_table, #6 Cu / #4 Al)", expression: `min(#${row?.copper || "—"} Cu, #6 Cu)`, result: `#${gecSize} AWG`, note: electrodeNote });
+    steps.push({ label: "Made Electrode Cap (250.66(C))", formula: "GEC_made = min(GEC_table, #6 Cu / #4 Al)", expression: `min(${formatConductorSize(row?.copper)} Cu, #6 Cu)`, result: formatConductorSize(gecSize), note: electrodeNote });
   }
 
   return {
