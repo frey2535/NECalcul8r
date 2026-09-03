@@ -5,7 +5,7 @@ import FormulaBox from "../FormulaBox";
 import NECTableDisplay from "../NECTableDisplay";
 import { getTablesById } from "@/lib/necTables";
 import { getNecData } from "@/data/nec";
-import { calcConductorAmpacity, getTempFactor, getBundleFactor } from "./logic/conductorAmpacityCalc";
+import { calcConductorAmpacity } from "./logic/conductorAmpacityCalc";
 
 const FORMULAS = [
   { label: "Corrected Ampacity", formula: "I_adj = I_base × CF_temp × CF_bundle", description: "I_base from the year-owned ampacity table, CF_temp = temperature correction factor, CF_bundle = bundling adjustment factor" },

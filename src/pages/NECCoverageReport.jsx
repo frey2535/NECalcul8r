@@ -1,9 +1,8 @@
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import {
-  CheckCircle2, AlertTriangle, XCircle, FileText, Database, Eye, EyeOff,
+  CheckCircle2, AlertTriangle, FileText, Database, Eye, EyeOff,
   BookOpen, Table, ZapIcon, ShieldAlert, Flag, ChevronDown, ChevronRight, Layers,
 } from "lucide-react";
 import { useMemo, useState } from "react";
