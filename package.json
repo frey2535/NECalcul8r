@@ -26,6 +26,8 @@
     "verify:conductor-ampacity-2020": "node scripts/verify-conductor-ampacity-2020.mjs",
     "verify:rv-park-2020": "node scripts/verify-rv-park-2020.mjs",
     "verify:remaining-calcs-2020": "node scripts/verify-remaining-calcs-2020.mjs",
+    "audit:calculator-verification": "node scripts/audit-calculator-verification.mjs",
+    "audit:calculator-verification:strict": "node scripts/audit-calculator-verification.mjs --strict",
     "verify:2020": "npm run verify:commercial-load-2020 && npm run verify:lighting-load-2020 && npm run verify:remaining-2020 && npm run verify:marina-2020 && npm run verify:conductor-ampacity-2020 && npm run verify:rv-park-2020 && npm run verify:remaining-calcs-2020",
     "verify:remaining-2020": "node scripts/verify-remaining-2020.mjs",
     "verify:release": "npm run verify:dwelling-optional && npm run verify:dwelling-standard && npm run verify:commercial-load && npm run verify:kitchen-equipment && npm run verify:multifamily-load && npm run verify:farm-load && npm run verify:rv-park && npm run verify:marina && npm run verify:remaining-2017 && npm run verify:2020"
