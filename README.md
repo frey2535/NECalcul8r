@@ -63,4 +63,9 @@ To move to a real backend later (Supabase, Postgres, etc.), replace `src/api/loc
 ```bash
 npm run build
 npm run verify:dwelling-optional
+npm run audit:calculator-verification
 ```
+
+Calculator correctness requires more than regression tests. See
+[`docs/calculator-verification-standard.md`](docs/calculator-verification-standard.md)
+for the source/article/table/exception/output coverage standard.
