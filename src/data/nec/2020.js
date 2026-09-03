@@ -86,11 +86,20 @@ import {
   RANGE_DEMAND as _RANGE_DEMAND,
   DRYER_DEMAND as _DRYER_DEMAND,
   DWELLING_DEMAND_TABLE as _DWELLING_DEMAND_TABLE,
+  EGC_TABLE as _EGC_TABLE,
   RECEPTACLE_DEMAND_TIERS as _RECEPTACLE_DEMAND_TIERS,
   WELDER_DUTY_CYCLE_TABLE as _WELDER_DUTY_CYCLE_TABLE,
 } from "./shared";
 
 export const NEC_YEAR = "2020";
+
+// Table 250.122 changed in 2020 for aluminum/copper-clad aluminum EGCs at
+// 5000A and 6000A: 1200 kcmil is no longer sufficient; use 1250 kcmil.
+export const EGC_TABLE = _EGC_TABLE.map((row) =>
+  row.ocpd === 5000 || row.ocpd === 6000
+    ? { ...row, aluminum: "1250" }
+    : row
+);
 
 // ─── Service Minimums ────────────────────────────────────────────────
 export const DWELLING_MIN_SERVICE_AMPS = 100;  // 230.42(B) — unchanged 2017–2026

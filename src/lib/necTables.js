@@ -223,10 +223,10 @@ export const NEC_TABLES = [
       ["2500", "350 kcmil", "600 kcmil"],
       ["3000", "400 kcmil", "600 kcmil"],
       ["4000", "500 kcmil", "750 kcmil"],
-      ["5000", "700 kcmil", "1200 kcmil"],
-      ["6000", "800 kcmil", "1200 kcmil"],
+      ["5000", "700 kcmil", "1250 kcmil"],
+      ["6000", "800 kcmil", "1250 kcmil"],
     ],
-    note: "NEC 250.122: Where conductors are increased in size for voltage drop, EGC must also be proportionally increased.",
+    note: "NEC 250.122: Where conductors are increased in size for voltage drop, EGC must also be proportionally increased. 2020+ changed 5000A/6000A aluminum or copper-clad aluminum EGCs to 1250 kcmil.",
   },
 
   // ─── Article 310 ─────────────────────────────────────────────────

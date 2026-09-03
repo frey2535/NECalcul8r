@@ -181,6 +181,18 @@ export function runRemainingCalcs2020Baseline() {
           inputs: { ocpd: "100", material: "copper", voltageDropUpsizeRatio: 2 },
           expected: { awg: "8", adjustedAwg: "4", egcUpsizeArticle: "250.122(B)" },
         },
+        {
+          id: "egc20_5000_al",
+          description: "2020 Table 250.122 high-amperage aluminum correction: 5000 A → 1250 kcmil",
+          inputs: { ocpd: "5000", material: "aluminum" },
+          expected: { awg: "1250", matchedOCPD: 5000 },
+        },
+        {
+          id: "egc20_6000_al",
+          description: "2020 Table 250.122 high-amperage aluminum correction: 6000 A → 1250 kcmil",
+          inputs: { ocpd: "6000", material: "aluminum" },
+          expected: { awg: "1250", matchedOCPD: 6000 },
+        },
       ],
     }),
   });
