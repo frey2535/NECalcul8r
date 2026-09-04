@@ -6,7 +6,7 @@
  *   2. Small appliance = units × circuits × 1500 VA
  *   3. Laundry = units × circuits × 1500 VA
  *   4. Total general load → Table 220.42 demand (3000 @ 100% + 117k @ 35% + rest @ 25%)
- *   5. Range demand → Table 220.55 Column C (with Note 1 adjustment for >12 kW)
+ *   5. Range demand → year-specific cooking demand table Column C (with Note 1 adjustment for >12 kW)
  *   6. Dryer demand → Table 220.54
  *   7. Water/space heating at 100%
  *   8. Net load = general demand + range + dryer + heating
@@ -49,9 +49,10 @@ export function calcMultifamilyStandard(v, nec) {
     if (remaining <= 0) break;
   }
 
-  // 6. Range demand (Table 220.55 Column C)
+  // 6. Range demand (cooking demand table Column C)
   const numRanges = rangeKW > 0 ? units : 0;
   let rangeDemandVA = 0;
+  const rangeDemandArticle = nec.RANGE_DEMAND_ARTICLE || "Table 220.55";
   if (numRanges > 0) {
     const row = nec.RANGE_DEMAND.find(r => numRanges <= r.count);
     if (row) {
@@ -103,7 +104,7 @@ export function calcMultifamilyStandard(v, nec) {
     { label: "Laundry (220.52(B))", formula: "VA = units × circuits × 1500", expression: `${units} × ${laundryCircuits} × ${nec.LAUNDRY_VA}`, result: Math.round(laundryVA), unit: "VA" },
     { label: "Total General Load", formula: "VA = lighting + small app + laundry", expression: `${Math.round(lightingVA)} + ${Math.round(smallAppVA)} + ${Math.round(laundryVA)}`, result: Math.round(totalGeneralVA), unit: "VA" },
     { label: "General Demand (Table 220.42)", formula: "3000 @ 100% + 117,000 @ 35% + remainder @ 25%", expression: `Demand of ${Math.round(totalGeneralVA)}`, result: Math.round(generalDemand), unit: "VA" },
-    { label: "Range Demand (Table 220.55)", formula: `Column C for ${numRanges} ranges${rangeKW > 12 ? ` + 5% × ${Math.ceil(rangeKW - 12)} kW over 12` : ""}`, expression: `${numRanges} × ${rangeKW} kW`, result: Math.round(rangeDemandVA), unit: "VA" },
+    { label: `Range Demand (${rangeDemandArticle})`, formula: `Column C for ${numRanges} ranges${rangeKW > 12 ? ` + 5% × ${Math.ceil(rangeKW - 12)} kW over 12` : ""}`, expression: `${numRanges} × ${rangeKW} kW`, result: Math.round(rangeDemandVA), unit: "VA" },
     { label: "Dryer Demand (Table 220.54)", formula: `Demand factor × total dryer VA`, expression: `${numDryers} × ${dryerKW} kW`, result: Math.round(dryerDemandVA), unit: "VA" },
     { label: "Water/Space Heating (100%)", formula: "VA at nameplate (no demand)", expression: `${heatingVA}`, result: Math.round(heatingVA), unit: "VA" },
     { label: "Net Calculated Load", formula: "VA = general demand + range + dryer + heating", expression: `${Math.round(generalDemand)} + ${Math.round(rangeDemandVA)} + ${Math.round(dryerDemandVA)} + ${Math.round(heatingVA)}`, result: Math.round(netLoadVA), unit: "VA" },
@@ -117,6 +118,7 @@ export function calcMultifamilyStandard(v, nec) {
     totalGeneralVA: Math.round(totalGeneralVA),
     generalDemandVA: Math.round(generalDemand),
     rangeDemandVA: Math.round(rangeDemandVA),
+    rangeDemandArticle,
     dryerDemandVA: Math.round(dryerDemandVA),
     heatingVA: Math.round(heatingVA),
     netLoadVA: Math.round(netLoadVA),
@@ -126,8 +128,8 @@ export function calcMultifamilyStandard(v, nec) {
   };
 
   return withTrace(result, {
-    articles_used: ["220.12", "220.40", "220.42", "220.52(A)", "220.52(B)", "220.54", "220.55", "240.6(A)"],
-    tables_used: ["Table 220.12", "Table 220.42", "Table 220.54", "Table 220.55", "Table 240.6(A)"],
-    fields_used: ["DWELLING_LIGHTING_VA_PER_SQFT", "SMALL_APPLIANCE_VA", "LAUNDRY_VA", "DWELLING_DEMAND_TABLE", "RANGE_DEMAND", "DRYER_DEMAND", "STD_OCPD_SIZES"],
+    articles_used: ["220.12", "220.40", "220.42", "220.52(A)", "220.52(B)", "220.54", rangeDemandArticle.replace(/^Table /, ""), "240.6(A)"],
+    tables_used: ["Table 220.12", "Table 220.42", "Table 220.54", rangeDemandArticle, "Table 240.6(A)"],
+    fields_used: ["DWELLING_LIGHTING_VA_PER_SQFT", "SMALL_APPLIANCE_VA", "LAUNDRY_VA", "DWELLING_DEMAND_TABLE", "RANGE_DEMAND", "RANGE_DEMAND_ARTICLE", "DRYER_DEMAND", "STD_OCPD_SIZES"],
   });
 }

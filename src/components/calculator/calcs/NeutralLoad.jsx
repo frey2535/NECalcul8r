@@ -107,7 +107,7 @@ export default function NeutralLoad({ category, necYear = "2020" }) {
           <ResultRow label="Fundamental Linear Neutral" value={r.fundamentalLinearNeutral_VA} unit="VA" sub={`${r.fundamentalLinearNeutral_A} A — 220.61(A), reducible linear combined`} />
           {r.rangeDryerReductionApplied && (
             <>
-              <ResultRow label="Range/Dryer Total Demand" value={r.rangeDryerTotalDemand_VA} unit="VA" sub="Tables 220.54/220.55" />
+              <ResultRow label="Range/Dryer Total Demand" value={r.rangeDryerTotalDemand_VA} unit="VA" sub={`Tables 220.54/${nec.RANGE_DEMAND_ARTICLE || "Table 220.55"}`} />
               <ResultRow label="Range/Dryer Neutral (70%)" value={r.rangeDryerNeutral_VA} unit="VA" sub={`${r.rangeDryerNeutral_A} A — 220.61(B)(1), phase-total: ${r.rangeDryerNeutralPhaseTotal} VA, scalar: ${r.rangeDryerNeutralScalar} VA`} />
             </>
           )}

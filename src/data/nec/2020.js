@@ -101,6 +101,8 @@ export const EGC_TABLE = _EGC_TABLE.map((row) =>
     : row
 );
 
+export const RANGE_DEMAND_ARTICLE = "Table 220.60";
+
 // ─── Service Minimums ────────────────────────────────────────────────
 export const DWELLING_MIN_SERVICE_AMPS = 100;  // 230.42(B) — unchanged 2017–2026
 

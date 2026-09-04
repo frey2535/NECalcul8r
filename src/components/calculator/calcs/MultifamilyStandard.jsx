@@ -6,7 +6,7 @@ import { getNecData } from "@/data/nec";
 import { calcMultifamilyStandard } from "./logic/multifamilyStandardCalc";
 
 const FORMULAS = [
-  { label: "NEC 220.40 Standard Method", formula: "Net Load = General demand + Range demand + Dryer demand + Heating", description: "General lighting, small appliance, and laundry loads are summed and demand-factored per Table 220.42. Ranges use Table 220.55 Column C. Dryers use Table 220.54. Heating at 100%." },
+  { label: "NEC 220.40 Standard Method", formula: "Net Load = General demand + Range demand + Dryer demand + Heating", description: "General lighting, small appliance, and laundry loads are summed and demand-factored per Table 220.42. Ranges use the year-specific cooking demand table Column C. Dryers use Table 220.54. Heating at 100%." },
   { label: "Table 220.42 Demand", formula: "First 3,000 @ 100% + next 117,000 @ 35% + remainder @ 25%", description: "Same demand tiers as single dwelling, applied to the total general load of all units combined." },
 ];
 
@@ -31,6 +31,7 @@ export default function MultifamilyStandard({ category, necYear = "2017" }) {
     generalDemandVA, rangeDemandVA, dryerDemandVA, heatingVA,
     netLoadVA, totalA, minService_A: minService, steps,
   } = r;
+  const rangeDemandArticle = r.rangeDemandArticle || "Table 220.55";
 
   return (
     <CalcLayout category={category} necYear={necYear} inputValues={v} outputValues={r} result={
@@ -43,7 +44,7 @@ export default function MultifamilyStandard({ category, necYear = "2017" }) {
           <ResultRow label="General Demand (Table 220.42)" value={generalDemandVA.toLocaleString()} unit="VA" highlight />
         </ResultSection>
         <ResultSection title="Appliance Demand">
-          <ResultRow label="Range Demand (Table 220.55)" value={rangeDemandVA.toLocaleString()} unit="VA" />
+          <ResultRow label={`Range Demand (${rangeDemandArticle})`} value={rangeDemandVA.toLocaleString()} unit="VA" />
           <ResultRow label="Dryer Demand (Table 220.54)" value={dryerDemandVA.toLocaleString()} unit="VA" />
           <ResultRow label="Water/Space Heating (100%)" value={heatingVA.toLocaleString()} unit="VA" />
         </ResultSection>
@@ -54,7 +55,7 @@ export default function MultifamilyStandard({ category, necYear = "2017" }) {
         </ResultSection>
         <FormulaBox steps={steps} />
         <NoteBox>
-          NEC {necYear} 220.40: Standard method for multifamily dwellings. General lighting ({nec.DWELLING_LIGHTING_VA_PER_SQFT} VA/ft²), small appliance ({nec.SMALL_APPLIANCE_VA} VA/circuit), and laundry ({nec.LAUNDRY_VA} VA/circuit) are summed across all units and demand-factored per Table 220.42. Ranges per Table 220.55 Column C. Dryers per Table 220.54. Water/space heating at 100%.
+          NEC {necYear} 220.40: Standard method for multifamily dwellings. General lighting ({nec.DWELLING_LIGHTING_VA_PER_SQFT} VA/ft²), small appliance ({nec.SMALL_APPLIANCE_VA} VA/circuit), and laundry ({nec.LAUNDRY_VA} VA/circuit) are summed across all units and demand-factored per Table 220.42. Ranges per {rangeDemandArticle} Column C. Dryers per Table 220.54. Water/space heating at 100%.
         </NoteBox>
       </div>
     }>

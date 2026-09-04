@@ -104,7 +104,7 @@ export function runRemainingCalcs2020Baseline() {
 
   suites.push({
     id: "dwelling_standard_2020",
-    title: "Dwelling Standard 220.40 / 220.55 2020 pending-same",
+    title: "Dwelling Standard 220.40 / 220.60 2020 pending-same",
     ...runCalcTests({
       nec: NEC_2020,
       calcFn: calcDwellingStandard,
@@ -116,16 +116,25 @@ export function runRemainingCalcs2020Baseline() {
             sqft: 1500, smallAppliance: 2, laundry: 1, bathroom: 1, range: 12000, rangeCount: 1,
             dryer: 5500, dishwasher: 0, disposer: 0, waterHeater: 0, hvac: 0, other: 0, voltage: 240,
           },
-          expected: { rangeDemand_VA: 8000, dryerDemand_VA: 5500, totalVA: 18600, minService_A: 100 },
+          expected: { rangeDemand_VA: 8000, rangeDemandArticle: "Table 220.60", dryerDemand_VA: 5500, totalVA: 18600, minService_A: 100 },
         },
         {
           id: "std20_note1",
-          description: "PENDING: 2020 Table 220.55 Note 1 12.5 kW still +5%",
+          description: "PENDING: 2020 Table 220.60 Note 1 12.5 kW still +5%",
           inputs: {
             sqft: 0, smallAppliance: 2, laundry: 1, bathroom: 0, range: 12500, rangeCount: 1,
             dryer: 0, dishwasher: 0, disposer: 0, waterHeater: 0, hvac: 0, other: 0, voltage: 240,
           },
-          expected: { rangeDemand_VA: 8400 },
+          expected: { rangeDemand_VA: 8400, rangeDemandArticle: "Table 220.60" },
+        },
+        {
+          id: "std20_31_ranges_col_c",
+          description: "2020 Table 220.60 Column C 31-40 row uses 15 kW + 1 kW per range",
+          inputs: {
+            sqft: 0, smallAppliance: 2, laundry: 1, bathroom: 0, range: 12000, rangeCount: 31,
+            dryer: 0, dishwasher: 0, disposer: 0, waterHeater: 0, hvac: 0, other: 0, voltage: 240,
+          },
+          expected: { rangeDemand_VA: 46000, rangeDemandArticle: "Table 220.60" },
         },
       ],
     }),

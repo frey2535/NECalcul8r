@@ -43,6 +43,7 @@ export const FIELD_META = {
   ISLAND_PENINSULA_RULE:                { value: "See year",         source: "210.52(C)",          description: "Receptacle placement for kitchen islands/peninsulas.", usedBy: ["Dwelling Standard", "Dwelling Optional"] },
   OPTIONAL_DEMAND_FACTOR:               { value: "40%",              source: "220.82(B)",          description: "Demand factor applied to general loads >10 kVA in the dwelling optional method.", usedBy: ["Dwelling Optional"] },
   OPTIONAL_HVAC:                        { value: "Year-owned 220.82(C) factors", source: "220.82(C)", description: "Largest of (C)(1)–(C)(6): AC 100%, heat-pump compressor 100%, supplemental 65%, space heat 65% (<4 units) or 40% (4+ units), thermal storage 100%. 2017 verified; later years inherit pending independent codebook check.", usedBy: ["Dwelling Optional"] },
+  RANGE_DEMAND_ARTICLE:                 { value: "See year",         source: "Table 220.55 / Table 220.60", description: "Year-specific household cooking appliance demand table reference.", usedBy: ["Dwelling Standard", "Multifamily Standard"] },
 
   // ── OCPD & Service ────────────────────────────────────────────────
   STD_OCPD_SIZES:                       { value: "15–6000 A",        source: "240.6(A)",           description: "Standard ampere ratings for fuses and inverse time circuit breakers.", usedBy: ["Dwelling Standard", "Dwelling Optional", "Service Sizing", "Motor Branch Circuit", "Marina Shore Power", "RV Park Load"] },
@@ -102,6 +103,7 @@ export const ARTICLE_META = {
   "220.52(B)":     { title: "Laundry Branch Circuit",              usedBy: ["Dwelling Standard", "Dwelling Optional"] },
   "220.54":        { title: "Clothes Dryers — Demand Factors",     usedBy: ["Dwelling Standard"] },
   "220.55":        { title: "Electric Ranges — Demand Factors",    usedBy: ["Dwelling Standard"] },
+  "220.60":        { title: "Household Cooking Appliances — Demand Factors", usedBy: ["Dwelling Standard", "Multifamily Standard"] },
   "220.82":        { title: "Dwelling Unit — Standard Method",     usedBy: ["Dwelling Standard"] },
   "220.83":        { title: "Dwelling Unit — Optional Method",     usedBy: ["Dwelling Optional"] },
   "220.83(A)":     { title: "Optional Method — General Loads",     usedBy: ["Dwelling Optional"] },
@@ -133,6 +135,7 @@ export const ARTICLE_META = {
   "Table 220.12":  { title: "Lighting Load Demand Factors by Occupancy", usedBy: ["Dwelling Standard", "Dwelling Optional", "Commercial Load"] },
   "Table 220.42":  { title: "Lighting Load Demand Factors — Dwelling", usedBy: ["Dwelling Standard"] },
   "Table 220.55":  { title: "Demand Factors for Household Ranges", usedBy: ["Dwelling Standard"] },
+  "Table 220.60":  { title: "Demand Factors for Household Cooking Appliances", usedBy: ["Dwelling Standard", "Multifamily Standard"] },
   "Table 240.6(A)": { title: "Standard Fuse and Breaker Ratings",  usedBy: ["Dwelling Standard", "Dwelling Optional", "Service Sizing"] },
   "Table 310.15(B)(16)": { title: "Allowable Conductor Ampacities", usedBy: ["Conductor Ampacity"] },
   "Table 310.12":  { title: "Single-Phase Dwelling Services and Feeders", usedBy: ["Conductor Ampacity"] },

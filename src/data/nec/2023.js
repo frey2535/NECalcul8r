@@ -21,6 +21,8 @@ export const EGC_TABLE = _EGC_TABLE.map((row) =>
     : row
 );
 
+export const RANGE_DEMAND_ARTICLE = "Table 220.60";
+
 // ─── GFCI Requirements (NEC 210.8) ──────────────────────────────────
 // 2023: Retained 2020 scope. Additional clarifications for 250V in dwelling
 // attached garages. AFCI/GFCI combination requirements refined.

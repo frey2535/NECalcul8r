@@ -20,6 +20,8 @@ export const EGC_TABLE = _EGC_TABLE.map((row) =>
     : row
 );
 
+export const RANGE_DEMAND_ARTICLE = "Table 220.60";
+
 // ─── Table 220.12 — Occupancy Unit Loads (2026) ───────────────────────
 // 2026: ⚠️ PENDING VERIFICATION. Values below are COPIED FROM 2020 as
 // placeholders. NOT verified against 2026 NEC. Every NEC edition owns its

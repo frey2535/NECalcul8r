@@ -310,6 +310,7 @@ export const OPTIONAL_HVAC = {
 // ─── Range Demand: NEC Table 220.55 ─────────────────────────────
 // pct = Column A (< 3½ kW), colB = Column B (3½–8¾ kW), max_12kW = Column C (> 8¾–12 kW)
 // colCFormula applies for 26+ appliances in place of a fixed max_12kW value.
+export const RANGE_DEMAND_ARTICLE = "Table 220.55";
 export const RANGE_DEMAND = [
   { count: 1,  pct: 80, colB: 80, max_12kW: 8 },
   { count: 2,  pct: 75, colB: 65, max_12kW: 11 },
@@ -337,7 +338,7 @@ export const RANGE_DEMAND = [
   { count: 24, pct: 31, colB: 26, max_12kW: 39 },
   { count: 25, pct: 30, colB: 26, max_12kW: 40 },
   { count: 30, pct: 30, colB: 24, max_12kW: null, colCFormula: "15 + 1 * count" },
-  { count: 40, pct: 30, colB: 22, max_12kW: null, colCFormula: "25 + 0.75 * count" },
+  { count: 40, pct: 30, colB: 22, max_12kW: null, colCFormula: "15 + 1 * count" },
   { count: 50, pct: 30, colB: 20, max_12kW: null, colCFormula: "25 + 0.75 * count" },
   { count: 60, pct: 30, colB: 18, max_12kW: null, colCFormula: "25 + 0.75 * count" },
   { count: 999, pct: 30, colB: 16, max_12kW: null, colCFormula: "25 + 0.75 * count" },

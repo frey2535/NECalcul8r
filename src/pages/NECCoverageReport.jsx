@@ -165,7 +165,7 @@ const COVERAGE = [
     name: "Dwelling Standard (220.82)",
     category: "Load Calculations",
     sourceFile: "components/calculator/calcs/DwellingStandard.jsx",
-    uiArticles: ["220.12", "220.42", "Table 220.55", "220.54", "210.11(C)(1)", "210.11(C)(2)", "210.11(C)(3)", "230.42"],
+    uiArticles: ["220.12", "220.42", "Table 220.55 / Table 220.60", "220.54", "210.11(C)(1)", "210.11(C)(2)", "210.11(C)(3)", "230.42"],
     uiTables: ["220_12_unit_loads", "220_42_lighting_demand", "220_54_dryer_demand", "220_55_cooking_demand", "240_6_std_sizes"],
     calcSharedFields: ["DWELLING_LIGHTING_VA_PER_SQFT", "SMALL_APPLIANCE_VA", "LAUNDRY_VA", "DWELLING_DEMAND_TABLE", "STD_OCPD_SIZES"],
     calcYearFields: ["DWELLING_MIN_SERVICE_AMPS", "DWELLING_SPD_REQUIRED", "DWELLING_OUTDOOR_DISCONNECT_REQUIRED", "GFCI_SCOPE_DWELLING", "ISLAND_PENINSULA_RULE", "DISHWASHER_GFCI_REQUIRED", "SUMP_PUMP_GFCI_REQUIRED", "GFCI_OUTDOOR_DWELLING_50A", "GARAGE_BASEMENT_RECEPTACLE_SCOPE"],

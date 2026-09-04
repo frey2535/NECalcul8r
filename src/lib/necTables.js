@@ -117,6 +117,12 @@ export const NEC_TABLES = [
   {
     id: "220_55_cooking_demand",
     article: "NEC Table 220.55",
+    yearRefs: {
+      "2017": "Table 220.55",
+      "2020": "Table 220.60",
+      "2023": "Table 220.60",
+      "2026": "Table 220.60 (pending)",
+    },
     title: "Demand Factors for Household Cooking Appliances (Nameplate >1¾ kW)",
     headers: ["Number of Appliances", "Column A — Less than 3½ kW (%)", "Column B — 3½ kW through 8¾ kW (%)", "Column C — Over 8¾ kW through 12 kW"],
     rows: [
@@ -146,12 +152,12 @@ export const NEC_TABLES = [
       ["24", "31%", "26%", "39 kW"],
       ["25", "30%", "26%", "40 kW"],
       ["26–30", "30%", "24%", "15 kW + 1 kW per range"],
-      ["31–40", "30%", "22%", "25 kW + 0.75 kW per range"],
+      ["31–40", "30%", "22%", "15 kW + 1 kW per range"],
       ["41–50", "30%", "20%", "25 kW + 0.75 kW per range"],
       ["51–60", "30%", "18%", "25 kW + 0.75 kW per range"],
       ["61 and over", "30%", "16%", "25 kW + 0.75 kW per range"],
     ],
-    note: "NEC Table 220.55: Column A applies to appliances rated <3½ kW. Column B applies to appliances rated 3½–8¾ kW. Column C applies to appliances rated >8¾ kW–12 kW (use the max demand kW value). For ranges >12 kW, increase Column C demand by 5% per kW above 12 kW.",
+    note: "Column A applies to appliances rated <3½ kW. Column B applies to appliances rated 3½–8¾ kW. Column C applies to appliances rated >8¾ kW–12 kW. For ranges >12 kW, increase Column C demand by 5% per kW above 12 kW. 2017 reference: Table 220.55. 2020+ reference: Table 220.60.",
   },
   {
     id: "220_56_kitchen_equipment_demand",
