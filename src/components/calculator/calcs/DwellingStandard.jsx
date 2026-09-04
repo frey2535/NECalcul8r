@@ -14,7 +14,7 @@ function buildFormulas(nec) {
   return [
     { label: "General Lighting Load", formula: `Lighting VA = Floor Area (sq ft) × ${nec.DWELLING_LIGHTING_VA_PER_SQFT} VA/sq ft`, description: `NEC 220.12 Table — dwellings use ${nec.DWELLING_LIGHTING_VA_PER_SQFT} VA/sq ft` },
     { label: "Lighting Demand (NEC 220.42)", formula: `Demand = ${demandDesc}`, description: "Applied to general lighting + small appliance + laundry circuits" },
-    { label: "Range Demand (Table 220.55)", formula: "Col A: <3½ kW % of nameplate | Col B: 3½–8¾ kW | Col C: table kW (8¾–12 kW) | Note 1: +5% per kW or major fraction over 12 kW", description: "2017 Table 220.55. One 12 kW range = 8 kW. Ranges ≤8¾ kW use Column A/B percent of nameplate, not 8 kW flat." },
+    { label: "Range Demand", formula: "Col A: <3½ kW % of nameplate | Col B: 3½–8¾ kW | Col C: table kW (8¾–12 kW) | Note 1: +5% per kW or major fraction over 12 kW", description: "Cooking demand table. 2017 uses Table 220.55; 2020+ uses Table 220.60. One 12 kW range = 8 kW. Ranges ≤8¾ kW use Column A/B percent of nameplate, not 8 kW flat." },
     { label: "Service Amperage", formula: "A = Total VA / Voltage", description: "For 240V single-phase service" },
   ];
 }
@@ -42,6 +42,7 @@ export default function DwellingStandard({ category, necYear = "2023" }) {
   const { genLighting_VA: genLighting, smallAppl_VA: smallApplVA, laundry_VA: laundryVA,
     subtotal_VA: subtotal, lightingDemand_VA: lightingDemand, rangeDemand_VA: rangeDemand,
     dryerDemand_VA: dryerDemand, fixedLoads_VA: fixedLoads, totalVA, totalAmps, minService_A: minService, steps } = r;
+  const rangeDemandArticle = r.rangeDemandArticle || "Table 220.55";
   const bathroomCount = parseFloat(v.bathroom) || 0;
 
   return (
@@ -56,7 +57,7 @@ export default function DwellingStandard({ category, necYear = "2023" }) {
         </ResultSection>
         <ResultSection title="After Demand Factors">
           <ResultRow label="Lighting Demand (220.42)" value={lightingDemand.toFixed(0)} unit="VA" />
-          <ResultRow label="Range Demand (Table 220.55)" value={rangeDemand.toFixed(0)} unit="VA" />
+          <ResultRow label={`Range Demand (${rangeDemandArticle})`} value={rangeDemand.toFixed(0)} unit="VA" />
           <ResultRow label="Dryer Demand (220.54)" value={dryerDemand.toFixed(0)} unit="VA" />
           <ResultRow label={r.fixedApplianceDemandApplied ? "Fixed Appliances (220.53 at 75%)" : "Fixed Appliances (nameplate)"} value={fixedLoads.toFixed(0)} unit="VA" />
         </ResultSection>
@@ -71,7 +72,7 @@ export default function DwellingStandard({ category, necYear = "2023" }) {
           <ul className="list-disc pl-3.5 space-y-1">
             <li>NEC {necYear} 220.40 Standard Method. Floor area per Table 220.12 excludes unused cellars, unfinished attics, and open porches. Lighting demand (Table 220.42 dwelling): {nec.DWELLING_DEMAND_TABLE.map((t) => `${(t.factor * 100).toFixed(0)}%${t.band < Infinity ? ` first ${t.band.toLocaleString()} VA` : " remainder"}`).join(", ")}.</li>
             <li>220.52 / 210.11(C): minimum 2 small-appliance circuits and 1 laundry circuit at 1500 VA each. 210.11(C)(3) bathroom circuit is required but is not an extra 1500 VA — 220.14(J).</li>
-            <li>Range per Table 220.55 (Columns A/B/C and Note 1). One household dryer: 5000 W or nameplate, 220.54. 220.53 75% applies only with 4+ fastened appliances other than range, dryer, space heating, or AC. 220.60: enter the larger of heating vs cooling in HVAC.</li>
+            <li>Range per {rangeDemandArticle} (Columns A/B/C and Note 1). One household dryer: 5000 W or nameplate, 220.54. 220.53 75% applies only with 4+ fastened appliances other than range, dryer, space heating, or AC. Enter the larger of heating vs cooling in HVAC.</li>
             <li>Feeder/service neutral (220.61) is not calculated here — use the Neutral Load calculator. D1(b) motor/A/C additions (430.24 / 440) are not in this calculator.</li>
             <li>Minimum service: {nec.DWELLING_MIN_SERVICE_AMPS}A per 230.42(B).</li>
             {nec.DWELLING_SPD_REQUIRED && <li><strong>230.67 ({necYear}):</strong> SPD Type 1 or 2 required for this dwelling unit service.</li>}
@@ -102,7 +103,7 @@ export default function DwellingStandard({ category, necYear = "2023" }) {
       <Field label="Range / Oven Nameplate" unit="watts" hint="0 if none">
         <NumInput value={v.range} onChange={set("range")} placeholder="12000" />
       </Field>
-      <Field label="Number of Ranges" unit="count" hint="Table 220.55 demand for multiple ranges">
+      <Field label="Number of Ranges" unit="count" hint={`${rangeDemandArticle} demand for multiple ranges`}>
         <NumInput value={v.rangeCount} onChange={set("rangeCount")} min={1} placeholder="1" />
       </Field>
       <Field label="Clothes Dryer Nameplate" unit="watts" hint="Min 5000W per NEC">

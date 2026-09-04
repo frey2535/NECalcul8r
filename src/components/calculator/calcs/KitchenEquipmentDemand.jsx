@@ -58,7 +58,7 @@ export default function KitchenEquipmentDemand({ category, necYear = "2023" }) {
         </ResultSection>
         <FormulaBox steps={steps} formulas={FORMULAS} />
         <NoteBox>
-          NEC {necYear} 220.56: Commercial kitchen equipment only — not dwelling ranges (use Table 220.55). Demand is at the feeder, not the branch circuit. Calculated load is not less than the two largest loads. Space-heating, ventilating, and air-conditioning equipment are not in this table. {necYear === "2017" ? "2017 Table 220.56: 6 or more units at 65%." : ""}
+          NEC {necYear} 220.56: Commercial kitchen equipment only — not dwelling ranges (use {nec.RANGE_DEMAND_ARTICLE || "Table 220.55"}). Demand is at the feeder, not the branch circuit. Calculated load is not less than the two largest loads. Space-heating, ventilating, and air-conditioning equipment are not in this table. {necYear === "2017" ? "2017 Table 220.56: 6 or more units at 65%." : ""}
         </NoteBox>
       </div>
     }>

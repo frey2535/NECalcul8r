@@ -113,6 +113,12 @@ const REGRESSION = Object.freeze([
     expected: Object.freeze({ rangeDemand_VA: 41000 }),
   }),
   Object.freeze({
+    id: "std_31_ranges_col_c",
+    description: "31 ranges at 12 kW — Column C 31-40 row uses 15 kW + 1 kW per range = 46 kW",
+    inputs: Object.freeze({ range: 12000, rangeCount: 31, dryer: 0, hvac: 0, dishwasher: 0, disposer: 0, waterHeater: 0, other: 0 }),
+    expected: Object.freeze({ rangeDemand_VA: 46000 }),
+  }),
+  Object.freeze({
     id: "std_220_53_three_no_factor",
     description: "Three fastened appliances — 220.53 75% does not apply",
     inputs: Object.freeze({
