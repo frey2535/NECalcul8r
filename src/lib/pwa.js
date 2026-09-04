@@ -79,9 +79,15 @@ function reloadFresh() {
   } catch {
     /* cache clearing is best-effort */
   }
-  const url = new URL(window.location.href);
-  url.searchParams.set("app-update", String(Date.now()));
-  window.location.replace(url.toString());
+  const current = new URL(window.location.href);
+  current.searchParams.delete("app-update");
+  const route = `${current.pathname}${current.search}${current.hash}`;
+  if (route && route !== "/") {
+    sessionStorage.setItem("necalcul8r_redirect", route);
+  }
+  const root = new URL("/", window.location.origin);
+  root.searchParams.set("app-update", String(Date.now()));
+  window.location.replace(root.toString());
 }
 
 export function isStandaloneDisplay() {
