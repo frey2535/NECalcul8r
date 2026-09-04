@@ -26,6 +26,29 @@ const GROUPS = [
   { label: "Annex D Examples", sub: "NEC 2017 Annex D — Worked Calculations", prefix: "annex_d", emoji: "📝" },
 ];
 
+function tableDisplayKey(table) {
+  const ref = table.yearRefs?.["2017"] || table.article || table.id;
+  const match = String(ref).match(/(\d+)(?:\.(\d+))?(?:\(([A-Z0-9]+)\))?/i);
+  if (!match) return [Number.MAX_SAFE_INTEGER, Number.MAX_SAFE_INTEGER, "", table.title || ""];
+  const [, article, section = "0", subsection = ""] = match;
+  return [Number(article), Number(section), subsection.toUpperCase(), table.title || ""];
+}
+
+function compareTables(a, b) {
+  const ak = tableDisplayKey(a);
+  const bk = tableDisplayKey(b);
+  for (let i = 0; i < ak.length; i++) {
+    if (typeof ak[i] === "number" || typeof bk[i] === "number") {
+      const diff = Number(ak[i]) - Number(bk[i]);
+      if (diff) return diff;
+    } else {
+      const diff = String(ak[i]).localeCompare(String(bk[i]), undefined, { numeric: true });
+      if (diff) return diff;
+    }
+  }
+  return 0;
+}
+
 function TableRow({ t, year }) {
   const [open, setOpen] = useState(false);
   const resolved = resolveNecTable(t, year);
@@ -120,7 +143,7 @@ export default function NECTables() {
       ) : (
         <div className="space-y-6">
           {GROUPS.map(group => {
-            const tables = NEC_TABLES.filter(t => t.id.startsWith(group.prefix));
+            const tables = NEC_TABLES.filter(t => t.id.startsWith(group.prefix)).sort(compareTables);
             if (tables.length === 0) return null;
             return (
               <div key={group.prefix} className="space-y-2">
