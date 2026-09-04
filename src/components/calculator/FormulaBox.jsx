@@ -20,7 +20,7 @@ export default function FormulaBox({ steps, formulas }) {
   if (!hasSteps && !hasFormulas) return null;
 
   return (
-    <div className="mt-4 rounded-2xl border border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50 shadow-sm overflow-hidden">
+    <div className="calc-formula-card mt-4 rounded-2xl border border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50 shadow-sm overflow-hidden">
       <div className="px-3.5 py-2.5 border-b border-blue-200 flex items-center gap-2">
         <span className="text-base">📐</span>
         <p className="text-[10px] font-bold uppercase tracking-widest text-blue-700">
