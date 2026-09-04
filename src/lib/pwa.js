@@ -1,28 +1,16 @@
 export function registerServiceWorker() {
   if (typeof window === "undefined" || !("serviceWorker" in navigator)) return;
-  if (new URL(window.location.href).searchParams.has("app-update")) {
+  if (new URL(window.location.href).searchParams.has("t")) {
     window.setTimeout(() => sessionStorage.removeItem("necalcul8r_update_in_progress"), 5000);
   }
   window.addEventListener("load", () => {
-    let refreshing = false;
-
-    navigator.serviceWorker.addEventListener("controllerchange", () => {
-      if (refreshing || sessionStorage.getItem("necalcul8r_update_in_progress") === "1") return;
-      refreshing = true;
-      window.location.reload();
-    });
-
     navigator.serviceWorker.register("/sw.js").then((registration) => {
       const promptUpdate = () => {
         if (!registration.waiting || !navigator.serviceWorker.controller) return;
         window.dispatchEvent(new CustomEvent("necalcul8r-update-available", {
           detail: {
             source: "service-worker",
-            applyUpdate: () => {
-              sessionStorage.setItem("necalcul8r_update_in_progress", "1");
-              registration.waiting?.postMessage({ type: "NECALCUL8R_SKIP_WAITING" });
-              window.setTimeout(() => reloadFresh(), 1000);
-            },
+            applyUpdate: reloadFresh,
           },
         }));
       };
@@ -99,15 +87,9 @@ async function reloadFresh(targetSha) {
   } catch {
     /* cache clearing is best-effort */
   }
-  const current = new URL(window.location.href);
-  current.searchParams.delete("app-update");
-  const route = `${current.pathname}${current.search}${current.hash}`;
-  if (route && route !== "/") {
-    sessionStorage.setItem("necalcul8r_redirect", route);
-  }
   const root = new URL("/", window.location.origin);
-  root.searchParams.set("app-update", String(Date.now()));
-  window.location.replace(root.toString());
+  root.searchParams.set("t", String(Date.now()));
+  window.location.assign(root.toString());
 }
 
 export function isStandaloneDisplay() {
