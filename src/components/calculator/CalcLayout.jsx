@@ -8,12 +8,46 @@ import { getNecData } from "@/data/nec";
 import { base44 } from "@/api/base44Client";
 import ReportDiscrepancy from "@/components/calculator/ReportDiscrepancy";
 import CalculationTrace from "@/components/calculator/CalculationTrace";
+import NECTableDisplay from "@/components/calculator/NECTableDisplay";
 import { useArticleVerification } from "@/hooks/useArticleVerification";
 import { computeGate, GATE_META } from "@/lib/verificationGate";
 import { getCalculator } from "@/data/nec/audit";
 import { useCalcRestore } from "@/context/CalcRestoreContext";
 
 const VALID_YEARS = ["2017", "2020", "2023", "2026"];
+
+function splitReferenceTables(node) {
+  if (Array.isArray(node)) {
+    const main = [];
+    const references = [];
+    for (const child of node) {
+      const split = splitReferenceTables(child);
+      if (split.main !== null && split.main !== undefined) main.push(split.main);
+      references.push(...split.references);
+    }
+    return { main, references };
+  }
+
+  if (!React.isValidElement(node)) {
+    return { main: node, references: [] };
+  }
+
+  if (node.type === NECTableDisplay) {
+    return { main: null, references: [node] };
+  }
+
+  if (!node.props?.children) {
+    return { main: node, references: [] };
+  }
+
+  const split = splitReferenceTables(React.Children.toArray(node.props.children));
+  if (split.references.length === 0) return { main: node, references: [] };
+
+  return {
+    main: React.cloneElement(node, undefined, split.main),
+    references: split.references,
+  };
+}
 
 export function CalcLayout({ category, children, result, trace, necYear, inputValues, outputValues }) {
   const isValidYear = VALID_YEARS.includes(necYear);
@@ -31,6 +65,9 @@ export function CalcLayout({ category, children, result, trace, necYear, inputVa
     ? computeGate(category.id, calcDef?.articles, necYear, verificationMap || {})
     : "invalid";
   const gateMeta = GATE_META[gate];
+  const splitResult = result
+    ? splitReferenceTables(result)
+    : { main: null, references: [] };
 
   useEffect(() => {
     // Check for open discrepancy reports for this calculator
@@ -131,6 +168,16 @@ export function CalcLayout({ category, children, result, trace, necYear, inputVa
             <BarChart3 className="w-4 h-4" />
             View Results →
           </button>
+          {splitResult.references.length > 0 && (
+            <div className="hidden lg:block mt-5 pt-4 border-t border-border/60">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-3 flex items-center gap-1.5">
+                <BarChart3 className="w-3 h-3" /> Reference Tables
+              </p>
+              <div className="space-y-3">
+                {splitResult.references}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Results panel */}
@@ -168,7 +215,15 @@ export function CalcLayout({ category, children, result, trace, necYear, inputVa
           )}
           {result ? (
            <>
-             {result}
+             {splitResult.main}
+             {splitResult.references.length > 0 && (
+               <div className="lg:hidden mt-4">
+                 <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-3 flex items-center gap-1.5">
+                   <BarChart3 className="w-3 h-3" /> Reference Tables
+                 </p>
+                 <div className="space-y-3">{splitResult.references}</div>
+               </div>
+             )}
              {trace && <CalculationTrace trace={trace} getStatus={getStatus} necYear={necYear} />}
            </>
           ) : (
