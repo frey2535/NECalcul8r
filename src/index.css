@@ -142,27 +142,3 @@
 .nec-scroll::-webkit-scrollbar-corner {
   background: #cbd5e1 !important;
 }
-
-@media (min-width: 1280px) {
-  .calculator-results > .space-y-2:has(.calc-formula-card):has(.calc-table-card) {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    gap: 0.75rem;
-    align-items: start;
-  }
-
-  .calculator-results > .space-y-2:has(.calc-formula-card):has(.calc-table-card) > .calc-result-section,
-  .calculator-results > .space-y-2:has(.calc-formula-card):has(.calc-table-card) > .calc-note-card {
-    grid-column: 1 / -1;
-  }
-
-  .calculator-results > .space-y-2:has(.calc-formula-card):has(.calc-table-card) > .calc-formula-card {
-    grid-column: 1;
-    margin-top: 0.75rem;
-  }
-
-  .calculator-results > .space-y-2:has(.calc-formula-card):has(.calc-table-card) > .calc-table-card {
-    grid-column: 2;
-    margin-top: 0.75rem;
-  }
-}
