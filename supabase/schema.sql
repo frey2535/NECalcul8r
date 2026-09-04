@@ -141,6 +141,26 @@ as $$
   select coalesce((select is_platform_admin from public.profiles where id = auth.uid()), false);
 $$;
 
+create or replace function public.current_profile_org_id()
+returns uuid
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select org_id from public.profiles where id = auth.uid();
+$$;
+
+create or replace function public.current_profile_org_role()
+returns text
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select org_role from public.profiles where id = auth.uid();
+$$;
+
 create or replace function public.organization_by_invite(code text)
 returns table (
   id uuid,
@@ -166,7 +186,7 @@ create policy "profiles read own org"
   using (
     id = auth.uid()
     or public.current_is_platform_admin()
-    or org_id = (select org_id from public.profiles where id = auth.uid() and org_role = 'owner')
+    or (public.current_profile_org_role() = 'owner' and org_id = public.current_profile_org_id())
   );
 
 create policy "profiles insert own"
@@ -178,19 +198,19 @@ create policy "profiles update own or org owner"
   using (
     id = auth.uid()
     or public.current_is_platform_admin()
-    or org_id = (select org_id from public.profiles where id = auth.uid() and org_role = 'owner')
+    or (public.current_profile_org_role() = 'owner' and org_id = public.current_profile_org_id())
   )
   with check (
     id = auth.uid()
     or public.current_is_platform_admin()
-    or org_id = (select org_id from public.profiles where id = auth.uid() and org_role = 'owner')
+    or (public.current_profile_org_role() = 'owner' and org_id = public.current_profile_org_id())
   );
 
 create policy "organizations read own"
   on public.organizations for select
   using (
     public.current_is_platform_admin()
-    or id = (select org_id from public.profiles where id = auth.uid())
+    or id = public.current_profile_org_id()
   );
 
 create policy "organizations create"
@@ -201,7 +221,7 @@ create policy "organizations update owner"
   on public.organizations for update
   using (
     public.current_is_platform_admin()
-    or id = (select org_id from public.profiles where id = auth.uid() and org_role = 'owner')
+    or (public.current_profile_org_role() = 'owner' and id = public.current_profile_org_id())
   );
 
 create policy "entitlements read assigned"
@@ -209,7 +229,7 @@ create policy "entitlements read assigned"
   using (
     public.current_is_platform_admin()
     or profile_id = auth.uid()
-    or org_id = (select org_id from public.profiles where id = auth.uid())
+    or org_id = public.current_profile_org_id()
   );
 
 create policy "subscriptions read assigned"
@@ -217,7 +237,7 @@ create policy "subscriptions read assigned"
   using (
     public.current_is_platform_admin()
     or profile_id = auth.uid()
-    or org_id = (select org_id from public.profiles where id = auth.uid())
+    or org_id = public.current_profile_org_id()
   );
 
 create policy "memberships read own org"
@@ -225,7 +245,7 @@ create policy "memberships read own org"
   using (
     public.current_is_platform_admin()
     or profile_id = auth.uid()
-    or org_id = (select org_id from public.profiles where id = auth.uid())
+    or org_id = public.current_profile_org_id()
   );
 
 create policy "app records read scoped"
