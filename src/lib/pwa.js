@@ -15,7 +15,7 @@ export function registerServiceWorker() {
         window.dispatchEvent(new CustomEvent("necalcul8r-update-available", {
           detail: {
             source: "service-worker",
-            applyUpdate: () => registration.waiting?.postMessage({ type: "NECALCUL8R_SKIP_WAITING" }),
+            applyUpdate: reloadFresh,
           },
         }));
       };
@@ -53,11 +53,13 @@ function watchForBuildUpdates() {
       if (!response.ok) return;
       const next = await response.json();
       if (!next?.sha || next.sha === currentSha || next.sha === promptedSha) return;
+      if (next.sha === sessionStorage.getItem("necalcul8r_update_attempted_sha")) return;
       promptedSha = next.sha;
       window.dispatchEvent(new CustomEvent("necalcul8r-update-available", {
         detail: {
           source: "build-version",
-          applyUpdate: reloadFresh,
+          targetSha: next.sha,
+          applyUpdate: () => reloadFresh(next.sha),
         },
       }));
     } catch {
@@ -73,11 +75,28 @@ function watchForBuildUpdates() {
   });
 }
 
-function reloadFresh() {
+async function reloadFresh(targetSha) {
+  if (targetSha) sessionStorage.setItem("necalcul8r_update_attempted_sha", targetSha);
   try {
     navigator.serviceWorker?.controller?.postMessage({ type: "NECALCUL8R_CLEAR_CACHES" });
   } catch {
     /* cache clearing is best-effort */
+  }
+  try {
+    if ("caches" in window) {
+      const keys = await caches.keys();
+      await Promise.all(keys.map((key) => caches.delete(key)));
+    }
+  } catch {
+    /* cache clearing is best-effort */
+  }
+  try {
+    if (navigator.serviceWorker?.getRegistrations) {
+      const registrations = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(registrations.map((registration) => registration.unregister()));
+    }
+  } catch {
+    /* unregistering stale workers is best-effort */
   }
   const current = new URL(window.location.href);
   current.searchParams.delete("app-update");

@@ -17,8 +17,16 @@ export default function UpdateAvailablePrompt() {
 
   const applyUpdate = () => {
     setApplying(true);
-    if (typeof update.applyUpdate === "function") update.applyUpdate();
-    else window.location.reload();
+    try {
+      const result = typeof update.applyUpdate === "function"
+        ? update.applyUpdate()
+        : window.location.reload();
+      if (result?.catch) {
+        result.catch(() => window.location.reload());
+      }
+    } catch {
+      window.location.reload();
+    }
   };
 
   return (

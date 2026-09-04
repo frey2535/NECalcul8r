@@ -236,6 +236,22 @@ export const NEC_TABLES = [
     ],
     note: "NEC 250.122: Where conductors are increased in size for voltage drop, EGC must also be proportionally increased. 2020+ changed 5000A/6000A aluminum or copper-clad aluminum EGCs to 1250 kcmil.",
   },
+  {
+    id: "250_102_c_1_bonding_jumper",
+    article: "NEC Table 250.102(C)(1)",
+    title: "Supply-Side Bonding Jumper and Grounded Conductor Sizing",
+    headers: ["Largest Ungrounded Service-Entrance Conductor or Equivalent Area", "Copper Bonding Jumper", "Aluminum/Copper-Clad Aluminum Bonding Jumper"],
+    rows: [
+      ["2 AWG or smaller", "8 AWG", "6 AWG"],
+      ["1 or 1/0 AWG", "6 AWG", "4 AWG"],
+      ["2/0 or 3/0 AWG", "4 AWG", "2 AWG"],
+      ["Over 3/0 through 350 kcmil", "2 AWG", "1/0 AWG"],
+      ["Over 350 through 600 kcmil", "1/0 AWG", "3/0 AWG"],
+      ["Over 600 through 1100 kcmil", "2/0 AWG", "4/0 AWG"],
+      ["Over 1100 kcmil", "12.5% of conductor area", "12.5% of conductor area"],
+    ],
+    note: "NEC Table 250.102(C)(1): Used for supply-side bonding jumpers, main bonding jumpers, system bonding jumpers, and grounded conductors where applicable. For parallel conductors, use the equivalent total circular-mil area.",
+  },
 
   // ─── Article 310 ─────────────────────────────────────────────────
   {
