@@ -5,7 +5,9 @@
  * Each calculator references the articles/tables it uses, and tracks whether
  * each has been manually verified against the published code book.
  * 
- * Status: "verified_YYYY" means confirmed against NEC YYYY code text.
+ * Status: "verified" means confirmed against licensed NEC source text.
+ *         "verified_YYYY" is a legacy seed label and is treated as pending until
+ *         a documented source review updates the record to "verified".
  *         "pending_review" means article exists but verification is queued.
  *         "needs_correction" means detected discrepancy between calculator and code.
  */
