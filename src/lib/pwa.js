@@ -1,12 +1,15 @@
 export function registerServiceWorker() {
   if (typeof window === "undefined" || !("serviceWorker" in navigator)) return;
+  if (new URL(window.location.href).searchParams.has("app-update")) {
+    window.setTimeout(() => sessionStorage.removeItem("necalcul8r_update_in_progress"), 5000);
+  }
   window.addEventListener("load", () => {
     let refreshing = false;
 
     navigator.serviceWorker.addEventListener("controllerchange", () => {
-      if (refreshing) return;
+      if (refreshing || sessionStorage.getItem("necalcul8r_update_in_progress") === "1") return;
       refreshing = true;
-      reloadFresh();
+      window.location.reload();
     });
 
     navigator.serviceWorker.register("/sw.js").then((registration) => {
@@ -15,7 +18,11 @@ export function registerServiceWorker() {
         window.dispatchEvent(new CustomEvent("necalcul8r-update-available", {
           detail: {
             source: "service-worker",
-            applyUpdate: reloadFresh,
+            applyUpdate: () => {
+              sessionStorage.setItem("necalcul8r_update_in_progress", "1");
+              registration.waiting?.postMessage({ type: "NECALCUL8R_SKIP_WAITING" });
+              window.setTimeout(() => reloadFresh(), 1000);
+            },
           },
         }));
       };
@@ -49,6 +56,7 @@ function watchForBuildUpdates() {
   let promptedSha = "";
   const check = async () => {
     try {
+      if (sessionStorage.getItem("necalcul8r_update_in_progress") === "1") return;
       const response = await fetch(`/build-version.json?t=${Date.now()}`, { cache: "no-store" });
       if (!response.ok) return;
       const next = await response.json();
@@ -76,6 +84,7 @@ function watchForBuildUpdates() {
 }
 
 async function reloadFresh(targetSha) {
+  sessionStorage.setItem("necalcul8r_update_in_progress", "1");
   if (targetSha) sessionStorage.setItem("necalcul8r_update_attempted_sha", targetSha);
   try {
     navigator.serviceWorker?.controller?.postMessage({ type: "NECALCUL8R_CLEAR_CACHES" });
@@ -89,14 +98,6 @@ async function reloadFresh(targetSha) {
     }
   } catch {
     /* cache clearing is best-effort */
-  }
-  try {
-    if (navigator.serviceWorker?.getRegistrations) {
-      const registrations = await navigator.serviceWorker.getRegistrations();
-      await Promise.all(registrations.map((registration) => registration.unregister()));
-    }
-  } catch {
-    /* unregistering stale workers is best-effort */
   }
   const current = new URL(window.location.href);
   current.searchParams.delete("app-update");
