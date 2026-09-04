@@ -12,7 +12,7 @@ import ResizableTh from "@/components/admin/ResizableTh";
 import {
   CheckCircle2, Clock, XCircle, AlertTriangle, ShieldCheck,
   Loader2, Filter, X, ChevronDown, ChevronUp, RefreshCw, Brain,
-  AlertCircle, ShieldAlert, Eye, CopyCheck,
+  AlertCircle, Eye, CopyCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
