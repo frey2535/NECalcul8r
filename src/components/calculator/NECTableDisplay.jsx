@@ -6,7 +6,7 @@ export default function NECTableDisplay({ title, headers, rows, note, compact = 
   const columnCount = headers?.length || rows[0]?.length || 0;
   const fitColumns = columnCount <= 3;
   return (
-    <div className="mt-4 rounded-xl border border-slate-200 shadow-md overflow-hidden">
+    <div className="calc-table-card mt-4 rounded-xl border border-slate-200 shadow-md overflow-hidden">
       {title && (
         <div className="px-3.5 py-2.5 bg-slate-100/80 border-b border-slate-200 flex items-center gap-2">
           <span className="text-base">📋</span>

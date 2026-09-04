@@ -135,7 +135,7 @@ export function CalcLayout({ category, children, result, trace, necYear, inputVa
 
         {/* Results panel */}
         <div className={cn(
-          "rounded-2xl bg-card border border-border shadow-md p-4",
+          "calculator-results rounded-2xl bg-card border border-border shadow-md p-4",
           "sm:block overflow-y-auto max-h-[80vh] sm:max-h-none",
           tab !== "results" && "hidden sm:block"
         )}>
@@ -239,7 +239,7 @@ export function ResultRow({ label, value, unit, highlight, sub, failed }) {
 
 export function ResultSection({ title, children }) {
   return (
-    <div className="space-y-1.5">
+    <div className="calc-result-section space-y-1.5">
       {title && (
         <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-4 mb-2 flex items-center gap-1.5">
           <span className="block w-3 h-px bg-muted-foreground/40" />
@@ -253,7 +253,7 @@ export function ResultSection({ title, children }) {
 
 export function NoteBox({ children, title }) {
   return (
-    <div className="mt-4 p-3.5 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-xl shadow-sm text-xs text-amber-800 dark:text-amber-300 leading-relaxed">
+    <div className="calc-note-card mt-4 p-3.5 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-xl shadow-sm text-xs text-amber-800 dark:text-amber-300 leading-relaxed">
       <p className="font-bold mb-1.5 text-amber-700 dark:text-amber-400 uppercase tracking-wide text-[10px] flex items-center gap-1.5">
         <span>📋</span> {title || "Code Notes (data-derived)"}
       </p>
