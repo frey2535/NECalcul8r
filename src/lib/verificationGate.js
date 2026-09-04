@@ -12,7 +12,7 @@
  *
  * Usage:
  *   const gate = computeGate(calcId, articles, necYear, verificationMap);
- *   // verificationMap: { "calc_id|article_ref|year": "verified"|"pending_review"|"needs_correction" }
+ *   // verificationMap contains calc-specific and global article_ref/year statuses.
  */
 import { normalizeArticleVerificationStatus } from "@/lib/articleVerificationStatus";
 
@@ -25,7 +25,9 @@ export function computeGate(calcId, articles, necYear, verificationMap) {
 
   const statuses = articles.map(a => {
     const key = `${calcId}|${a.ref}|${necYear}`;
-    return normalizeArticleVerificationStatus(verificationMap[key]);
+    const calcStatus = normalizeArticleVerificationStatus(verificationMap[key]);
+    if (calcStatus !== "pending_review") return calcStatus;
+    return normalizeArticleVerificationStatus(verificationMap[`global|${a.ref}|${necYear}`]);
   });
 
   // ai_reviewed_pending_human_approval does NOT count as verified for gate purposes
