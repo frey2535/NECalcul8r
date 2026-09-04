@@ -279,7 +279,7 @@ const COVERAGE = [
     name: "Motor Branch Circuit (430)",
     category: "Motor / HVAC",
     sourceFile: "components/calculator/calcs/MotorBranchCircuit.jsx",
-    uiArticles: ["Table 430.248", "Table 430.250", "430.22", "430.52"],
+    uiArticles: ["Table 430.247", "Table 430.248", "Table 430.250", "430.22", "430.52"],
     uiTables: ["310_15_b_16_copper"],
     calcSharedFields: ["MOTOR_FLC_3PHASE", "MOTOR_FLC_1PHASE", "CONTINUOUS_LOAD_MULTIPLIER", "MOTOR_OCPD_MULTIPLIERS"],
     calcYearFields: [],
