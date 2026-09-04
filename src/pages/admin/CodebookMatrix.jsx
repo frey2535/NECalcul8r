@@ -305,7 +305,7 @@ export default function CodebookMatrix() {
 
   const saveField = useCallback(async (calcId, articleRef, necYear, field, value) => {
     // Guard: only admins may set status to 'verified'
-    if (field === "status" && value === "verified") return;
+    if (field === "status" && value === "verified" && user?.role !== "admin") return;
 
     const key = `${calcId}|${articleRef}|${necYear}`;
     const existing = records[key];
@@ -328,7 +328,7 @@ export default function CodebookMatrix() {
       }
     } catch (e) { /* ignore */ }
     setSaving(null);
-  }, [records]);
+  }, [records, user?.role]);
 
   const handleRecordSaved = useCallback((saved) => {
     const key = `${saved.calculator_id}|${saved.article_ref}|${saved.nec_year}`;
