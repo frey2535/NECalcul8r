@@ -13,7 +13,12 @@ export default function NECTableDisplay({ title, headers, rows, note, compact = 
           <p className={cn("font-bold text-slate-700 leading-snug", compact ? "text-[10px]" : "text-xs")}>{title}</p>
         </div>
       )}
-      <div className="nec-scroll" style={{ overflowX: "scroll", overflowY: "auto", maxHeight: "18rem", width: "100%" }}>
+      {!fitColumns && (
+        <div className="px-3.5 py-1.5 bg-blue-50 border-b border-blue-100 text-[10px] font-semibold text-blue-700">
+          Wide table — scroll left/right to view all columns
+        </div>
+      )}
+      <div className="nec-scroll" style={{ overflowX: "scroll", overflowY: "auto", maxHeight: "18rem", width: "100%", scrollbarGutter: "stable both-edges" }}>
         <table className={cn("text-left border-collapse", fitColumns && "w-full")} style={{ minWidth: fitColumns ? "100%" : "max-content" }}>
           {headers && headers.length > 0 && (
             <thead>

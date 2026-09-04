@@ -116,6 +116,8 @@
 .nec-scroll {
   scrollbar-width: auto !important;
   scrollbar-color: #64748b #cbd5e1 !important;
+  overscroll-behavior-x: contain;
+  padding-bottom: 0.35rem;
 }
 .nec-scroll::-webkit-scrollbar {
   width: 14px !important;
