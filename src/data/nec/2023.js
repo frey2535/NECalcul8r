@@ -28,6 +28,7 @@ export const RANGE_DEMAND_ARTICLE = "Table 220.55";
 // attached garages. AFCI/GFCI combination requirements refined.
 export const GFCI_SCOPE_DWELLING = "125V–250V, 15/20/30A receptacles — same scope as 2020. 250V receptacles in attached garages and similar areas clarified. Kitchen, laundry, bathroom, outdoor, crawl space, unfinished basement covered.";  // 210.8(A)
 export const EV_GFCI_REQUIRED = true;
+export const EV_GFCI_REQUIREMENT_TEXT = "Required by 625.54 for receptacles installed for electric vehicle charging. Verify exact outlet/receptacle scope against the adopted NEC edition and local amendments.";
 
 // ─── 210.8(B) Other-Than-Dwelling GFCI — 2023 EXPLICIT DEFINITION ──────
 // 2023: Values below are COPIED FROM 2020. NOT independently verified for

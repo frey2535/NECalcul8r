@@ -62,10 +62,10 @@ export function runRemaining2020Baseline() {
 
     suite("ev_immut", "EV 2017 immutability", calcEVCharging, NEC_2017, [
       {
-        id: "ev_2017_no_gfci",
-        description: "2017 32 A EVSE — no 625.54 / 230.67 / 230.85",
+        id: "ev_2017_gfci",
+        description: "2017 32 A EVSE — 625.54 GFCI required; no 230.67 / 230.85",
         inputs: { voltage: 240, evseA: 32, numUnits: 1, demandManaged: "no" },
-        expected: { conductorA_each: 40, GFCI_required: false, SPD_required: false, outdoor_disconnect: false, min_load_VA: 0 },
+        expected: { conductorA_each: 40, GFCI_required: true, SPD_required: false, outdoor_disconnect: false, min_load_VA: 0 },
       },
     ]),
     suite("ev_2020", "EV Charging 2020 625.54", calcEVCharging, NEC_2020, [

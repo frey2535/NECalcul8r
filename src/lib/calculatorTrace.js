@@ -85,7 +85,7 @@ export const FIELD_META = {
 
   // ── EV ────────────────────────────────────────────────────────────
   EV_CONTINUOUS_MULTIPLIER:             { value: "1.25 (125%)",      source: "625.42",             description: "EV supply equipment is continuous load; circuit rated at 125% of EVSE rating.", usedBy: ["EV Charging"] },
-  EV_GFCI_REQUIRED:                     { value: "See year",         source: "625.54",             description: "GFCI protection requirement for EVSE (varies by NEC year).", usedBy: ["EV Charging"] },
+  EV_GFCI_REQUIRED:                     { value: "See year",         source: "625.54",             description: "GFCI protection requirement for covered EV charging receptacles; required in the 2017 model and later.", usedBy: ["EV Charging"] },
   EV_MINIMUM_LOAD_VA:                   { value: "See year",         source: "220.57",             description: "Minimum EV load VA for dwelling load calculations.", usedBy: ["EV Charging"] },
 
   // ── Solar PV ──────────────────────────────────────────────────────

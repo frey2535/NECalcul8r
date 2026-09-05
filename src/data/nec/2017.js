@@ -3,7 +3,7 @@
  * These override shared.js defaults when keys match.
  *
  * Key differences from later codes:
- * - No GFCI requirement for EV chargers (added 2020 625.54)
+ * - EV charging receptacle GFCI required by 625.54
  * - No outdoor emergency disconnect for dwellings (added 2020 230.85)
  * - No SPD requirement for dwellings (added 2023 230.67)
  * - Kitchen GFCI: only within 6ft of sink, not all receptacles
@@ -16,7 +16,8 @@ export const NEC_YEAR = "2017";
 // ─── GFCI Requirements (NEC 210.8) ──────────────────────────────────
 // 2017: narrower scope — 125V, 15/20A in defined rooms; does NOT include
 // all receptacles in garages/basements/outdoor unless previously required.
-export const EV_GFCI_REQUIRED = false;              // 625.54 — not required in 2017
+export const EV_GFCI_REQUIRED = true;               // 625.54 — EV charging receptacle GFCI required in 2017
+export const EV_GFCI_REQUIREMENT_TEXT = "Required by 625.54 for single-phase receptacles installed for electric vehicle charging that are rated 150 V to ground or less and 50 A or less.";
 export const GFCI_SCOPE_DWELLING = "125V, 15/20A receptacles in bathrooms, garages, outdoors, crawl spaces, unfinished basements, kitchen countertops within 6 ft of sink, boathouses";  // 210.8(A)
 
 // ─── 210.8(B) Other-Than-Dwelling GFCI — structured rule (2017) ──────

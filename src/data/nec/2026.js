@@ -43,6 +43,7 @@ export const OCCUPANCY_UNIT_LOADS = {
 
 // ─── GFCI Requirements (NEC 210.8) — same as 2023 ──────────────────
 export const EV_GFCI_REQUIRED = true;
+export const EV_GFCI_REQUIREMENT_TEXT = "Required by 625.54 for receptacles installed for electric vehicle charging. Verify exact outlet/receptacle scope against the adopted NEC edition and local amendments.";
 // ─── Dwelling Unit Requirements ─────────────────────────────────────
 export const DWELLING_OUTDOOR_DISCONNECT_REQUIRED = true;  // 230.85
 export const DWELLING_SPD_REQUIRED = true;                  // 230.67
