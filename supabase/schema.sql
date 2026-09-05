@@ -161,6 +161,26 @@ as $$
   select org_role from public.profiles where id = auth.uid();
 $$;
 
+create or replace function public.current_profile_role()
+returns text
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select role from public.profiles where id = auth.uid();
+$$;
+
+create or replace function public.current_can_manage_codebook()
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select public.current_is_platform_admin() or coalesce(public.current_profile_role(), '') = 'admin';
+$$;
+
 create or replace function public.organization_by_invite(code text)
 returns table (
   id uuid,
@@ -262,12 +282,24 @@ create policy "app records create own"
 
 create policy "app records update own"
   on public.app_records for update
-  using (created_by_id = auth.uid() or public.current_is_platform_admin())
-  with check (created_by_id = auth.uid() or public.current_is_platform_admin());
+  using (
+    created_by_id = auth.uid()
+    or public.current_is_platform_admin()
+    or (entity_type = 'ArticleVerification' and public.current_can_manage_codebook())
+  )
+  with check (
+    created_by_id = auth.uid()
+    or public.current_is_platform_admin()
+    or (entity_type = 'ArticleVerification' and public.current_can_manage_codebook())
+  );
 
 create policy "app records delete own"
   on public.app_records for delete
-  using (created_by_id = auth.uid() or public.current_is_platform_admin());
+  using (
+    created_by_id = auth.uid()
+    or public.current_is_platform_admin()
+    or (entity_type = 'ArticleVerification' and public.current_can_manage_codebook())
+  );
 
 -- Writes to subscriptions, entitlements, and purchase_events should be performed
 -- by Supabase Edge Functions using the service role key after verifying Stripe,
@@ -292,4 +324,6 @@ grant select, insert, update, delete on public.app_records to authenticated;
 grant execute on function public.current_is_platform_admin() to authenticated;
 grant execute on function public.current_profile_org_id() to authenticated;
 grant execute on function public.current_profile_org_role() to authenticated;
+grant execute on function public.current_profile_role() to authenticated;
+grant execute on function public.current_can_manage_codebook() to authenticated;
 grant execute on function public.organization_by_invite(text) to authenticated;

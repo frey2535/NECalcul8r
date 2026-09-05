@@ -251,6 +251,7 @@ export default function CodebookMatrix() {
   const [records, setRecords]           = useState({});
   const [loading, setLoading]           = useState(true);
   const [saving, setSaving] = useState(null);
+  const [saveError, setSaveError] = useState(null);
   const [syncing, setSyncing] = useState(false);
   const [syncResult, setSyncResult] = useState(null);
   const [filterCalc, setFilterCalc]     = useState("");
@@ -266,6 +267,7 @@ export default function CodebookMatrix() {
     status: 200, sourceType: 160, verifiedBy: 110, date: 100,
     notes: 240, amend: 40,
   });
+  const isAdmin = user?.role === "admin";
 
   const handleResizeStart = (e, colKey) => {
     e.preventDefault();
@@ -290,6 +292,7 @@ export default function CodebookMatrix() {
 
   const loadRecords = useCallback(async () => {
     setLoading(true);
+    setSaveError(null);
     try {
       const recs = await base44.entities.ArticleVerification.list("-updated_date", 5000);
       const map = {};
@@ -297,20 +300,20 @@ export default function CodebookMatrix() {
         map[`${r.calculator_id}|${r.article_ref}|${r.nec_year}`] = r;
       }
       setRecords(map);
-    } catch (e) { /* ignore */ }
+    } catch (e) {
+      setSaveError(e.message || "Unable to load codebook verification records.");
+    }
     setLoading(false);
   }, []);
 
   useEffect(() => { loadRecords(); }, [loadRecords]);
 
-  const saveField = useCallback(async (calcId, articleRef, necYear, field, value) => {
-    // Guard: only admins may set status to 'verified'
-    if (field === "status" && value === "verified" && user?.role !== "admin") return;
-
+  const saveRecordPatch = useCallback(async (calcId, articleRef, necYear, patch) => {
+    if (patch?.status === "verified" && !isAdmin) return;
     const key = `${calcId}|${articleRef}|${necYear}`;
     const existing = records[key];
-    const patch = { [field]: value };
 
+    setSaveError(null);
     setRecords(prev => ({
       ...prev,
       [key]: { ...(existing || { calculator_id: calcId, article_ref: articleRef, nec_year: necYear }), ...patch },
@@ -318,17 +321,48 @@ export default function CodebookMatrix() {
     setSaving(key);
 
     try {
+      let saved;
       if (existing?.id) {
-        await base44.entities.ArticleVerification.update(existing.id, patch);
+        saved = await base44.entities.ArticleVerification.update(existing.id, patch);
       } else {
-        const created = await base44.entities.ArticleVerification.create({
+        saved = await base44.entities.ArticleVerification.create({
           calculator_id: calcId, article_ref: articleRef, nec_year: necYear, ...patch,
         });
-        setRecords(prev => ({ ...prev, [key]: created }));
       }
-    } catch (e) { /* ignore */ }
+      setRecords(prev => ({ ...prev, [key]: saved }));
+    } catch (e) {
+      setSaveError(e.message || "Unable to save codebook verification record.");
+      setRecords(prev => {
+        const next = { ...prev };
+        if (existing) next[key] = existing;
+        else delete next[key];
+        return next;
+      });
+    }
     setSaving(null);
-  }, [records, user?.role]);
+  }, [isAdmin, records]);
+
+  const saveField = useCallback((calcId, articleRef, necYear, field, value) => {
+    return saveRecordPatch(calcId, articleRef, necYear, { [field]: value });
+  }, [saveRecordPatch]);
+
+  const markVerified = useCallback((row) => {
+    if (!isAdmin) return;
+    const existing = records[row.key] || {};
+    const today = new Date().toISOString().split("T")[0];
+    const reviewer = existing.verified_by || user?.full_name || user?.email || "Admin";
+
+    return saveRecordPatch(row.calcId, row.articleRef, row.necYear, {
+      status: "verified",
+      source_type: existing.source_type && existing.source_type !== "pending"
+        ? existing.source_type
+        : "manual_codebook_review",
+      verified_by: reviewer,
+      verified_date: existing.verified_date || today,
+      human_approved_by: existing.human_approved_by || reviewer,
+      human_approved_date: existing.human_approved_date || today,
+    });
+  }, [isAdmin, records, saveRecordPatch, user?.email, user?.full_name]);
 
   const handleRecordSaved = useCallback((saved) => {
     const key = `${saved.calculator_id}|${saved.article_ref}|${saved.nec_year}`;
@@ -507,7 +541,7 @@ export default function CodebookMatrix() {
           <h1 className="text-2xl font-bold">Codebook Verification Matrix</h1>
           <p className="text-sm text-muted-foreground mt-1">
             Every article used by every calculator — verified against the exact NEC edition.
-            Only a human admin may mark status as <strong>"Verified"</strong>.
+            Human admins may mark status as <strong>"Verified"</strong> after manual codebook review.
           </p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
@@ -534,6 +568,13 @@ export default function CodebookMatrix() {
         </div>
       )}
 
+      {saveError && (
+        <div className="flex items-start gap-2 px-3 py-2.5 rounded-lg bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 text-xs text-red-700 dark:text-red-300">
+          <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+          <span><strong>Codebook verification save failed:</strong> {saveError}</span>
+        </div>
+      )}
+
       {/* Summary stats */}
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
         {[
@@ -555,8 +596,8 @@ export default function CodebookMatrix() {
         <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
         <span>
           <strong>Verification integrity:</strong> AI review does not automatically verify any record.
-          After AI review, status becomes "AI Reviewed — Awaiting Admin". Only you (admin) can advance to "Verified"
-          by clicking "Mark Verified" in the AI Review panel. Never mark Verified without reviewing the AI explanation.
+          After you compare the app value against the NEC codebook, an admin can advance a record to "Verified"
+          from the Status dropdown, the manual "Mark Verified" shortcut, or the AI Review panel.
         </span>
       </div>
 
@@ -715,24 +756,32 @@ export default function CodebookMatrix() {
                                       <span className="text-[10px] text-red-600 dark:text-red-400 font-semibold">Pending publication</span>
                                     ) : (
                                       <>
-                                        {/* Status selector — verified is locked to human approval only */}
+                                        {/* Only admins may advance a record to Verified. */}
                                         <select
                                           value={rec.status || "pending_review"}
                                           onChange={e => {
-                                            // Admin can set anything EXCEPT verified via dropdown — verified requires AI review + approval
-                                            if (e.target.value !== "verified") {
+                                            if (e.target.value === "verified") {
+                                              markVerified(row);
+                                            } else {
                                               saveField(row.calcId, row.articleRef, row.necYear, "status", e.target.value);
                                             }
                                           }}
                                           className="text-xs border border-input rounded px-1.5 py-1 bg-card w-full focus:outline-none focus:ring-1 focus:ring-blue-400"
                                         >
-                                          {STATUS_OPTIONS.filter(o => o.value !== "verified").map(o => (
+                                          {(isAdmin ? STATUS_OPTIONS : STATUS_OPTIONS.filter(o => o.value !== "verified")).map(o => (
                                             <option key={o.value} value={o.value}>{o.label}</option>
                                           ))}
-                                          {rec.status === "verified" && (
-                                            <option value="verified">✓ Verified</option>
-                                          )}
                                         </select>
+                                        {isAdmin && rec.status !== "verified" && (
+                                          <button
+                                            type="button"
+                                            onClick={() => markVerified(row)}
+                                            className="text-[10px] text-emerald-700 hover:text-emerald-900 font-semibold flex items-center gap-1 mt-1"
+                                          >
+                                            <CheckCircle2 className="w-3 h-3" />
+                                            Mark Verified
+                                          </button>
+                                        )}
                                         <button
                                           onClick={() => setOpenAIReviews(prev => ({ ...prev, [row.key]: !prev[row.key] }))}
                                           className="text-[10px] text-purple-600 hover:text-purple-800 font-semibold flex items-center gap-1 mt-1"
