@@ -17,6 +17,7 @@ import {
 import { cn } from "@/lib/utils";
 
 const YEARS = ["2017", "2020", "2023", "2026"];
+const GLOBAL_REF_PREFIX = "global";
 
 const STATUS_OPTIONS = [
   { value: "pending_review",                   label: "Pending Review",            icon: Clock,        color: "text-slate-500" },
@@ -42,6 +43,50 @@ function articleSortKey(ref) {
   const numMatch = ref.match(/^([\d.]+)/);
   if (numMatch) return parseFloat(numMatch[1]);
   return 9999;
+}
+
+function verificationKey(calcId, articleRef, necYear) {
+  return `${calcId}|${articleRef}|${necYear}`;
+}
+
+function globalReferenceKey(articleRef, necYear) {
+  return verificationKey(GLOBAL_REF_PREFIX, articleRef, necYear);
+}
+
+function mergeReferenceStatus(current = "pending_review", next = "pending_review") {
+  if (current === "needs_correction" || next === "needs_correction") return "needs_correction";
+  if (current === "verified" || next === "verified") return "verified";
+  if (current === "ai_reviewed_pending_human_approval" || next === "ai_reviewed_pending_human_approval") {
+    return "ai_reviewed_pending_human_approval";
+  }
+  return "pending_review";
+}
+
+function recordStatus(record) {
+  return record?.status || "pending_review";
+}
+
+function getReferenceRecords(records, articleRef, necYear) {
+  return Object.values(records).filter(record =>
+    record?.article_ref === articleRef && record?.nec_year === necYear
+  );
+}
+
+function getReferenceStatus(records, articleRef, necYear) {
+  const globalRecord = records[globalReferenceKey(articleRef, necYear)];
+  return getReferenceRecords(records, articleRef, necYear)
+    .reduce((status, record) => mergeReferenceStatus(status, recordStatus(record)), recordStatus(globalRecord));
+}
+
+function pickReferenceRecord(records, articleRef, necYear) {
+  const globalRecord = records[globalReferenceKey(articleRef, necYear)];
+  if (globalRecord) return globalRecord;
+  const matches = getReferenceRecords(records, articleRef, necYear);
+  return matches.find(record => record.status === "needs_correction")
+    || matches.find(record => record.status === "verified")
+    || matches.find(record => record.status === "ai_reviewed_pending_human_approval")
+    || matches[0]
+    || null;
 }
 
 // ── Inline editable cell ─────────────────────────────────────────────────────
@@ -183,7 +228,7 @@ function NEC2017CompliancePass({ allRows, records }) {
         </h3>
         <div className="space-y-2">
           {highRiskRows.map(row => {
-            const rec = records[row.key];
+            const rec = row.record || records[row.key];
             const status = rec?.status || "pending_review";
             const isPending = status === "pending_review";
             const isAiPending = status === "ai_reviewed_pending_human_approval";
@@ -259,7 +304,7 @@ export default function CodebookMatrix() {
   const [filterStatus, setFilterStatus] = useState("");
   const [showInfoOnly, setShowInfoOnly] = useState(false);
   const [expandedCalcs, setExpandedCalcs] = useState({});
-  const [activeTab, setActiveTab]       = useState("matrix"); // "matrix" | "2017pass"
+  const [activeTab, setActiveTab]       = useState("references"); // "references" | "matrix" | "2017pass"
   const [openAIReviews, setOpenAIReviews] = useState({});
   const [openDetails, setOpenDetails] = useState({});
   const [colWidths, setColWidths] = useState({
@@ -297,7 +342,7 @@ export default function CodebookMatrix() {
       const recs = await base44.entities.ArticleVerification.list("-updated_date", 5000);
       const map = {};
       for (const r of recs) {
-        map[`${r.calculator_id}|${r.article_ref}|${r.nec_year}`] = r;
+        map[verificationKey(r.calculator_id, r.article_ref, r.nec_year)] = r;
       }
       setRecords(map);
     } catch (e) {
@@ -310,7 +355,7 @@ export default function CodebookMatrix() {
 
   const saveRecordPatch = useCallback(async (calcId, articleRef, necYear, patch) => {
     if (patch?.status === "verified" && !isAdmin) return;
-    const key = `${calcId}|${articleRef}|${necYear}`;
+    const key = verificationKey(calcId, articleRef, necYear);
     const existing = records[key];
 
     setSaveError(null);
@@ -365,7 +410,7 @@ export default function CodebookMatrix() {
   }, [isAdmin, records, saveRecordPatch, user?.email, user?.full_name]);
 
   const handleRecordSaved = useCallback((saved) => {
-    const key = `${saved.calculator_id}|${saved.article_ref}|${saved.nec_year}`;
+    const key = verificationKey(saved.calculator_id, saved.article_ref, saved.nec_year);
     setRecords(prev => ({ ...prev, [key]: saved }));
   }, []);
 
@@ -451,11 +496,15 @@ export default function CodebookMatrix() {
     const statusMap = {};
     for (const [key, rec] of Object.entries(records)) {
       statusMap[key] = rec.status || "pending_review";
+      if (rec.article_ref && rec.nec_year) {
+        const refKey = globalReferenceKey(rec.article_ref, rec.nec_year);
+        statusMap[refKey] = mergeReferenceStatus(statusMap[refKey], rec.status || "pending_review");
+      }
     }
     const g = {};
     for (const calc of CALCULATORS) {
       for (const year of YEARS) {
-        g[`${calc.id}|${year}`] = computeGate(calc.id, calc.articles, year, statusMap);
+        g[verificationKey(calc.id, year, "gate")] = computeGate(calc.id, calc.articles, year, statusMap);
       }
     }
     return g;
@@ -467,15 +516,19 @@ export default function CodebookMatrix() {
       if (!calc.articles || calc.articles.length === 0) continue;
       for (const art of calc.articles) {
         for (const year of YEARS) {
-          const key = `${calc.id}|${art.ref}|${year}`;
+          const key = verificationKey(calc.id, art.ref, year);
+          const globalKey = globalReferenceKey(art.ref, year);
           rows.push({
             key, calcId: calc.id, calcName: calc.name,
             articleRef: art.ref, articleDesc: art.desc,
             articleNote: art.note, articleSource: art.source, articleChanged: art.changed,
             isInfoOnly: !!(art.note && art.note.includes("NoteBox")),
             sourceNotes: calc.sourceNotes,
-            necYear: year, gate: gates[`${calc.id}|${year}`],
-            record: records[key] || null,
+            necYear: year, gate: gates[verificationKey(calc.id, year, "gate")],
+            record: records[key] || records[globalKey] || null,
+            specificRecord: records[key] || null,
+            globalRecord: records[globalKey] || null,
+            status: getReferenceStatus(records, art.ref, year),
           });
         }
       }
@@ -483,21 +536,65 @@ export default function CodebookMatrix() {
     return rows;
   }, [records, gates]);
 
+  const referenceRows = useMemo(() => {
+    const grouped = new Map();
+
+    for (const row of allRows) {
+      const key = globalReferenceKey(row.articleRef, row.necYear);
+      const existing = grouped.get(key);
+      const calculator = { id: row.calcId, name: row.calcName };
+
+      if (existing) {
+        if (!existing.calculators.some(calc => calc.id === calculator.id)) {
+          existing.calculators.push(calculator);
+        }
+        existing.isInfoOnly = existing.isInfoOnly && row.isInfoOnly;
+        continue;
+      }
+
+      grouped.set(key, {
+        ...row,
+        key,
+        calcId: GLOBAL_REF_PREFIX,
+        calcName: "Global Codebook Reference",
+        calculators: [calculator],
+        record: pickReferenceRecord(records, row.articleRef, row.necYear),
+        status: getReferenceStatus(records, row.articleRef, row.necYear),
+      });
+    }
+
+    return Array.from(grouped.values()).map(row => ({
+      ...row,
+      sourceNotes: `${row.calculators.length} calculator${row.calculators.length === 1 ? "" : "s"} use this reference: ${row.calculators.map(calc => calc.name).join(", ")}`,
+    })).sort((a, b) => {
+      const keyA = articleSortKey(a.articleRef);
+      const keyB = articleSortKey(b.articleRef);
+      if (keyA !== keyB) return keyA - keyB;
+      return a.necYear.localeCompare(b.necYear);
+    });
+  }, [allRows, records]);
+
   const filtered = useMemo(() => {
-    return allRows.filter(r => {
+    const inputRows = activeTab === "references" ? referenceRows : allRows;
+    return inputRows.filter(r => {
       if (!showInfoOnly && r.isInfoOnly) return false;
-      if (filterCalc && !r.calcName.toLowerCase().includes(filterCalc.toLowerCase()) &&
-          !r.calcId.toLowerCase().includes(filterCalc.toLowerCase())) return false;
+      if (filterCalc) {
+        const needle = filterCalc.toLowerCase();
+        const matchesCalc = r.calcName.toLowerCase().includes(needle)
+          || r.calcId.toLowerCase().includes(needle)
+          || r.calculators?.some(calc => calc.name.toLowerCase().includes(needle) || calc.id.toLowerCase().includes(needle));
+        if (!matchesCalc) return false;
+      }
       if (filterYear && r.necYear !== filterYear) return false;
       if (filterStatus) {
-        const recStatus = r.record?.status || "pending_review";
-        if (filterStatus === "missing")      return !r.record;
+        const recStatus = r.status || r.record?.status || "pending_review";
+        if (filterStatus === "missing")      return !r.record && recStatus === "pending_review";
         if (filterStatus === "2026_pending") return r.necYear === "2026";
         if (filterStatus !== recStatus)      return false;
       }
       return true;
     });
-  }, [allRows, filterCalc, filterYear, filterStatus]);
+  }, [activeTab, allRows, filterCalc, filterYear, filterStatus, referenceRows, showInfoOnly]);
 
   const groupedFiltered = useMemo(() => {
     const groups = {};
@@ -517,12 +614,12 @@ export default function CodebookMatrix() {
     return Object.values(groups);
   }, [filtered]);
 
-  const totalRows      = allRows.length;
-  const verifiedCount  = allRows.filter(r => r.record?.status === "verified").length;
-  const aiPendingCount = allRows.filter(r => r.record?.status === "ai_reviewed_pending_human_approval").length;
-  const pendingCount   = allRows.filter(r => !r.record || r.record.status === "pending_review").length;
-  const correctionCount= allRows.filter(r => r.record?.status === "needs_correction").length;
-  const missingCount   = allRows.filter(r => !r.record).length;
+  const statsRows      = activeTab === "matrix" ? allRows : referenceRows;
+  const totalRows      = statsRows.length;
+  const verifiedCount  = statsRows.filter(r => (r.status || r.record?.status) === "verified").length;
+  const aiPendingCount = statsRows.filter(r => (r.status || r.record?.status) === "ai_reviewed_pending_human_approval").length;
+  const pendingCount   = statsRows.filter(r => (r.status || r.record?.status || "pending_review") === "pending_review").length;
+  const correctionCount= statsRows.filter(r => (r.status || r.record?.status) === "needs_correction").length;
 
   if (loading) {
     return (
@@ -540,8 +637,7 @@ export default function CodebookMatrix() {
         <div>
           <h1 className="text-2xl font-bold">Codebook Verification Matrix</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Every article used by every calculator — verified against the exact NEC edition.
-            Human admins may mark status as <strong>"Verified"</strong> after manual codebook review.
+            Verify each unique article/table once per NEC edition. That verified reference applies to every calculator using it.
           </p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
@@ -578,7 +674,7 @@ export default function CodebookMatrix() {
       {/* Summary stats */}
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
         {[
-          { label: "Total references",          val: totalRows,      color: "text-foreground" },
+          { label: activeTab === "matrix" ? "Calculator references" : "Unique references", val: totalRows, color: "text-foreground" },
           { label: "Verified",                  val: verifiedCount,  color: "text-emerald-600" },
           { label: "AI Review — Awaiting Admin", val: aiPendingCount, color: "text-purple-600" },
           { label: "Pending review",             val: pendingCount,   color: "text-amber-600" },
@@ -596,15 +692,16 @@ export default function CodebookMatrix() {
         <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
         <span>
           <strong>Verification integrity:</strong> AI review does not automatically verify any record.
-          After you compare the app value against the NEC codebook, an admin can advance a record to "Verified"
-          from the Status dropdown, the manual "Mark Verified" shortcut, or the AI Review panel.
+          After you compare an article/table against the NEC codebook, mark that reference "Verified" once for the edition.
+          The verification then applies to every calculator listed under "Used By".
         </span>
       </div>
 
       {/* Tabs */}
       <div className="flex gap-2 border-b border-border">
         {[
-          { key: "matrix", label: "Full Matrix" },
+          { key: "references", label: "Reference Review" },
+          { key: "matrix", label: "Full Calculator Matrix" },
           { key: "2017pass", label: "🔒 2017 Isolation Pass" },
         ].map(tab => (
           <button
@@ -625,6 +722,198 @@ export default function CodebookMatrix() {
       {/* 2017 Isolation Pass */}
       {activeTab === "2017pass" && (
         <NEC2017CompliancePass allRows={allRows} records={records} />
+      )}
+
+      {/* Unique article/table review */}
+      {activeTab === "references" && (
+        <>
+          {/* Filters */}
+          <div className="flex flex-wrap gap-2 items-center">
+            <Filter className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+            <Input placeholder="Filter by calculator…" value={filterCalc}
+              onChange={e => setFilterCalc(e.target.value)} className="h-8 w-48 text-xs" />
+            <select value={filterYear} onChange={e => setFilterYear(e.target.value)}
+              className="h-8 text-xs border border-input rounded-md px-2 bg-card">
+              <option value="">All years</option>
+              {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
+            </select>
+            <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)}
+              className="h-8 text-xs border border-input rounded-md px-2 bg-card">
+              <option value="">All statuses</option>
+              <option value="verified">Verified</option>
+              <option value="ai_reviewed_pending_human_approval">AI Reviewed — Awaiting Admin</option>
+              <option value="pending_review">Pending Review</option>
+              <option value="needs_correction">Needs Correction</option>
+              <option value="missing">No record yet</option>
+              <option value="2026_pending">2026 pending</option>
+            </select>
+            {(filterCalc || filterYear || filterStatus) && (
+              <Button variant="ghost" size="sm" className="h-8 gap-1 text-xs"
+                onClick={() => { setFilterCalc(""); setFilterYear(""); setFilterStatus(""); }}>
+                <X className="w-3 h-3" /> Clear
+              </Button>
+            )}
+            <button
+              onClick={() => setShowInfoOnly(s => !s)}
+              className={cn(
+                "h-8 px-3 text-xs border rounded-md whitespace-nowrap",
+                showInfoOnly ? "bg-blue-50 dark:bg-blue-950/30 border-blue-300 dark:border-blue-700 text-blue-700 dark:text-blue-300" : "bg-card border-input text-muted-foreground"
+              )}
+              title="Info-only articles are displayed as notes to the user but do not affect calculation results"
+            >
+              {showInfoOnly ? "✓ Showing info-only" : "Hiding info-only"}
+            </button>
+            <span className="text-xs text-muted-foreground ml-1">
+              {filtered.length} unique references ({allRows.length} calculator uses)
+            </span>
+          </div>
+
+          <div className="border border-border rounded-xl overflow-x-auto">
+            <table className="text-xs w-full" style={{ tableLayout: 'fixed' }}>
+              <thead>
+                <tr className="border-b border-border bg-muted/20 text-[10px] uppercase tracking-wider text-muted-foreground">
+                  <th className="text-left px-3 py-2 font-semibold w-[170px]">Article / Table</th>
+                  <th className="text-left px-3 py-2 font-semibold w-[240px]">Used By</th>
+                  <th className="text-left px-3 py-2 font-semibold w-[90px]">Year</th>
+                  <th className="text-left px-3 py-2 font-semibold w-[190px]">Status</th>
+                  <th className="text-left px-3 py-2 font-semibold w-[160px]">Source Type</th>
+                  <th className="text-left px-3 py-2 font-semibold w-[120px]">Verified By</th>
+                  <th className="text-left px-3 py-2 font-semibold w-[110px]">Date</th>
+                  <th className="text-left px-3 py-2 font-semibold w-[240px]">Notes</th>
+                  <th className="text-left px-3 py-2 font-semibold text-center w-[60px]">Amend</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border/40">
+                {filtered.map(row => {
+                  const rec = row.record || {};
+                  const effectiveStatus = row.status || rec.status || "pending_review";
+                  const isSaving = saving === row.key;
+                  const is2026 = row.necYear === "2026";
+                  const is2017 = row.necYear === "2017";
+                  const contaminated = is2017 && check2017ArticleCompliance(row.articleRef).isViolation;
+
+                  return (
+                    <React.Fragment key={row.key}>
+                      <tr className={cn(
+                        "hover:bg-muted/20 transition-colors",
+                        contaminated ? "bg-red-50/60 dark:bg-red-950/20" :
+                        is2026 ? "bg-red-50/30 dark:bg-red-950/10" : "",
+                        isSaving ? "opacity-60" : ""
+                      )}>
+                        <td className="px-3 py-2 align-top">
+                          <code className="font-mono font-semibold text-foreground">{row.articleRef}</code>
+                          {contaminated && (
+                            <span className="ml-1 px-1 py-0.5 rounded bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 text-[9px] font-bold">POST-2017</span>
+                          )}
+                          {row.isInfoOnly && (
+                            <span className="ml-1 px-1 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 text-[9px] font-bold" title="Displayed as a note to the user — does not affect calculation results">INFO ONLY</span>
+                          )}
+                          <div className="text-[10px] text-muted-foreground mt-0.5 leading-snug">{row.articleDesc}</div>
+                          <button
+                            onClick={() => setOpenDetails(prev => ({ ...prev, [row.key]: !prev[row.key] }))}
+                            className="text-[10px] text-blue-600 hover:text-blue-800 font-semibold flex items-center gap-1 mt-1"
+                          >
+                            <Eye className="w-3 h-3" />
+                            App Usage
+                            {openDetails[row.key] ? <ChevronDown className="w-3 h-3" /> : <ChevronUp className="w-3 h-3 rotate-180" />}
+                          </button>
+                        </td>
+                        <td className="px-3 py-2 align-top">
+                          <div className="flex flex-wrap gap-1">
+                            {row.calculators.slice(0, 6).map(calc => (
+                              <span key={calc.id} className="px-1.5 py-0.5 rounded bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300 border border-blue-100 dark:border-blue-800 text-[10px] font-semibold">
+                                {calc.name}
+                              </span>
+                            ))}
+                            {row.calculators.length > 6 && (
+                              <span className="px-1.5 py-0.5 rounded bg-muted text-muted-foreground text-[10px] font-semibold">
+                                +{row.calculators.length - 6} more
+                              </span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-3 py-2 align-top text-center">
+                          <span className={cn("font-bold", is2026 ? "text-red-600" : is2017 ? "text-blue-600" : "text-muted-foreground")}>{row.necYear}</span>
+                        </td>
+                        <td className="px-3 py-2 align-top overflow-hidden">
+                          {is2026 ? (
+                            <span className="text-[10px] text-red-600 dark:text-red-400 font-semibold">Pending publication</span>
+                          ) : (
+                            <>
+                              <select
+                                value={effectiveStatus}
+                                onChange={e => {
+                                  if (e.target.value === "verified") {
+                                    markVerified(row);
+                                  } else {
+                                    saveField(row.calcId, row.articleRef, row.necYear, "status", e.target.value);
+                                  }
+                                }}
+                                className="text-xs border border-input rounded px-1.5 py-1 bg-card w-full focus:outline-none focus:ring-1 focus:ring-blue-400"
+                              >
+                                {(isAdmin ? STATUS_OPTIONS : STATUS_OPTIONS.filter(o => o.value !== "verified")).map(o => (
+                                  <option key={o.value} value={o.value}>{o.label}</option>
+                                ))}
+                              </select>
+                              {isAdmin && effectiveStatus !== "verified" && (
+                                <button
+                                  type="button"
+                                  onClick={() => markVerified(row)}
+                                  className="text-[10px] text-emerald-700 hover:text-emerald-900 font-semibold flex items-center gap-1 mt-1"
+                                >
+                                  <CheckCircle2 className="w-3 h-3" />
+                                  Mark Verified Once
+                                </button>
+                              )}
+                            </>
+                          )}
+                        </td>
+                        <td className="px-3 py-2 align-top overflow-hidden">
+                          {!is2026 && (
+                            <SelectCell value={rec.source_type || "pending"} options={SOURCE_TYPE_OPTIONS}
+                              onSave={v => saveField(row.calcId, row.articleRef, row.necYear, "source_type", v)} />
+                          )}
+                        </td>
+                        <td className="px-3 py-2 align-top overflow-hidden">
+                          <EditableCell value={rec.verified_by} placeholder="Name…"
+                            onSave={v => saveField(row.calcId, row.articleRef, row.necYear, "verified_by", v)} />
+                        </td>
+                        <td className="px-3 py-2 align-top">
+                          <input type="date" value={rec.verified_date || ""}
+                            onChange={e => saveField(row.calcId, row.articleRef, row.necYear, "verified_date", e.target.value)}
+                            className="text-xs border border-input rounded px-1 py-0.5 bg-card w-28 focus:outline-none focus:ring-1 focus:ring-blue-400" />
+                        </td>
+                        <td className="px-3 py-2 align-top overflow-hidden">
+                          <EditableCell value={rec.notes} placeholder="Reviewer notes…" multiline
+                            onSave={v => saveField(row.calcId, row.articleRef, row.necYear, "notes", v)} />
+                        </td>
+                        <td className="px-3 py-2 align-top text-center">
+                          <input type="checkbox" checked={!!rec.local_amendment}
+                            onChange={e => saveField(row.calcId, row.articleRef, row.necYear, "local_amendment", e.target.checked)}
+                            title="Local amendment may override this value"
+                            className="w-3.5 h-3.5 cursor-pointer" />
+                        </td>
+                      </tr>
+                      {openDetails[row.key] && (
+                        <tr>
+                          <td colSpan={9} className="px-4 py-3 bg-blue-50/30 dark:bg-blue-950/10">
+                            <AppUsagePanel row={row} />
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          {filtered.length === 0 && (
+            <div className="text-center py-12 text-muted-foreground text-sm">
+              No rows match the current filters.
+            </div>
+          )}
+        </>
       )}
 
       {/* Full Matrix */}
@@ -683,7 +972,7 @@ export default function CodebookMatrix() {
                       <span className="font-semibold text-sm">{group.calcName}</span>
                       <code className="text-[10px] font-mono text-muted-foreground">{group.calcId}</code>
                       <div className="flex gap-1.5 flex-wrap">
-                        {YEARS.map(y => <GateBadge key={y} gate={gates[`${group.calcId}|${y}`]} />)}
+                        {YEARS.map(y => <GateBadge key={y} gate={gates[verificationKey(group.calcId, y, "gate")]} />)}
                       </div>
                     </div>
                     {isExpanded ? <ChevronUp className="w-4 h-4 text-muted-foreground shrink-0" /> : <ChevronDown className="w-4 h-4 text-muted-foreground shrink-0" />}
@@ -709,6 +998,7 @@ export default function CodebookMatrix() {
                         <tbody className="divide-y divide-border/40">
                           {group.rows.map(row => {
                             const rec = row.record || {};
+                            const effectiveStatus = row.status || rec.status || "pending_review";
                             const isSaving = saving === row.key;
                             const is2026   = row.necYear === "2026";
                             const is2017   = row.necYear === "2017";
@@ -758,7 +1048,7 @@ export default function CodebookMatrix() {
                                       <>
                                         {/* Only admins may advance a record to Verified. */}
                                         <select
-                                          value={rec.status || "pending_review"}
+                                          value={effectiveStatus}
                                           onChange={e => {
                                             if (e.target.value === "verified") {
                                               markVerified(row);
@@ -772,7 +1062,7 @@ export default function CodebookMatrix() {
                                             <option key={o.value} value={o.value}>{o.label}</option>
                                           ))}
                                         </select>
-                                        {isAdmin && rec.status !== "verified" && (
+                                        {isAdmin && effectiveStatus !== "verified" && (
                                           <button
                                             type="button"
                                             onClick={() => markVerified(row)}
@@ -825,7 +1115,7 @@ export default function CodebookMatrix() {
                                       <div className="rounded-xl bg-card border border-border p-4 max-w-2xl space-y-2">
                                         <AIVerificationPanel
                                           row={row}
-                                          record={records[row.key]}
+                                          record={row.record || records[row.key]}
                                           onRecordSaved={handleRecordSaved}
                                           currentUser={user}
                                         />
