@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/lib/AuthContext";
 import { CALCULATORS } from "@/data/nec/audit";
-import { computeGate, GATE_META } from "@/lib/verificationGate";
+import { articleRefForYear, computeGate, GATE_META } from "@/lib/verificationGate";
 import { check2017ArticleCompliance, HIGH_RISK_2017_CALCULATORS, POST_2017_ARTICLES } from "@/lib/nec2017Compliance";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -491,23 +491,27 @@ export default function CodebookMatrix() {
     setSyncing(true);
     setSyncResult(null);
     try {
-      // Build map of article_ref -> [calculator_ids] from CALCULATORS
+      // Build map of nec_year|article_ref -> [calculator_ids] from CALCULATORS
       const refToCalcs = {};
       for (const calc of CALCULATORS) {
         if (!calc.articles) continue;
         for (const art of calc.articles) {
-          if (!refToCalcs[art.ref]) refToCalcs[art.ref] = [];
-          if (!refToCalcs[art.ref].includes(calc.id)) refToCalcs[art.ref].push(calc.id);
+          for (const year of YEARS) {
+            const ref = articleRefForYear(art, year);
+            const refKey = `${year}|${ref}`;
+            if (!refToCalcs[refKey]) refToCalcs[refKey] = [];
+            if (!refToCalcs[refKey].includes(calc.id)) refToCalcs[refKey].push(calc.id);
+          }
         }
       }
 
-      // Get all 2017 records
-      const recs = await base44.entities.ArticleVerification.filter({ nec_year: "2017" }, "-updated_date", 5000);
+      // Get all codebook records and sync duplicate references within the same NEC year.
+      const recs = await base44.entities.ArticleVerification.filter({}, "-updated_date", 5000);
 
-      // Build map by calculator_id|article_ref (most recently updated wins)
+      // Build map by nec_year|calculator_id|article_ref (most recently updated wins)
       const existingByKey = {};
       for (const r of recs) {
-        const key = `${r.calculator_id}|${r.article_ref}`;
+        const key = `${r.nec_year}|${r.calculator_id}|${r.article_ref}`;
         if (!existingByKey[key] || new Date(r.updated_date) > new Date(existingByKey[key].updated_date)) {
           existingByKey[key] = r;
         }
@@ -516,21 +520,22 @@ export default function CodebookMatrix() {
       const toUpdate = [];
       const toCreate = [];
 
-      for (const [ref, calcIds] of Object.entries(refToCalcs)) {
+      for (const [refKey, calcIds] of Object.entries(refToCalcs)) {
         if (calcIds.length <= 1) continue;
+        const [year, ref] = refKey.split("|");
 
         // Find source: a record with verified_date set by the reviewer
-        const records = calcIds.map(c => existingByKey[`${c}|${ref}`]).filter(Boolean);
+        const records = calcIds.map(c => existingByKey[`${year}|${c}|${ref}`]).filter(Boolean);
         const source = records.find(r => r.verified_date);
         if (!source) continue;
 
         for (const calcId of calcIds) {
-          const key = `${calcId}|${ref}`;
+          const key = `${year}|${calcId}|${ref}`;
           const existing = existingByKey[key];
 
           if (!existing) {
             toCreate.push({
-              calculator_id: calcId, article_ref: ref, nec_year: "2017",
+              calculator_id: calcId, article_ref: ref, nec_year: year,
               source_type: "manual_codebook_review",
               verified_date: source.verified_date,
               verified_by: source.verified_by || "",
@@ -589,11 +594,12 @@ export default function CodebookMatrix() {
       if (!calc.articles || calc.articles.length === 0) continue;
       for (const art of calc.articles) {
         for (const year of YEARS) {
-          const key = verificationKey(calc.id, art.ref, year);
-          const globalKey = globalReferenceKey(art.ref, year);
+          const articleRef = articleRefForYear(art, year);
+          const key = verificationKey(calc.id, articleRef, year);
+          const globalKey = globalReferenceKey(articleRef, year);
           rows.push({
             key, calcId: calc.id, calcName: calc.name,
-            articleRef: art.ref, articleDesc: art.desc,
+            articleRef, articleDesc: art.desc,
             articleNote: art.note, articleSource: art.source, articleChanged: art.changed,
             isInfoOnly: !!(art.note && art.note.includes("NoteBox")),
             sourceNotes: calc.sourceNotes,
@@ -601,7 +607,7 @@ export default function CodebookMatrix() {
             record: records[key] || records[globalKey] || null,
             specificRecord: records[key] || null,
             globalRecord: records[globalKey] || null,
-            status: getReferenceStatus(records, art.ref, year),
+            status: getReferenceStatus(records, articleRef, year),
           });
         }
       }

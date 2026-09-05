@@ -15,10 +15,11 @@ export default function MarinaResults({ r, necYear, tempRating, material, length
         ))}
         <ResultRow label="Total Connected Shore Power" value={r.totalConnectedReceptacles.toLocaleString()} unit="VA" highlight />
         <ResultRow label="Total Receptacle Count" value={r.totalReceptacleCount} unit="receptacles" />
+        <ResultRow label="Demand Count Basis" value={r.demandReceptacleCount} unit="receptacles" sub="Maximum connected to any one line after balancing" />
       </ResultSection>
 
       <ResultSection title={`Demand Factor (${r.demandTableRef || "Table 555.12"})`}>
-        <ResultRow label="Demand Factor" value={r.demandFactorPct} unit="%" highlight sub={`${r.demandTableRef || "Table 555.12"} → ${r.totalReceptacleCount} receptacles`} />
+        <ResultRow label="Demand Factor" value={r.demandFactorPct} unit="%" highlight sub={`${r.demandTableRef || "Table 555.12"} → ${r.demandReceptacleCount} receptacles on max line`} />
         <ResultRow label="Shore Power Demand Load" value={r.demandLoadShore.toLocaleString()} unit="VA" highlight />
       </ResultSection>
 
@@ -91,8 +92,8 @@ export default function MarinaResults({ r, necYear, tempRating, material, length
       )}
 
       <FormulaBox steps={r.steps} formulas={[
-        { label: "Connected Load (NEC 555.11)", formula: "VA = Σ (receptacle count × amps × voltage)", description: "Each receptacle VA = amps × nominal voltage" },
-        { label: `Demand Factor (NEC ${r.demandTableRef || "Table 555.12"})`, formula: `DF = ${r.demandTableRef || "Table 555.12"} lookup by total receptacle count`, description: "Demand factors range from 100% (1–4) to 30% (71+)" },
+        { label: `Connected Load (NEC ${r.receptacleArticleRef || "555.33(A)"})`, formula: "VA = Σ (receptacle count × amps × voltage)", description: "Each shore-power receptacle VA = amps × nominal voltage; shore-power receptacles are 30A minimum." },
+        { label: `Demand Factor (NEC ${r.demandTableRef || "Table 555.12"})`, formula: `DF = ${r.demandTableRef || "Table 555.12"} lookup by max receptacles on any line`, description: "Demand factors range from 100% (1–4) to 30% (71+)" },
         { label: "Demand Load", formula: "VA = total connected × DF", description: "Apply demand factor to sum of receptacle ratings" },
         { label: "Total Service Load", formula: "VA = shore power demand + additional loads", description: "Additional loads sized separately per NEC 220" },
         { label: "Service Current", formula: "I = VA ÷ (V × √3) [3Ø] or VA ÷ V [1Ø]", description: "Convert total VA to amps" },
@@ -101,7 +102,7 @@ export default function MarinaResults({ r, necYear, tempRating, material, length
       {demandTable && <NECTableDisplay title={`${demandTable.article} — ${demandTable.title}`} headers={demandTable.headers} rows={demandTable.rows} note={demandTable.note} compact />}
 
       <NoteBox>
-        NEC {necYear} Article 555: Marina shore power demand factors from {r.demandTableRef || "Table 555.12"}. Demand factors are applied to the sum of the ratings of all shore power receptacles based on total receptacle count. Note 1: Where two receptacles for an individual slip have different ratings, demand factors apply to the sum. Note 2: Where two or more receptacles supply an individual slip, demand factors apply to the sum at that slip. Receptacle ratings per NEC 555.11. Additional marina loads (office, fuel dock, lighting, etc.) are calculated separately using existing production calculators (motor branch circuit, HVAC, lighting load) and added at 100%. Voltage drop, EGC sizing, conductor ampacity, and transformer sizing reuse existing production engines.
+        NEC {necYear} Article 555: Marina shore power demand factors from {r.demandTableRef || "Table 555.12"}. The demand-factor row is selected from the maximum number of shore-power receptacles connected to any one line after balancing, then applied to the connected shore-power receptacle load. Shore-power receptacle ratings are referenced by {r.receptacleArticleRef || "555.33(A)"} and use a 30A minimum; 30A/50A are locking and grounding type, and 60A or higher are pin-and-sleeve type. Additional marina loads (office, fuel dock, lighting, etc.) are calculated separately using existing production calculators (motor branch circuit, HVAC, lighting load) and added at 100%. Voltage drop, EGC sizing, conductor ampacity, and transformer sizing reuse existing production engines.
       </NoteBox>
     </div>
   );

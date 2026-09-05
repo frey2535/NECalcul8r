@@ -21,7 +21,7 @@ export const EGC_TABLE = _EGC_TABLE.map((row) =>
     : row
 );
 
-export const RANGE_DEMAND_ARTICLE = "Table 220.60";
+export const RANGE_DEMAND_ARTICLE = "Table 220.55";
 
 // ─── GFCI Requirements (NEC 210.8) ──────────────────────────────────
 // 2023: Retained 2020 scope. Additional clarifications for 250V in dwelling
@@ -135,7 +135,7 @@ export const GFCI_210_8F_METADATA = {
 
 // ─── Dwelling Unit Requirements ─────────────────────────────────────
 export const DWELLING_OUTDOOR_DISCONNECT_REQUIRED = true;  // 230.85
-export const DWELLING_SPD_REQUIRED = true;                  // 230.67 — new in 2023
+export const DWELLING_SPD_REQUIRED = true;                  // 230.67 — required 2020+
 
 // ─── Island / Peninsula Receptacles (NEC 210.52(C)) ─────────────────
 // 2023: Retained 2020 rules. Below-counter/pop-up outlets continue to be permitted.
@@ -165,6 +165,6 @@ export const OCCUPANCY_UNIT_LOADS = {
 };
 
 // ─── Service Minimums ────────────────────────────────────────────────
-export const DWELLING_MIN_SERVICE_AMPS = 100;  // 230.42(B)
+export const DWELLING_MIN_SERVICE_AMPS = 100;  // 230.79(C)
 
 export const VERIFIED = true;

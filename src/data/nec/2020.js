@@ -101,10 +101,10 @@ export const EGC_TABLE = _EGC_TABLE.map((row) =>
     : row
 );
 
-export const RANGE_DEMAND_ARTICLE = "Table 220.60";
+export const RANGE_DEMAND_ARTICLE = "Table 220.55";
 
 // ─── Service Minimums ────────────────────────────────────────────────
-export const DWELLING_MIN_SERVICE_AMPS = 100;  // 230.42(B) — unchanged 2017–2026
+export const DWELLING_MIN_SERVICE_AMPS = 100;  // 230.79(C) — unchanged 2017–2026
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 210.8(A) — Dwelling Unit GFCI
@@ -558,15 +558,16 @@ export const DWELLING_SERVICE_CONDUCTOR_FACTOR = 0.83;
 
 // Table 220.84 / 220.102 / 220.103 / 551.73(A) — 2020 owns copies of the
 // 2017 bands so they are not silently inherited from shared.js. Numeric
-// factors pending NFPA 70-2020 confirmation.
+// factors pending row-for-row NFPA 70-2020 confirmation.
 export const MULTIFAMILY_DEMAND_TABLE = [
-  { units: 3, factor: 45 }, { units: 4, factor: 44 }, { units: 5, factor: 43 },
-  { units: 6, factor: 42 }, { units: 7, factor: 41 }, { units: 8, factor: 40 },
-  { units: 9, factor: 39 }, { units: 10, factor: 38 }, { units: 11, factor: 37 },
-  { units: 12, factor: 36 }, { units: 13, factor: 35 }, { units: 14, factor: 34 },
-  { units: 15, factor: 33 }, { units: 20, factor: 32 }, { units: 25, factor: 31 },
-  { units: 30, factor: 30 }, { units: 40, factor: 29 }, { units: 50, factor: 28 },
-  { units: 61, factor: 27 }, { units: 999, factor: 26 },
+  { units: 5, factor: 45 }, { units: 7, factor: 44 }, { units: 10, factor: 43 },
+  { units: 11, factor: 42 }, { units: 13, factor: 41 }, { units: 15, factor: 40 },
+  { units: 17, factor: 39 }, { units: 20, factor: 38 }, { units: 21, factor: 37 },
+  { units: 23, factor: 36 }, { units: 25, factor: 35 }, { units: 27, factor: 34 },
+  { units: 30, factor: 33 }, { units: 31, factor: 32 }, { units: 33, factor: 31 },
+  { units: 36, factor: 30 }, { units: 38, factor: 29 }, { units: 42, factor: 28 },
+  { units: 45, factor: 27 }, { units: 50, factor: 26 }, { units: 55, factor: 25 },
+  { units: 61, factor: 24 }, { units: 999, factor: 23 },
 ];
 export const FARM_102_VOLTAGE = 240;
 export const FARM_102_MOTOR_MULTIPLIER = 1.25;
@@ -645,7 +646,7 @@ export const SUPPLY_SIDE_DISCONNECT_NOTE =
 // ─────────────────────────────────────────────────────────────────────────────
 // Inherited from 2017 — no change in 2020
 // ─────────────────────────────────────────────────────────────────────────────
-// DWELLING_MIN_SERVICE_AMPS = 100         (230.42(B)) — inherited from 2017 baseline
+// DWELLING_MIN_SERVICE_AMPS = 100         (230.79(C)) — inherited from 2017 baseline
 // DWELLING_LIGHTING_VA_PER_SQFT = 3       (Table 220.12) — inherited from 2017 baseline
 // SMALL_APPLIANCE_VA = 1500               (220.52(A)) — inherited from 2017 baseline
 // LAUNDRY_VA = 1500                       (220.52(B)) — inherited from 2017 baseline
@@ -1030,7 +1031,7 @@ export const PENDING_IMPACT_LIST = [
     article: "Article 555 (Marina Shore Power)",
     item: "Article 555 was reorganized in the 2020 cycle (section numbering, demand-factor table identity/notes, receptacle grouping, phase balancing, GFPE/GFCI, disconnects).",
     status: "citation_gated_values_pending",
-    next_step: "2020 owns MARINA_DEMAND and cites Table 555.6; 71+ still 30% as a pending copy of 2017. Verify table notes, GFPE/GFCI, disconnects, and 555.11 numbering against NFPA 70-2020 before calling factors codebook-confirmed.",
+    next_step: "2020 owns MARINA_DEMAND and cites Table 555.6; 71+ still 30% as a pending copy of 2017. Verify table notes, GFPE/GFCI, disconnects, and 555.33(A) receptacle requirements against NFPA 70-2020 before calling factors codebook-confirmed.",
   },
 ];
 

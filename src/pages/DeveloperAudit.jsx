@@ -4,6 +4,8 @@ import {
   CALCULATORS, getDynamicCalculators, getYearSensitiveCalculators, getGroupedCalculators, NEC_CHANGE_LOG,
 } from "@/data/nec/audit";
 import { getNecData } from "@/data/nec";
+import { normalizeArticleVerificationStatus } from "@/lib/articleVerificationStatus";
+import { articleRefForYear } from "@/lib/verificationGate";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -16,15 +18,36 @@ import {
 } from "lucide-react";
 
 const YEARS = ["2017", "2020", "2023", "2026"];
+const GLOBAL_REF_PREFIX = "global";
 
 // ─── Status helpers ────────────────────────────────────────────────────────
 const STATUS_CYCLE = ["pending_review", "verified", "needs_correction"];
 
 const STATUS_META = {
   pending_review:  { label: "Pending",    icon: Clock,       color: "bg-slate-100 text-slate-500 border-slate-200 hover:bg-slate-200" },
+  ai_reviewed_pending_human_approval: { label: "AI reviewed", icon: FileSearch, color: "bg-purple-100 text-purple-700 border-purple-300 hover:bg-purple-200" },
   verified:        { label: "Verified",   icon: ShieldCheck, color: "bg-emerald-100 text-emerald-700 border-emerald-300 hover:bg-emerald-200" },
   needs_correction:{ label: "Needs fix",  icon: XCircle,     color: "bg-rose-100 text-rose-700 border-rose-300 hover:bg-rose-200" },
 };
+
+function verificationKey(calcId, articleRef, year) {
+  return `${calcId}|${articleRef}|${year}`;
+}
+
+function mergeVerificationStatus(current = "pending_review", next = "pending_review") {
+  if (current === "needs_correction" || next === "needs_correction") return "needs_correction";
+  if (current === "verified" || next === "verified") return "verified";
+  if (current === "ai_reviewed_pending_human_approval" || next === "ai_reviewed_pending_human_approval") {
+    return "ai_reviewed_pending_human_approval";
+  }
+  return "pending_review";
+}
+
+function getVerificationStatus(verifications, calcId, articleRef, year) {
+  const specific = verifications[verificationKey(calcId, articleRef, year)] || "pending_review";
+  const global = verifications[verificationKey(GLOBAL_REF_PREFIX, articleRef, year)] || "pending_review";
+  return mergeVerificationStatus(global, specific);
+}
 
 // ─── Sub-components ────────────────────────────────────────────────────────
 
@@ -46,11 +69,13 @@ function YearShield({ year, verified }) {
 }
 
 function ArticleRow({ article, calcId, verifications, onToggle }) {
+  const hasYearRefs = !!article.yearRefs;
   return (
     <div className="flex items-start gap-2 py-1.5 text-xs">
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
           <code className="bg-muted px-1.5 py-0.5 rounded font-mono text-[11px] whitespace-nowrap shrink-0">{article.ref}</code>
+          {hasYearRefs && <Badge variant="outline" className="text-[10px] border-blue-300 text-blue-600 py-0 h-4">Year refs</Badge>}
           <span className="text-foreground font-medium">{article.desc}</span>
           {article.changed
             ? <Badge variant="outline" className="text-[10px] border-rose-300 text-rose-600 py-0 h-4">Changed</Badge>
@@ -61,16 +86,16 @@ function ArticleRow({ article, calcId, verifications, onToggle }) {
       {/* Per-year verification toggles */}
       <div className="flex items-center gap-1 shrink-0">
         {YEARS.map(y => {
-          const key = `${calcId}|${article.ref}|${y}`;
-          const status = verifications[key] || "pending_review";
-          const meta = STATUS_META[status];
+          const resolvedRef = articleRefForYear(article, y);
+          const status = getVerificationStatus(verifications, calcId, resolvedRef, y);
+          const meta = STATUS_META[status] || STATUS_META.pending_review;
           const Icon = meta.icon;
           return (
             <button
               key={y}
-              onClick={() => onToggle(calcId, article.ref, y, status)}
+              onClick={() => onToggle(calcId, resolvedRef, y, status)}
               className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] border transition-colors cursor-pointer ${meta.color}`}
-              title={`${article.ref} / NEC ${y}: ${meta.label} — click to cycle`}
+              title={`${resolvedRef} / NEC ${y}: ${meta.label} — click to cycle`}
             >
               <Icon className="w-3 h-3" />
               <span>{y}</span>
@@ -160,7 +185,11 @@ export default function DeveloperAudit() {
       ]);
       const map = {};
       for (const r of records) {
-        map[`${r.calculator_id}|${r.article_ref}|${r.nec_year}`] = r.status;
+        const status = normalizeArticleVerificationStatus(r.status);
+        const key = verificationKey(r.calculator_id, r.article_ref, r.nec_year);
+        map[key] = mergeVerificationStatus(map[key], status);
+        const globalKey = verificationKey(GLOBAL_REF_PREFIX, r.article_ref, r.nec_year);
+        map[globalKey] = mergeVerificationStatus(map[globalKey], status);
       }
       setVerifications(map);
       // Group open reports by calculator_id
@@ -217,8 +246,8 @@ export default function DeveloperAudit() {
       const perYear = {};
       for (const y of YEARS) {
         perYear[y] = articles.every(a => {
-          const key = `${calc.id}|${a.ref}|${y}`;
-          return verifications[key] === "verified";
+          const articleRef = articleRefForYear(a, y);
+          return getVerificationStatus(verifications, calc.id, articleRef, y) === "verified";
         });
       }
       result[calc.id] = perYear;

@@ -9,7 +9,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { NEC_CATEGORIES } from "@/pages/NECCalculator";
-import { gradientMap, bgMap } from "@/components/landing/MockPrimitives";
+import { bgMap } from "@/components/landing/MockPrimitives";
 import {
   VoltageDropPreview, DwellingLoadPreview, EGCSizingPreview, RVParkPreview,
 } from "@/components/landing/CalcPreview";

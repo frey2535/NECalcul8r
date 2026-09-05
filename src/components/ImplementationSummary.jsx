@@ -1,6 +1,6 @@
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { CheckCircle2, AlertTriangle, XCircle, FileText, Database, Eye, EyeOff, Layers } from "lucide-react";
+import { CheckCircle2, AlertTriangle, XCircle, FileText, Database, Eye, Layers } from "lucide-react";
 
 export default function ImplementationSummary({ summary }) {
   const items = [

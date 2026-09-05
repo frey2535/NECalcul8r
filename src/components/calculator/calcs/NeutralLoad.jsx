@@ -177,7 +177,7 @@ export default function NeutralLoad({ category, necYear = "2020" }) {
           <p className="mb-1"><strong>220.61(C) — Prohibited Reductions:</strong> No reduction for nonlinear loads on 3φ 4W wye. 220.61(C) PROHIBITS reduction — it does NOT supply a formula for exact harmonic neutral current. External input required (harmonic study, equipment data, measurement, or manufacturer information).</p>
           <p className="mb-1"><strong>RMS Combination:</strong> Total RMS: entered value used directly (fundamental NOT added again). Harmonic-only: root-sum-square sqrt(fundamental² + harmonic²). Individual spectrum: UNSUPPORTED.</p>
           <p className="mt-2 text-amber-700 dark:text-amber-400">
-            ⚠ Verification Status: DEFECT CORRECTED — ADDITIONAL DEFECT FOUND. Pending verification against authorized 2020 NFPA 70 text.
+            ⚠ Verification Status: Corrected model pending final verification against authorized NEC text for each edition.
           </p>
         </NoteBox>
       </div>

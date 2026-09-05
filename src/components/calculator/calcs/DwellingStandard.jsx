@@ -14,7 +14,7 @@ function buildFormulas(nec) {
   return [
     { label: "General Lighting Load", formula: `Lighting VA = Floor Area (sq ft) × ${nec.DWELLING_LIGHTING_VA_PER_SQFT} VA/sq ft`, description: `NEC 220.12 Table — dwellings use ${nec.DWELLING_LIGHTING_VA_PER_SQFT} VA/sq ft` },
     { label: "Lighting Demand (NEC 220.42)", formula: `Demand = ${demandDesc}`, description: "Applied to general lighting + small appliance + laundry circuits" },
-    { label: "Range Demand", formula: "Col A: <3½ kW % of nameplate | Col B: 3½–8¾ kW | Col C: table kW (8¾–12 kW) | Note 1: +5% per kW or major fraction over 12 kW", description: "Cooking demand table. 2017 uses Table 220.55; 2020+ uses Table 220.60. One 12 kW range = 8 kW. Ranges ≤8¾ kW use Column A/B percent of nameplate, not 8 kW flat." },
+    { label: "Range Demand", formula: "Col A: <3½ kW % of nameplate | Col B: 3½–8¾ kW | Col C: table kW (8¾–12 kW) | Note 1: +5% per kW or major fraction over 12 kW", description: "Cooking demand table: Table 220.55. NEC 220.60 is the separate noncoincident-load rule. One 12 kW range = 8 kW. Ranges ≤8¾ kW use Column A/B percent of nameplate, not 8 kW flat." },
     { label: "Service Amperage", formula: "A = Total VA / Voltage", description: "For 240V single-phase service" },
   ];
 }
@@ -64,7 +64,7 @@ export default function DwellingStandard({ category, necYear = "2023" }) {
         <ResultSection title="Service Sizing">
           <ResultRow label="Total Load" value={totalVA.toFixed(0)} unit="VA" highlight />
           <ResultRow label="Total Amperage" value={totalAmps.toFixed(1)} unit="A" highlight />
-          <ResultRow label="Minimum Service Size" value={`${minService}A`} sub="NEC 230.42" highlight />
+          <ResultRow label="Minimum Service Size" value={`${minService}A`} sub="NEC 230.79(C)" highlight />
         </ResultSection>
         <FormulaBox steps={steps} formulas={buildFormulas(nec)} />
         {TABLES.map(t => <NECTableDisplay key={t.id} title={t.article} headers={t.headers} rows={t.rows} note={t.note} compact />)}
@@ -74,7 +74,7 @@ export default function DwellingStandard({ category, necYear = "2023" }) {
             <li>220.52 / 210.11(C): minimum 2 small-appliance circuits and 1 laundry circuit at 1500 VA each. 210.11(C)(3) bathroom circuit is required but is not an extra 1500 VA — 220.14(J).</li>
             <li>Range per {rangeDemandArticle} (Columns A/B/C and Note 1). One household dryer: 5000 W or nameplate, 220.54. 220.53 75% applies only with 4+ fastened appliances other than range, dryer, space heating, or AC. Enter the larger of heating vs cooling in HVAC.</li>
             <li>Feeder/service neutral (220.61) is not calculated here — use the Neutral Load calculator. D1(b) motor/A/C additions (430.24 / 440) are not in this calculator.</li>
-            <li>Minimum service: {nec.DWELLING_MIN_SERVICE_AMPS}A per 230.42(B).</li>
+            <li>Minimum one-family dwelling service: {nec.DWELLING_MIN_SERVICE_AMPS}A per 230.79(C).</li>
             {nec.DWELLING_SPD_REQUIRED && <li><strong>230.67 ({necYear}):</strong> SPD Type 1 or 2 required for this dwelling unit service.</li>}
             {nec.DWELLING_OUTDOOR_DISCONNECT_REQUIRED && <li><strong>230.85 ({necYear}):</strong> Outdoor emergency disconnect required for one- and two-family dwellings.</li>}
             {nec.GFCI_SCOPE_DWELLING && <li><strong>210.8(A) GFCI scope ({necYear}):</strong> {nec.GFCI_SCOPE_DWELLING}</li>}

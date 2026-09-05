@@ -25,9 +25,15 @@ const DEMAND_TABLE_REF = {
   "2026": "Table 220.120 (pending verification)",
 };
 
-// ─── Standard shore power receptacle presets (NEC 555.11) ──────────
+const RECEPTACLE_ARTICLE_REF = {
+  "2017": "555.19(A)",
+  "2020": "555.33(A)",
+  "2023": "555.33(A)",
+  "2026": "555.33(A) (pending verification)",
+};
+
+// ─── Standard shore power receptacle presets (2017: 555.19(A); 2020+: 555.33(A)) ──────────
 const RECEPTACLE_PRESETS = {
-  "20A":  { amps: 20,  voltage: 120, poles: 1 },
   "30A":  { amps: 30,  voltage: 120, poles: 1 },
   "50A":  { amps: 50,  voltage: 240, poles: 2 },
   "60A":  { amps: 60,  voltage: 240, poles: 2 },
@@ -49,7 +55,7 @@ export const LOAD_TYPE_LABELS = {
   retail: "Retail", fire_pump: "Fire Pump", other: "Other User Load",
 };
 
-export const RECEPTACLE_RATINGS = ["20A", "30A", "50A", "60A", "100A", "custom"];
+export const RECEPTACLE_RATINGS = ["30A", "50A", "60A", "100A", "custom"];
 
 /**
  * Resolve receptacle electrical properties from an entry.
@@ -139,6 +145,7 @@ function computeMarinaPhaseLoading(receptacles, phases, phaseMode) {
   const numPhases = phases === "three" ? 3 : 2;
   const phaseLabels = phases === "three" ? ["A", "B", "C"] : ["L1", "L2"];
   const phaseCurrents = new Array(numPhases).fill(0);
+  const phaseReceptacleCounts = new Array(numPhases).fill(0);
 
   for (const rec of receptacles) {
     const { amps, poles, quantity } = resolveReceptacle(rec);
@@ -148,14 +155,25 @@ function computeMarinaPhaseLoading(receptacles, phases, phaseMode) {
       const idx = phaseLabels.indexOf(rec.manualPhase);
       if (idx >= 0) {
         phaseCurrents[idx] += quantity * amps;
+        phaseReceptacleCounts[idx] += quantity;
       } else {
-        for (let p = 0; p < numPhases; p++) phaseCurrents[p] += quantity * amps / numPhases;
+        for (let p = 0; p < numPhases; p++) {
+          phaseCurrents[p] += quantity * amps / numPhases;
+          phaseReceptacleCounts[p] += quantity / numPhases;
+        }
       }
     } else {
       if (poles >= 2) {
-        for (let p = 0; p < numPhases; p++) phaseCurrents[p] += quantity * amps;
+        for (let p = 0; p < numPhases; p++) {
+          phaseCurrents[p] += quantity * amps;
+          phaseReceptacleCounts[p] += quantity;
+        }
       } else {
-        for (let i = 0; i < quantity; i++) phaseCurrents[i % numPhases] += amps;
+        for (let i = 0; i < quantity; i++) {
+          const phaseIndex = i % numPhases;
+          phaseCurrents[phaseIndex] += amps;
+          phaseReceptacleCounts[phaseIndex] += 1;
+        }
       }
     }
   }
@@ -163,7 +181,7 @@ function computeMarinaPhaseLoading(receptacles, phases, phaseMode) {
   const maxI = Math.max(...phaseCurrents);
   const minI = Math.min(...phaseCurrents);
   const imbalance = maxI > 0 ? ((maxI - minI) / maxI) * 100 : 0;
-  return { phaseCurrents, imbalance, phaseLabels };
+  return { phaseCurrents, phaseReceptacleCounts, imbalance, phaseLabels };
 }
 
 /**
@@ -174,6 +192,7 @@ function computeMarinaPhaseLoading(receptacles, phases, phaseMode) {
 export function calcMarinaShorePower(v, nec, necYear) {
   const year = necYear || nec?.year || "2023";
   const demandTableRef = nec?.MARINA_DEMAND_TABLE || DEMAND_TABLE_REF[year] || DEMAND_TABLE_REF["2023"];
+  const receptacleArticleRef = RECEPTACLE_ARTICLE_REF[year] || RECEPTACLE_ARTICLE_REF["2023"];
   const receptacles = (v.receptacles || []).filter(r => (parseInt(r.quantity) || 0) > 0);
   const additionalLoads = v.additionalLoads || [];
   const voltage = parseFloat(v.voltage) || 208;
@@ -222,9 +241,14 @@ export function calcMarinaShorePower(v, nec, necYear) {
   // ── Step 5: Connected marina load ──
   const totalConnectedReceptacles = recDetails.reduce((s, d) => s + d.totalVA, 0);
   const totalReceptacleCount = recDetails.reduce((s, d) => s + d.quantity, 0);
+  const phaseLoading = computeMarinaPhaseLoading(receptacles, phases, phaseMode);
+  const phaseCurrents = phaseLoading.phaseCurrents;
+  const phaseReceptacleCounts = phaseLoading.phaseReceptacleCounts;
+  const imbalance = phaseLoading.imbalance;
+  const demandReceptacleCount = Math.ceil(Math.max(0, ...phaseReceptacleCounts));
 
   // ── Step 6: Demand factor from year-owned MARINA_DEMAND (2017 Table 555.12 / 2020 Table 555.6) ──
-  const demandFactorPct = marinaDemandPct(nec, totalReceptacleCount);
+  const demandFactorPct = marinaDemandPct(nec, demandReceptacleCount);
   const demandFactor = demandFactorPct / 100;
 
   // ── Step 7: Apply demand factor ──
@@ -278,9 +302,6 @@ export function calcMarinaShorePower(v, nec, necYear) {
     ? calcVoltageDrop({ voltage, current: totalA, length, material, phases, selectedAWG: conductor.awg }, nec)
     : null;
 
-  // ── Steps 18-19: Phase loading and imbalance ──
-  const { phaseCurrents, imbalance } = computeMarinaPhaseLoading(receptacles, phases, phaseMode);
-
   // ── Build step-by-step trace ──
   const steps = [];
 
@@ -303,10 +324,17 @@ export function calcMarinaShorePower(v, nec, necYear) {
     result: totalConnectedReceptacles, unit: "VA",
   });
   steps.push({
-    label: "Total Receptacle Count",
-    formula: "N = Σ receptacle quantities",
+    label: "Total Shore Power Receptacle Count",
+    formula: "N_total = Σ receptacle quantities",
     expression: recDetails.map(d => d.quantity).join(" + ") || "0",
     result: totalReceptacleCount, unit: "receptacles",
+  });
+  steps.push({
+    label: "Demand Receptacle Count",
+    formula: "N_demand = maximum receptacles connected to any one line after balancing",
+    expression: phaseLabels.map((p, i) => `${p}: ${Math.ceil(phaseReceptacleCounts[i] || 0)}`).join(", "),
+    result: demandReceptacleCount, unit: "receptacles",
+    note: "Used for the marina demand-factor lookup.",
   });
   // Per-dock breakdown (multi-dock mode)
   const dockEntries = Object.values(dockGroups).filter(d => d.dock !== "Unassigned");
@@ -323,9 +351,9 @@ export function calcMarinaShorePower(v, nec, necYear) {
   steps.push({
     label: `Demand Factor (${demandTableRef})`,
     formula: `DF = ${demandTableRef} lookup by receptacle count`,
-    expression: `${demandTableRef} → ${totalReceptacleCount} receptacles → ${demandFactorPct}%`,
+    expression: `${demandTableRef} → ${demandReceptacleCount} receptacles on the maximum line → ${demandFactorPct}%`,
     result: demandFactorPct, unit: "%",
-    note: `NEC ${year}: ${demandTableRef}. Row selected by total receptacle count (notes: multiple receptacles at one slip count as multiple receptacles).`,
+    note: `NEC ${year}: ${demandTableRef}. Row selected by maximum receptacles on any line after phase balancing.`,
   });
   steps.push({
     label: "Shore Power Demand Load",
@@ -473,8 +501,11 @@ export function calcMarinaShorePower(v, nec, necYear) {
       }),
     totalConnectedReceptacles,
     totalReceptacleCount,
+    demandReceptacleCount,
+    phaseReceptacleCounts: phaseReceptacleCounts.map(c => Math.ceil(c)),
     demandFactorPct,
     demandTableRef,
+    receptacleArticleRef,
     demandLoadShore,
     additionalLoads: loadDetails,
     totalAdditional: Math.round(totalAdditional),
@@ -497,7 +528,7 @@ export function calcMarinaShorePower(v, nec, necYear) {
   };
 
   // ── Build trace — year-specific references actually used ──
-  const articles = [demandTableRef.replace("Table ", ""), "555.11", "240.6(A)", "250.122", (nec.AMPACITY_TABLE || "Table 310.15(B)(16)").replace("Table ", ""), "210.19", "215.2"];
+  const articles = [demandTableRef.replace("Table ", ""), receptacleArticleRef.replace(" (pending verification)", ""), "240.6(A)", "250.122", (nec.AMPACITY_TABLE || "Table 310.15(B)(16)").replace("Table ", ""), "210.19", "215.2"];
   const tables = [demandTableRef, "Table 240.6(A)", "Table 250.122", nec.AMPACITY_TABLE || "Table 310.15(B)(16)"];
   const fields = ["STD_OCPD_SIZES", "COPPER_AMPACITY", "ALUMINUM_AMPACITY", "EGC_TABLE", "RESISTIVITY", "CONDUCTOR_CM"];
 

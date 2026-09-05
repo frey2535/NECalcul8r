@@ -5,7 +5,7 @@ import FormulaBox from "../FormulaBox";
 import NECTableDisplay from "../NECTableDisplay";
 import { getTablesById } from "@/lib/necTables";
 import { getNecData } from "@/data/nec";
-import { calcMotorBranchCircuit, getMaxOCPD } from "./logic/motorBranchCircuitCalc";
+import { calcMotorBranchCircuit } from "./logic/motorBranchCircuitCalc";
 
 const FORMULAS = [
   { label: "FLC (NEC 430.6)", formula: "Use Table 430.248 (1-phase) or 430.250 (3-phase) — NOT nameplate FLA", description: "Table FLC is always used for conductor and OCPD sizing per NEC 430.6(A)" },

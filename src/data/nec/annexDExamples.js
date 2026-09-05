@@ -39,8 +39,8 @@ export const ANNEX_D_EXAMPLES = [
       ["Range (see Table 220.55)", "8,000 VA", "Table 220.55"],
       ["Dryer Load (see Table 220.54)", "5,500 VA", "220.54"],
       ["Net Calculated Load", "18,600 VA", "—"],
-      ["18,600 VA ÷ 240 V (120/240-V, 3-wire, 1φ)", "78 A", "230.42(B), 230.79"],
-      ["Minimum service conductors & disconnecting means", "100 A", "230.42(B), 230.79"],
+      ["18,600 VA ÷ 240 V (120/240-V, 3-wire, 1φ)", "78 A", "230.42(A), 230.79(C)"],
+      ["Minimum service conductors & disconnecting means", "100 A", "230.79(C)"],
       ["Calculation for Neutral — Feeder & Service", "", ""],
       ["Lighting and Small-Appliance Load", "5,100 VA", "—"],
       ["Range: 8,000 VA at 70%", "5,600 VA", "220.61"],
@@ -48,7 +48,7 @@ export const ANNEX_D_EXAMPLES = [
       ["Total Neutral Load", "14,550 VA", "—"],
       ["Calculated Load for Neutral: 14,550 VA ÷ 240 V", "61 A", "—"],
     ],
-    note: "NEC Annex D Example D1(a): Verified against NFPA 70-2017 text. Standard method for a one-family dwelling with 1500 ft² floor area, 12-kW range, and 5.5-kW dryer. Minimum service is 100A per 230.42(B) and 230.79.",
+    note: "NEC Annex D Example D1(a): Verified against NFPA 70-2017 text. Standard method for a one-family dwelling with 1500 ft² floor area, 12-kW range, and 5.5-kW dryer. Minimum one-family dwelling service is 100A per 230.79(C).",
   },
 
   // ─── D1(b) One-Family Dwelling with Additional Loads ────────────

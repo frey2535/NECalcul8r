@@ -88,13 +88,13 @@
  *
  * ─── VERIFICATION STATUS ───────────────────────────────────────────
  * Source: 2020 NEC (NFPA 70-2020) — primary source per user requirement.
- * Status: DEFECT CORRECTED — ADDITIONAL DEFECT FOUND
+ * Status: Corrected model pending source verification
  *   - Arithmetic sum of fundamental + harmonic REMOVED
  *   - RMS combination implemented (total RMS direct, harmonic-only RSS)
  *   - Four concepts distinguished in output
  *   - Range/dryer trace enhanced with incorporation method
  *   - Individual spectrum labeled unsupported
- * Pending: verification against authorized 2020 NFPA 70 text.
+ * Pending: final verification against authorized NEC text for each edition.
  */
 
 import { withTrace } from "@/lib/calculatorTrace";

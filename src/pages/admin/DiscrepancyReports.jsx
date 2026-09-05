@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { CALCULATORS } from "@/data/nec/audit";
 import {
-  CheckCircle2, XCircle, Eye, MessageSquare, Filter, Loader2, ArrowUpDown,
+  CheckCircle2, XCircle, Eye, Filter, Loader2,
   Clock, FileText, Image, ChevronDown, ChevronUp,
 } from "lucide-react";
 

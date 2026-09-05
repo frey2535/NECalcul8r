@@ -1,7 +1,6 @@
 import React from "react";
 import { cn } from "@/lib/utils";
 import { BookOpen, ShieldCheck, Calendar, Check, FileText, Database, Eye } from "lucide-react";
-import { MockResultRow, MockResultSection } from "./MockPrimitives";
 
 // ─── NEC Tables Page Preview ───
 

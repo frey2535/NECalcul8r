@@ -130,7 +130,7 @@ export function calcDwellingStandard(v, nec) {
     { label: "Dryer Demand (Table 220.54)", formula: "Demand = max(5,000, nameplate) for one household dryer", expression: dryerW > 0 ? `max(5,000, ${dryerW})` : "0", result: Math.round(dryerDemand), unit: "VA" },
     { label: apply220_53 ? "Fixed Appliances (220.53 at 75%)" : "Fixed Appliances (nameplate)", formula: apply220_53 ? "Demand = (dishwasher + disposer + WH + other) × 75%; HVAC at 100% (220.60 largest heating/cooling)" : "Demand = nameplate (220.53 75% applies only with 4+ fastened appliances, excluding range/dryer/HVAC)", expression: `${Math.round(qualifyingDemand)} + HVAC ${Math.round(hvacVA)}`, result: Math.round(fixedLoads), unit: "VA" },
     { label: "Total Calculated Load", formula: "Total = lighting demand + range + dryer + fixed loads", expression: `${Math.round(lightingDemand)} + ${Math.round(rangeDemand)} + ${Math.round(dryerDemand)} + ${Math.round(fixedLoads)}`, result: Math.round(totalVA), unit: "VA" },
-    { label: "Service Size", formula: "Amps = Total VA ÷ V", expression: `${Math.round(totalVA)} ÷ ${voltage}`, result: Math.round(totalAmps * 10) / 10, unit: "A", note: `→ min ${minService} A (230.42(B))` },
+    { label: "Service Size", formula: "Amps = Total VA ÷ V", expression: `${Math.round(totalVA)} ÷ ${voltage}`, result: Math.round(totalAmps * 10) / 10, unit: "A", note: `→ min ${minService} A (230.79(C))` },
   ];
   const result = {
     genLighting_VA: Math.round(genLighting),
@@ -164,7 +164,7 @@ export function calcDwellingStandard(v, nec) {
     articles_used: dwellingYearArticles(nec, [
       "220.12", "220.14(J)", "220.40", "220.42", "220.52(A)", "220.52(B)",
       "220.54", rangeDemandArticle.replace(/^Table /, ""), "220.60", "210.11(C)(1)", "210.11(C)(2)", "210.11(C)(3)",
-      "240.6(A)", "230.42", "210.8(A)", "210.52(C)(2)",
+      "240.6(A)", "230.42", "230.79(C)", "210.8(A)", "210.52(C)(2)",
       ...(apply220_53 ? ["220.53"] : []),
     ]),
     tables_used: ["Table 220.12", "Table 220.42", "Table 220.54", rangeDemandArticle, "Table 240.6(A)"],
@@ -336,6 +336,7 @@ export function calcDwellingOptional(v, nec) {
       "220.82(C)(6)",
       "240.6(A)",
       "230.42",
+      "230.79(C)",
       "210.8(A)",
       "210.52(C)(2)",
     ]),

@@ -127,9 +127,9 @@ export const CALCULATORS = [
       { ref: "220.53", desc: "75% for 4+ fastened appliances other than range/dryer/HVAC", changed: false, source: N17 },
       { ref: "220.60", desc: "Noncoincident loads — larger of heating vs cooling", changed: false, source: N17 },
       { ref: "240.6(A)", desc: "Standard OCPD sizes", changed: false, source: DEV },
-      { ref: "230.42(B)", desc: "Minimum dwelling service — 100A", changed: false, source: DEV, note: "100A minimum since 1959 per industry consensus. Needs codebook confirmation." },
+      { ref: "230.79(C)", desc: "Minimum one-family dwelling service — 100A", changed: false, source: DEV, note: "100A minimum dwelling service." },
       { ref: "230.85", desc: "Outdoor emergency disconnect (2020+)", changed: true, source: PEND, note: "2017: not required. 2020+: required for 1- and 2-family dwellings. Displayed in NoteBox." },
-      { ref: "230.67", desc: "SPD required for dwelling services (2023+)", changed: true, source: PEND, note: "2017/2020: not required. 2023+: Type 1 or 2 SPD required. Displayed in NoteBox." },
+      { ref: "230.67", desc: "SPD required for dwelling services (2020+)", changed: true, source: PEND, note: "2017: not required. 2020+: Type 1 or Type 2 SPD required. Displayed in NoteBox." },
       { ref: "210.8(A)", desc: "GFCI scope — dwelling receptacles", changed: true, source: PEND, note: "2017: narrower 125V/15-20A scope. 2020: expanded to 250V, more areas, laundry, all kitchen. Displayed in NoteBox." },
       { ref: "210.52(C)(2)", desc: "Island/peninsula sq-ft receptacle rule", changed: true, source: PEND, note: "2017: required if ≥12 sq ft. 2020: sq-ft tiered rule (first 9 sq ft, +1 per 18 sq ft). Displayed in NoteBox." },
       { ref: "210.52(G)", desc: "Garage/basement/accessory receptacle — multifamily expansion", changed: true, source: PEND, note: "2020: expanded to include multifamily dwellings. Displayed in NoteBox." },
@@ -155,7 +155,7 @@ export const CALCULATORS = [
       { ref: "220.82(C)", desc: "HVAC — largest of (C)(1)–(C)(6): 100% AC, 100% HP, 65% supplemental, 65%/40% space heat, 100% thermal storage", changed: false, source: N17 },
       { ref: "240.6(A)", desc: "Standard OCPD sizes", changed: false, source: DEV },
       { ref: "230.85", desc: "Outdoor emergency disconnect (2020+)", changed: true, source: PEND, note: "2017: not required. 2020+: required for 1- and 2-family dwellings. Displayed in NoteBox." },
-      { ref: "230.67", desc: "SPD required for dwelling services (2023+)", changed: true, source: PEND, note: "2017/2020: not required. 2023+: required. Displayed in NoteBox." },
+      { ref: "230.67", desc: "SPD required for dwelling services (2020+)", changed: true, source: PEND, note: "2017: not required. 2020+: required. Displayed in NoteBox." },
       { ref: "210.8(A)", desc: "GFCI scope — dwelling receptacles", changed: true, source: PEND, note: "2017: narrower scope. 2020: expanded. Displayed in NoteBox." },
       { ref: "210.52(C)(2)", desc: "Island/peninsula sq-ft receptacle rule", changed: true, source: PEND, note: "2017: ≥12 sq ft threshold. 2020: sq-ft tiered rule. Displayed in NoteBox." },
       { ref: "210.52(G)", desc: "Garage/basement/accessory receptacle — multifamily expansion", changed: true, source: PEND, note: "2020: expanded to multifamily dwellings. Displayed in NoteBox." },
@@ -232,11 +232,11 @@ export const CALCULATORS = [
       { ref: "220.84(A)", desc: "3+ units, one feeder per unit, electric cooking", changed: false, source: N17 },
       { ref: "220.84(B)", desc: "House loads per Part III, added after Table 220.84", changed: false, source: N17 },
       { ref: "220.84(C)", desc: "Connected unit load: 3 VA/ft², SA/laundry, nameplate, larger of A/C or heat", changed: false, source: N17 },
-      { ref: "Table 220.84", desc: "Demand factors 45%→26% by unit count; 51–61 at 27%, 62+ at 26%", changed: false, source: N17 },
+      { ref: "Table 220.84", desc: "Demand factors 45%→23% by unit count; 51–55 at 25%, 56–61 at 24%, 62+ at 23%", changed: false, source: N17 },
       { ref: "210.52(F) Exception", desc: "Common laundry may omit in-unit laundry circuit", changed: false, source: N17 },
       { ref: "240.6(A)", desc: "Standard OCPD sizes", changed: false, source: DEV },
     ],
-    sourceNotes: "2017 Table 220.84 bands gated including 62-and-over at 26%. House loads are user-entered Part III results. 220.84 Exception (no-cooking comparison) and 220.61 / D5(b) phase balancing are other paths.",
+    sourceNotes: "2017 Table 220.84 bands gated including 51–55 at 25%, 56–61 at 24%, and 62-and-over at 23%. House loads are user-entered Part III results. 220.84 Exception (no-cooking comparison) and 220.61 / D5(b) phase balancing are other paths.",
     testInputs: { numUnits: 12, sqftPerUnit: 900, rangeKW: 12, dryerKW: 5, acKW: 3.5, waterHeaterKW: 4.5, houseLighting: 3000, houseHVAC: 5000, voltage: 208, phases: "three" },
     calculate: (i, nec) => {
       const r = calcMultifamilyLoad(i, nec);
@@ -388,13 +388,17 @@ export const CALCULATORS = [
     id: "welding_receptacle", name: "Welder Load (630.11 / 630.12)",
     category: "Motor / HVAC", usesGetNecData: true, yearSensitive: false,
     articles: [
-      { ref: "630.11", desc: "Arc welder conductor — rated primary × √(DC%/100)", changed: false, source: DEV, note: "Duty cycle formula and multiplier table need verification." },
+      { ref: "630.11", desc: "Arc welder conductor — rated primary × Table 630.11(A) duty-cycle multiplier", changed: false, source: DEV, note: "Uses listed table multipliers, not a raw square-root duty-cycle formula." },
       { ref: "630.12", desc: "Welder OCPD — 200% of rated primary", changed: false, source: DEV },
     ],
-    sourceNotes: "Welder sizing uses thermal averaging (√ of duty cycle) and a 200% OCPD allowance. Both articles need verification against each code edition.",
+    sourceNotes: "Welder sizing uses the listed Table 630.11(A) duty-cycle multipliers and a 200% OCPD allowance. Both articles need verification against each code edition.",
     testInputs: { nameplateAmps: 60, dutyCycle: 60 },
     calculate: (i, nec) => {
-      const dc = Math.sqrt(i.dutyCycle / 100);
+      const table = nec.WELDER_DUTY_CYCLE_TABLE || [];
+      const dc = table.find((r) => r.dc === i.dutyCycle)?.mult
+        ?? table.filter((r) => r.dc >= i.dutyCycle).sort((a, b) => a.dc - b.dc)[0]?.mult
+        ?? table[0]?.mult
+        ?? Math.sqrt(i.dutyCycle / 100);
       return { conductorA: +(i.nameplateAmps * dc).toFixed(1), maxOCPD: +(i.nameplateAmps * nec.WELDER_OCPD_MULTIPLIER).toFixed(1) };
     },
   },
@@ -407,11 +411,11 @@ export const CALCULATORS = [
       { ref: "625.42", desc: "EVSE continuous load — 125% of rating", changed: false, source: DEV, note: "125% multiplier reportedly stable. 2023 added minimum 7,200VA." },
       { ref: "625.42(A)", desc: "EVSE minimum load VA", changed: true, source: DEV, note: "2017:none, 2020:none, 2023:7,200VA. NEEDS VERIFICATION against NEC 2023 text." },
       { ref: "625.54", desc: "GFCI protection for EVSE", changed: true, source: DEV, note: "2017:not req. 2020:required. NEEDS VERIFICATION against NEC 2020 text." },
-      { ref: "230.67", desc: "SPD required for dwellings", changed: true, source: DEV, note: "2017:no, 2020:no, 2023:yes. NEEDS VERIFICATION against NEC 2023 text." },
+      { ref: "230.67", desc: "SPD required for dwellings", changed: true, source: DEV, note: "2017:no, 2020+:yes. NEEDS VERIFICATION against NEC 2020 text." },
       { ref: "230.85", desc: "Outdoor emergency disconnect", changed: true, source: DEV, note: "2017:no, 2020:yes. NEEDS VERIFICATION against NEC 2020 text." },
       { ref: "240.6(A)", desc: "Standard OCPD sizes", changed: false, source: DEV },
     ],
-    sourceNotes: "The ONLY year-sensitive calculator. Uses three date-gated requirements: GFCI (2020+), minimum load VA (2023+), SPD/disconnect (2020+/2023+). ALL of these critical thresholds need verification against the actual codebook text. The 2026 values are speculative.",
+    sourceNotes: "The ONLY year-sensitive calculator. Uses three date-gated requirements: GFCI (2020+), minimum load VA (2023+), and SPD/disconnect (2020+). ALL of these critical thresholds need verification against the actual codebook text. The 2026 values are speculative.",
     testInputs: { evseA: 32, voltage: 240, numUnits: 1 },
     calculate: (i, nec) => {
       const ca = i.evseA * nec.EV_CONTINUOUS_MULTIPLIER;
@@ -498,12 +502,12 @@ export const CALCULATORS = [
     category: "Power / Misc", usesGetNecData: true, yearSensitive: false,
     articles: [
       { ref: "230.42(A)", desc: "Service conductor — 125% continuous + 100% noncontinuous", changed: false, source: DEV },
-      { ref: "230.42(B)", desc: "Minimum dwelling service — 100A", changed: false, source: DEV, note: "100A minimum since 1959 per consensus. Needs verification." },
+      { ref: "230.79(C)", desc: "Minimum one-family dwelling service — 100A", changed: false, source: DEV, note: "100A minimum dwelling service." },
       { ref: "240.6(A)", desc: "Standard OCPD sizes", changed: false, source: DEV },
       { ref: "230.67", desc: "Dwelling SPD requirement", changed: true, source: PEND, note: "2020: new requirement — Type 1 or 2 SPD required for dwelling unit services. Displayed in result row + NoteBox." },
       { ref: "230.85", desc: "Outdoor emergency disconnect", changed: true, source: PEND, note: "2020: new requirement for 1- and 2-family dwellings. Displayed in result row + NoteBox." },
     ],
-    sourceNotes: "230.42 mirrors the 125% rule for service conductors. 100A minimum for dwellings needs verification in each edition. 230.67/230.85 added in 2020 per Eaton PDF — displayed dynamically.",
+    sourceNotes: "230.42 mirrors the 125% rule for service conductors. 230.79(C) carries the 100A one-family dwelling minimum. 230.67/230.85 added in 2020 per Eaton PDF — displayed dynamically.",
     testInputs: { totalVA: 40000, voltage: 240, continuousPct: 80 },
     calculate: (i, nec) => {
       const ta = i.totalVA / i.voltage, ca = ta * (i.continuousPct / 100), nca = ta * ((100 - i.continuousPct) / 100);
@@ -702,7 +706,7 @@ export const CALCULATORS = [
     id: "overcurrent_protection", name: "Overcurrent Protection (240)",
     category: "Wire / Conduit / Sizing", usesGetNecData: true, yearSensitive: false,
     articles: [
-      { ref: "240.4", desc: "Next standard size up (≤800A)", changed: false, source: DEV },
+      { ref: "240.4(B)", desc: "Next standard size up for conductor ampacity not matching a standard size (<800A)", changed: false, source: DEV },
       { ref: "240.4(D)", desc: "Small conductor limits: 14=15A, 12=20A, 10=30A", changed: false, source: DEV, note: "Each size limit needs verification." },
       { ref: "210.20(A)", desc: "Continuous load OCPD — 125%", changed: false, source: DEV },
       { ref: "240.6(A)", desc: "Standard OCPD sizes", changed: false, source: DEV },
@@ -738,7 +742,7 @@ export const CALCULATORS = [
     category: "Load Calculations", usesGetNecData: true, yearSensitive: false,
     articles: [
       { ref: "Table 555.12", desc: "Marina shore power demand factors (2017); renumbered Table 555.6 in 2020; moved to Table 220.120 in 2023", changed: true, source: PENDING_CODEBOOK, yearRefs: { "2017": "Table 555.12", "2020": "Table 555.6", "2023": "Table 220.120", "2026": "Table 220.120 (pending)" }, note: "Demand factors by number of shore power receptacles. Read from centralized necTables.js. VALUES unchanged across editions but section number reorganized: 2017=Table 555.12, 2020=Table 555.6, 2023=Table 220.120 (moved to Article 220). 2026 status: unverified. Needs per-year codebook verification of both values AND section numbers." },
-      { ref: "555.11", desc: "Marina shore power receptacle ratings — 30A minimum, pin-and-sleeve for 60A+ (2017); renumbered in 2020/2023", changed: true, source: PENDING_CODEBOOK, yearRefs: { "2017": "555.11", "2020": "555.11 (renumbered — verify)", "2023": "555.11 (renumbered — verify)", "2026": "pending" }, note: "Receptacle ratings: 20A/30A/50A/60A/100A/custom. Section number may have changed in 2020 reorganization. Needs per-year codebook verification." },
+      { ref: "555.19(A)", desc: "Marina shore power receptacle ratings — 30A minimum, locking/grounding for 30A/50A, pin-and-sleeve for 60A+ (2017); 2020+ moved to 555.33(A)", changed: true, source: PENDING_CODEBOOK, yearRefs: { "2017": "555.19(A)", "2020": "555.33(A)", "2023": "555.33(A)", "2026": "555.33(A) (pending)" }, note: "Shore-power receptacles are 30A minimum. The app no longer offers 20A as a shore-power preset; custom remains for reviewed nonstandard cases. Needs per-year codebook verification." },
       { ref: "240.6(A)", desc: "Standard OCPD sizes", changed: false, source: INHERITED_VERIFIED, note: "Inherited from centralized necTables.js — same data used by all production calculators." },
       { ref: "250.122", desc: "EGC sizing by OCPD", changed: false, source: INHERITED_VERIFIED, note: "Inherited from centralized necTables.js — same data used by EGC Sizing calculator." },
       { ref: "Table 310.15(B)(16)", desc: "Conductor ampacities", changed: false, source: INHERITED_VERIFIED, note: "Inherited from centralized necTables.js — same data used by Conductor Ampacity calculator." },
@@ -753,7 +757,7 @@ export const CALCULATORS = [
       { ref: "210.19", desc: "Voltage drop — Informational Note recommendation (NOT mandatory)", changed: false, source: PENDING_CODEBOOK, note: "NEC Informational Note (formerly Fine Print Note) — 3% branch circuit VD is a RECOMMENDATION, not a mandatory requirement. Needs codebook verification of exact text in each edition." },
       { ref: "215.2", desc: "Feeder voltage drop — Informational Note recommendation (NOT mandatory)", changed: false, source: PENDING_CODEBOOK, note: "NEC Informational Note — 3% feeder VD is a RECOMMENDATION, not a mandatory requirement. Combined branch+feeder 5% is also informational. Needs codebook verification." },
     ],
-    sourceNotes: "Marina shore power demand factors from centralized necTables.js (single source of truth). Article 555 was REORGANIZED across editions: 2017=Table 555.12, 2020=Table 555.6 (renumbered), 2023=Table 220.120 (moved to Article 220, section 555.6 now references 220.120). Demand factor VALUES are unchanged across editions but section numbers differ. 2026 status: UNVERIFIED — year-switch test does NOT make 2026 rules verified. Voltage drop 3%/5% limits are NEC Informational Notes (recommendations), NOT mandatory requirements. Reuses voltage drop, EGC, conductor ampacity, transformer sizing, motor/HVAC/lighting calc engines, and phase balancing. Additional loads calculated using existing production calculators. Table 555.12 row selection is based on total receptacle COUNT (NEC-defined treatment), not input rows — multiple receptacles at one slip count as multiple receptacles per Table 555.12 Notes 1 & 2.",
+    sourceNotes: "Marina shore power demand factors from centralized necTables.js (single source of truth). Article 555 was REORGANIZED across editions: 2017=Table 555.12, 2020=Table 555.6 (renumbered), 2023=Table 220.120 (moved to Article 220, section 555.6 now references 220.120). Demand factor VALUES are unchanged across editions but section numbers differ. 2026 status: UNVERIFIED — year-switch test DOES NOT make 2026 rules verified. Voltage drop 3%/5% limits are NEC Informational Notes (recommendations), NOT mandatory requirements. Reuses voltage drop, EGC, conductor ampacity, transformer sizing, motor/HVAC/lighting calc engines, and phase balancing. Additional loads calculated using existing production calculators. Demand-factor row selection uses the maximum number of shore-power receptacles connected to any one line after balancing, not total receptacles across all lines.",
     testInputs: {
       receptacles: [
         { id: "r1", rating: "30A", quantity: 10, slip: "Slips 1-10", feeder: "Feeder 1", panel: "Panel A" },
@@ -851,7 +855,7 @@ export const CALCULATORS = [
       { ref: "220.61(B)(2)", desc: "Permitted reduction — excess over 200A at 70%", changed: false, source: PEND, note: "Pending verification against authorized NFPA 70-2020." },
       { ref: "220.61(C)", desc: "Prohibited reductions — nonlinear loads on 3φ 4W wye", changed: false, source: PEND, note: "Pending verification against authorized NFPA 70-2020." },
     ],
-    sourceNotes: "DEFECT CORRECTED — ADDITIONAL DEFECT FOUND. v3 redesign: (1) Arithmetic sum of fundamental + harmonic REMOVED. Final neutral amperes now combined via root-sum-square (RSS) for harmonic-only inputs, or taken directly for total-RMS inputs. (2) Neutral study input distinguishes FOUR value types: A. Total neutral RMS current (includes fundamental), B. Harmonic-only neutral RMS current, C. Individual harmonic spectrum (UNSUPPORTED), D. Measured total neutral RMS current. (3) Four concepts distinguished: NEC-calculated maximum unbalanced fundamental load (220.61(A)), NEC-permitted neutral demand reduction (220.61(B)), externally determined harmonic neutral current (NOT a 220.61 formula), final conductor design current (RMS combination). (4) Range/dryer trace shows: appliance demand, permitted %, neutral portion, system type, connection, assigned legs, incorporation method (scalar vs. phase-total), resulting maximum unbalanced neutral load. (5) 220.61(A) NOT described as 'vector-sum formula' — supplies maximum unbalanced load calculation. 220.61(C) NOT described as harmonic-sizing formula — prohibits reduction. (6) Tests NL-H replaced with NL-H1 (harmonic-only RSS) and NL-H2 (total RMS direct). NL-H2 replaced with NL-H2a (harmonic-only + excess RSS) and NL-H2b (total RMS + excess). Range/dryer tests NL-RD1 through NL-RD8 added. NEC article sources pending verification against authorized 2020 NFPA 70 text.",
+    sourceNotes: "Corrected neutral-load model pending final source verification. v3 redesign: (1) arithmetic sum of fundamental + harmonic removed. Final neutral amperes are combined via root-sum-square (RSS) for harmonic-only inputs, or taken directly for total-RMS inputs. (2) Neutral study input distinguishes total neutral RMS current, harmonic-only neutral RMS current, unsupported individual harmonic spectrum, and measured total neutral RMS current. (3) Output distinguishes NEC-calculated maximum unbalanced fundamental load (220.61(A)), NEC-permitted neutral demand reduction (220.61(B)), externally determined harmonic neutral current (not a 220.61 formula), and final conductor design current. (4) Range/dryer trace shows demand, permitted %, neutral portion, system type, connection, assigned legs, incorporation method, and resulting maximum unbalanced neutral load. (5) 220.61(A) is not described as a harmonic formula; 220.61(C) prohibits reduction and requires external harmonic-current input. NEC article sources remain pending verification against authorized NFPA 70 text.",
     testInputs: { systemType: "1φ-3W 120/240V", loads: [{ id: "l1", type: "linear_ln", va: 10000, phase: "L1" }, { id: "l2", type: "linear_ln", va: 5000, phase: "L2" }], neutralStudy: { valueType: "", source: "", totalRmsA: "", harmonicOnlyRmsA: "" } },
     calculate: (i, nec) => {
       const SYS = {
@@ -933,14 +937,14 @@ export const NEC_CHANGE_LOG = [
     id: "cl_230_67",
     article: "230.67",
     title: "Surge Protective Device (SPD) — Dwelling Unit Services",
-    cycle: "2020→2023",
+    cycle: "2017→2020",
     affectedCalcs: ["dwelling_standard", "dwelling_optional", "ev_charging"],
     value2017: "Not required",
-    value2020: "Not required",
-    value2023: "Required — Type 1 or Type 2 SPD for dwelling unit services",
+    value2020: "Required — Type 1 or Type 2 SPD for dwelling unit services",
+    value2023: "Required — carried forward",
     verificationStatus: "pending_manual_review",
     sourceStatus: PEND,
-    notes: "First appeared in 2023. Displayed dynamically in NoteBox. No numeric output change.",
+    notes: "First appears in the app's 2020 year data. Displayed dynamically in NoteBox. No numeric output change.",
   },
   {
     id: "cl_210_8a",
