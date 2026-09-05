@@ -14,7 +14,29 @@ grant select on public.entitlements to authenticated;
 grant select, insert on public.purchase_events to authenticated;
 grant select, insert, update, delete on public.app_records to authenticated;
 
+create or replace function public.current_profile_role()
+returns text
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select role from public.profiles where id = auth.uid();
+$$;
+
+create or replace function public.current_can_manage_codebook()
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select public.current_is_platform_admin() or coalesce(public.current_profile_role(), '') = 'admin';
+$$;
+
 grant execute on function public.current_is_platform_admin() to authenticated;
 grant execute on function public.current_profile_org_id() to authenticated;
 grant execute on function public.current_profile_org_role() to authenticated;
+grant execute on function public.current_profile_role() to authenticated;
+grant execute on function public.current_can_manage_codebook() to authenticated;
 grant execute on function public.organization_by_invite(text) to authenticated;

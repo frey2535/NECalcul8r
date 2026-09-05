@@ -130,6 +130,7 @@ function mapProfile(profile, org) {
     trial_end_date: profile.trial_end_date,
     purchase_source: profile.purchase_source || "manual",
     subscription_status: profile.subscription_status || null,
+    is_platform_admin: Boolean(profile.is_platform_admin),
     created_date: profile.created_date || profile.created_at,
     updated_date: profile.updated_date || profile.updated_at,
   };
