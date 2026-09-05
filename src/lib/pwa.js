@@ -1,7 +1,11 @@
 export function registerServiceWorker() {
   if (typeof window === "undefined" || !("serviceWorker" in navigator)) return;
+  installStaleAssetRecovery();
   if (new URL(window.location.href).searchParams.has("t")) {
-    window.setTimeout(() => sessionStorage.removeItem("necalcul8r_update_in_progress"), 5000);
+    window.setTimeout(() => {
+      sessionStorage.removeItem("necalcul8r_update_in_progress");
+      sessionStorage.removeItem("necalcul8r_stale_asset_reloaded");
+    }, 5000);
   }
   window.addEventListener("load", () => {
     navigator.serviceWorker.register("/sw.js").then((registration) => {
@@ -35,6 +39,32 @@ export function registerServiceWorker() {
   });
 
   watchForBuildUpdates();
+}
+
+function installStaleAssetRecovery() {
+  const recover = (error) => {
+    const message = String(error?.message || error || "");
+    if (!/Failed to fetch dynamically imported module|error loading dynamically imported module|Importing a module script failed/i.test(message)) return;
+    reloadFreshOnce();
+  };
+
+  window.addEventListener("vite:preloadError", (event) => {
+    event.preventDefault();
+    reloadFreshOnce();
+  });
+  window.addEventListener("unhandledrejection", (event) => recover(event.reason));
+  window.addEventListener("error", (event) => recover(event.error || event.message));
+}
+
+function reloadFreshOnce() {
+  const key = "necalcul8r_stale_asset_reloaded";
+  try {
+    if (sessionStorage.getItem(key) === "1") return;
+    sessionStorage.setItem(key, "1");
+  } catch {
+    /* sessionStorage can be unavailable in private mode */
+  }
+  reloadFresh();
 }
 
 function watchForBuildUpdates() {
