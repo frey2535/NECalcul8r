@@ -2,6 +2,15 @@ import React, { createContext, useState, useContext, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 
 const AuthContext = createContext();
+const AUTH_STARTUP_TIMEOUT_MS = 10000;
+
+function withTimeout(promise, ms, message) {
+  let timeoutId;
+  const timeout = new Promise((_, reject) => {
+    timeoutId = window.setTimeout(() => reject(new Error(message)), ms);
+  });
+  return Promise.race([promise, timeout]).finally(() => window.clearTimeout(timeoutId));
+}
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
@@ -22,10 +31,15 @@ export const AuthProvider = ({ children }) => {
     setAuthError(null);
     setIsLoadingPublicSettings(false);
     try {
-      const currentUser = await base44.auth.me();
+      const currentUser = await withTimeout(
+        base44.auth.me(),
+        AUTH_STARTUP_TIMEOUT_MS,
+        "Authentication took too long. Refresh the app to load the newest version."
+      );
       setUser(currentUser);
       setIsAuthenticated(true);
-    } catch {
+    } catch (error) {
+      setAuthError(error);
       setUser(null);
       setIsAuthenticated(false);
     } finally {

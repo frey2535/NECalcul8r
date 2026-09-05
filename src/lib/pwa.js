@@ -109,10 +109,15 @@ async function applyServiceWorkerUpdate(registration) {
   sessionStorage.setItem("necalcul8r_update_in_progress", "1");
   try {
     registration.waiting?.postMessage({ type: "NECALCUL8R_SKIP_WAITING" });
+    await new Promise((resolve) => window.setTimeout(resolve, 250));
   } catch {
     /* skipWaiting is best-effort; the network reload below still fetches the newest app shell */
   }
   await reloadFresh();
+}
+
+export async function refreshApp(targetSha) {
+  await reloadFresh(targetSha);
 }
 
 async function reloadFresh(targetSha) {

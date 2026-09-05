@@ -1,4 +1,4 @@
-import React, { Suspense, lazy } from "react";
+import React, { Suspense, lazy, useEffect, useState } from "react";
 import { Toaster } from "@/components/ui/toaster"
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
@@ -21,6 +21,7 @@ import { useTrialStatus } from '@/hooks/useTrialStatus';
 import TrialExpiredScreen from '@/components/TrialExpiredScreen';
 import InstallAppPrompt from '@/components/InstallAppPrompt';
 import UpdateAvailablePrompt from '@/components/UpdateAvailablePrompt';
+import { refreshApp } from '@/lib/pwa';
 
 // Lazy-loaded route components
 const NECCalculator = lazy(lazyRetry(() => import('@/pages/NECCalculator'), 'NECCalculator'));
@@ -49,17 +50,57 @@ function PageLoader() {
   );
 }
 
+function StartupLoadingScreen() {
+  const [showRecovery, setShowRecovery] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setShowRecovery(true), 5000);
+    return () => window.clearTimeout(timer);
+  }, []);
+
+  const refreshAndUpdate = async () => {
+    setRefreshing(true);
+    await refreshApp();
+  };
+
+  return (
+    <div className="fixed inset-0 flex items-center justify-center bg-background px-6">
+      <div className="max-w-sm text-center space-y-4">
+        <div className="w-8 h-8 border-4 border-slate-200 border-t-slate-800 rounded-full animate-spin mx-auto" />
+        <div>
+          <p className="text-sm font-semibold text-foreground">Loading NECalcul8r…</p>
+          <p className="text-xs text-muted-foreground mt-1">
+            Checking your app session and latest update.
+          </p>
+        </div>
+        {showRecovery && (
+          <div className="rounded-xl border border-border bg-card p-3 shadow-sm">
+            <p className="text-xs text-muted-foreground">
+              If loading is stuck, refresh the full app and install any pending update.
+            </p>
+            <button
+              type="button"
+              onClick={refreshAndUpdate}
+              disabled={refreshing}
+              className="mt-3 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-xs font-bold px-3 py-1.5 transition-colors"
+            >
+              {refreshing ? "Refreshing…" : "Refresh / Update app"}
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin, user } = useAuth();
   const location = useLocation();
   const trialStatus = useTrialStatus(user);
 
   if (isLoadingPublicSettings || isLoadingAuth) {
-    return (
-      <div className="fixed inset-0 flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-slate-200 border-t-slate-800 rounded-full animate-spin"></div>
-      </div>
-    );
+    return <StartupLoadingScreen />;
   }
 
   if (authError?.type === 'user_not_registered') {
