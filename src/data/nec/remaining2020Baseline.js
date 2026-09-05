@@ -163,29 +163,69 @@ export function runRemaining2020Baseline() {
       },
     ]),
 
-    suite("mf_2017", "Multifamily 2017 immutability", calcMultifamilyLoad, NEC_2017, [
+    suite("mf_2017", "Multifamily 2017 corrected Table 220.84 high-unit bands", calcMultifamilyLoad, NEC_2017, [
       {
-        id: "immut_mf_62_2017",
-        description: "2017 62 units stay 26%",
+        id: "mf17_51_25",
+        description: "2017 51 units use 25%",
+        inputs: {
+          sqftPerUnit: 1000, smallApplianceCircuits: 2, laundryCircuits: 1, commonLaundry: false,
+          rangeKW: 12, dryerKW: 0, acKW: 0, heatKW: 0, waterHeaterKW: 0, otherFixedKW: 0,
+          houseLighting: 0, houseHVAC: 0, voltage: 240, phases: "single", numUnits: 51,
+        },
+        expected: { demandFactor: 25, demandedVA: 248625 },
+      },
+      {
+        id: "mf17_56_24",
+        description: "2017 56 units use 24%",
+        inputs: {
+          sqftPerUnit: 1000, smallApplianceCircuits: 2, laundryCircuits: 1, commonLaundry: false,
+          rangeKW: 12, dryerKW: 0, acKW: 0, heatKW: 0, waterHeaterKW: 0, otherFixedKW: 0,
+          houseLighting: 0, houseHVAC: 0, voltage: 240, phases: "single", numUnits: 56,
+        },
+        expected: { demandFactor: 24, demandedVA: 262080 },
+      },
+      {
+        id: "mf17_62_23",
+        description: "2017 62 units use 23%",
         inputs: {
           sqftPerUnit: 1000, smallApplianceCircuits: 2, laundryCircuits: 1, commonLaundry: false,
           rangeKW: 12, dryerKW: 0, acKW: 0, heatKW: 0, waterHeaterKW: 0, otherFixedKW: 0,
           houseLighting: 0, houseHVAC: 0, voltage: 240, phases: "single", numUnits: 62,
         },
-        expected: { demandFactor: 26, demandedVA: 314340 },
+        expected: { demandFactor: 23, demandedVA: 278070 },
       },
     ]),
 
-    suite("mf_2020", "Multifamily 220.84 2020 pending-same 62+ 26%", calcMultifamilyLoad, NEC_2020, [
+    suite("mf_2020", "Multifamily 220.84 2020 corrected high-unit bands", calcMultifamilyLoad, NEC_2020, [
       {
-        id: "mf20_62_26",
-        description: "PENDING: 2020 62 units still 26% (owned copy, not codebook-confirmed)",
+        id: "mf20_51_25",
+        description: "2020 51 units use 25%",
+        inputs: {
+          sqftPerUnit: 1000, smallApplianceCircuits: 2, laundryCircuits: 1, commonLaundry: false,
+          rangeKW: 12, dryerKW: 0, acKW: 0, heatKW: 0, waterHeaterKW: 0, otherFixedKW: 0,
+          houseLighting: 0, houseHVAC: 0, voltage: 240, phases: "single", numUnits: 51,
+        },
+        expected: { demandFactor: 25, demandedVA: 248625 },
+      },
+      {
+        id: "mf20_56_24",
+        description: "2020 56 units use 24%",
+        inputs: {
+          sqftPerUnit: 1000, smallApplianceCircuits: 2, laundryCircuits: 1, commonLaundry: false,
+          rangeKW: 12, dryerKW: 0, acKW: 0, heatKW: 0, waterHeaterKW: 0, otherFixedKW: 0,
+          houseLighting: 0, houseHVAC: 0, voltage: 240, phases: "single", numUnits: 56,
+        },
+        expected: { demandFactor: 24, demandedVA: 262080 },
+      },
+      {
+        id: "mf20_62_23",
+        description: "2020 62 units use 23%",
         inputs: {
           sqftPerUnit: 1000, smallApplianceCircuits: 2, laundryCircuits: 1, commonLaundry: false,
           rangeKW: 12, dryerKW: 0, acKW: 0, heatKW: 0, waterHeaterKW: 0, otherFixedKW: 0,
           houseLighting: 0, houseHVAC: 0, voltage: 240, phases: "single", numUnits: 62,
         },
-        expected: { demandFactor: 26, demandedVA: 314340 },
+        expected: { demandFactor: 23, demandedVA: 278070 },
       },
     ]),
 

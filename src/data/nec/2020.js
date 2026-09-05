@@ -558,15 +558,16 @@ export const DWELLING_SERVICE_CONDUCTOR_FACTOR = 0.83;
 
 // Table 220.84 / 220.102 / 220.103 / 551.73(A) — 2020 owns copies of the
 // 2017 bands so they are not silently inherited from shared.js. Numeric
-// factors pending NFPA 70-2020 confirmation.
+// factors pending row-for-row NFPA 70-2020 confirmation.
 export const MULTIFAMILY_DEMAND_TABLE = [
-  { units: 3, factor: 45 }, { units: 4, factor: 44 }, { units: 5, factor: 43 },
-  { units: 6, factor: 42 }, { units: 7, factor: 41 }, { units: 8, factor: 40 },
-  { units: 9, factor: 39 }, { units: 10, factor: 38 }, { units: 11, factor: 37 },
-  { units: 12, factor: 36 }, { units: 13, factor: 35 }, { units: 14, factor: 34 },
-  { units: 15, factor: 33 }, { units: 20, factor: 32 }, { units: 25, factor: 31 },
-  { units: 30, factor: 30 }, { units: 40, factor: 29 }, { units: 50, factor: 28 },
-  { units: 61, factor: 27 }, { units: 999, factor: 26 },
+  { units: 5, factor: 45 }, { units: 7, factor: 44 }, { units: 10, factor: 43 },
+  { units: 11, factor: 42 }, { units: 13, factor: 41 }, { units: 15, factor: 40 },
+  { units: 17, factor: 39 }, { units: 20, factor: 38 }, { units: 21, factor: 37 },
+  { units: 23, factor: 36 }, { units: 25, factor: 35 }, { units: 27, factor: 34 },
+  { units: 30, factor: 33 }, { units: 31, factor: 32 }, { units: 33, factor: 31 },
+  { units: 36, factor: 30 }, { units: 38, factor: 29 }, { units: 42, factor: 28 },
+  { units: 45, factor: 27 }, { units: 50, factor: 26 }, { units: 55, factor: 25 },
+  { units: 61, factor: 24 }, { units: 999, factor: 23 },
 ];
 export const FARM_102_VOLTAGE = 240;
 export const FARM_102_MOTOR_MULTIPLIER = 1.25;

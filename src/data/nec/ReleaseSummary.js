@@ -72,8 +72,8 @@ export const RELEASE_SUMMARY = {
       defectsFixed: 1,
       ready: "✅",
       lastReviewed: "2026-08-22",
-      notes: "2017 gated: Table 220.84 bands (62+ is 26%, not 27%), 220.84(A) 3+ units + electric cooking + electric heat or A/C, 220.84(B) house after demand, 220.84(C) connected load, 210.52(F) common laundry. FROZEN BASELINE v1.0.0 (18 tests). D5(b) phase balancing and 220.84 Exception not in this calculator. 2020: owned Table 220.84 copy; 62+ still 26% pending codebook.",
-      baselineGate: { frozen: true, version: "1.0.0", date: "2026-08-22", totalTests: 18 },
+      notes: "2017 gated: Table 220.84 bands including 51–55 at 25%, 56–61 at 24%, and 62+ at 23%; 220.84(A) 3+ units + electric cooking + electric heat or A/C, 220.84(B) house after demand, 220.84(C) connected load, 210.52(F) common laundry. FROZEN BASELINE v1.0.0 (20 tests). D5(b) phase balancing and 220.84 Exception not in this calculator. 2020: owned Table 220.84 copy with the same corrected high-unit bands.",
+      baselineGate: { frozen: true, version: "1.0.0", date: "2026-08-22", totalTests: 20 },
     },
     {
       calculator: "Farm Load",

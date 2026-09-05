@@ -229,16 +229,17 @@ export const LAUNDRY_MIN_CIRCUITS = 1;
 export const RANGE_NOTE1_MAJOR_FRACTION_KW = 0.5; // Table 220.55 Note 1
 
 // ─── Table 220.84 Multifamily Optional — 2017 EXPLICIT ───────────
-// Lookup is find(r => units <= r.units). 51–61 is 27%; 62 and over is 26%.
-// Prior encoding used units: 62 at 27%, which wrongly gave 62 units 27%.
+// Lookup is find(r => units <= r.units). Encoded by upper bound:
+// 3–5 → 45%, 6–7 → 44%, ... 56–61 → 24%, 62+ → 23%.
 export const MULTIFAMILY_DEMAND_TABLE = [
-  { units: 3, factor: 45 }, { units: 4, factor: 44 }, { units: 5, factor: 43 },
-  { units: 6, factor: 42 }, { units: 7, factor: 41 }, { units: 8, factor: 40 },
-  { units: 9, factor: 39 }, { units: 10, factor: 38 }, { units: 11, factor: 37 },
-  { units: 12, factor: 36 }, { units: 13, factor: 35 }, { units: 14, factor: 34 },
-  { units: 15, factor: 33 }, { units: 20, factor: 32 }, { units: 25, factor: 31 },
-  { units: 30, factor: 30 }, { units: 40, factor: 29 }, { units: 50, factor: 28 },
-  { units: 61, factor: 27 }, { units: 999, factor: 26 },
+  { units: 5, factor: 45 }, { units: 7, factor: 44 }, { units: 10, factor: 43 },
+  { units: 11, factor: 42 }, { units: 13, factor: 41 }, { units: 15, factor: 40 },
+  { units: 17, factor: 39 }, { units: 20, factor: 38 }, { units: 21, factor: 37 },
+  { units: 23, factor: 36 }, { units: 25, factor: 35 }, { units: 27, factor: 34 },
+  { units: 30, factor: 33 }, { units: 31, factor: 32 }, { units: 33, factor: 31 },
+  { units: 36, factor: 30 }, { units: 38, factor: 29 }, { units: 42, factor: 28 },
+  { units: 45, factor: 27 }, { units: 50, factor: 26 }, { units: 55, factor: 25 },
+  { units: 61, factor: 24 }, { units: 999, factor: 23 },
 ];
 
 // ─── Farm Part V — 2017 EXPLICIT ────────────────────────────────

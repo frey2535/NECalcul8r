@@ -232,11 +232,11 @@ export const CALCULATORS = [
       { ref: "220.84(A)", desc: "3+ units, one feeder per unit, electric cooking", changed: false, source: N17 },
       { ref: "220.84(B)", desc: "House loads per Part III, added after Table 220.84", changed: false, source: N17 },
       { ref: "220.84(C)", desc: "Connected unit load: 3 VA/ft², SA/laundry, nameplate, larger of A/C or heat", changed: false, source: N17 },
-      { ref: "Table 220.84", desc: "Demand factors 45%→26% by unit count; 51–61 at 27%, 62+ at 26%", changed: false, source: N17 },
+      { ref: "Table 220.84", desc: "Demand factors 45%→23% by unit count; 51–55 at 25%, 56–61 at 24%, 62+ at 23%", changed: false, source: N17 },
       { ref: "210.52(F) Exception", desc: "Common laundry may omit in-unit laundry circuit", changed: false, source: N17 },
       { ref: "240.6(A)", desc: "Standard OCPD sizes", changed: false, source: DEV },
     ],
-    sourceNotes: "2017 Table 220.84 bands gated including 62-and-over at 26%. House loads are user-entered Part III results. 220.84 Exception (no-cooking comparison) and 220.61 / D5(b) phase balancing are other paths.",
+    sourceNotes: "2017 Table 220.84 bands gated including 51–55 at 25%, 56–61 at 24%, and 62-and-over at 23%. House loads are user-entered Part III results. 220.84 Exception (no-cooking comparison) and 220.61 / D5(b) phase balancing are other paths.",
     testInputs: { numUnits: 12, sqftPerUnit: 900, rangeKW: 12, dryerKW: 5, acKW: 3.5, waterHeaterKW: 4.5, houseLighting: 3000, houseHVAC: 5000, voltage: 208, phases: "three" },
     calculate: (i, nec) => {
       const r = calcMultifamilyLoad(i, nec);

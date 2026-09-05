@@ -12,7 +12,7 @@ export function getDemandFactor(nec, units) {
   if (units < 3) return 100;
   const table = nec.MULTIFAMILY_DEMAND_TABLE || [];
   const row = table.find((r) => units <= r.units);
-  return row ? row.factor : (table[table.length - 1]?.factor ?? 26);
+  return row ? row.factor : (table[table.length - 1]?.factor ?? 23);
 }
 
 /**
