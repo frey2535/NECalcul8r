@@ -4,10 +4,12 @@ import { RefreshCw, X } from "lucide-react";
 export default function UpdateAvailablePrompt() {
   const [update, setUpdate] = useState(null);
   const [applying, setApplying] = useState(false);
+  const [updateUrl, setUpdateUrl] = useState("/");
 
   useEffect(() => {
     const onUpdateAvailable = (event) => {
       setUpdate(event.detail || { applyUpdate: () => window.location.reload() });
+      setUpdateUrl(`/?t=${Date.now()}`);
     };
     window.addEventListener("necalcul8r-update-available", onUpdateAvailable);
     return () => window.removeEventListener("necalcul8r-update-available", onUpdateAvailable);
@@ -15,17 +17,19 @@ export default function UpdateAvailablePrompt() {
 
   if (!update) return null;
 
-  const applyUpdate = () => {
+  const prepareUpdate = () => {
     setApplying(true);
+    if (update?.targetSha) {
+      sessionStorage.setItem("necalcul8r_update_attempted_sha", update.targetSha);
+    }
+    sessionStorage.setItem("necalcul8r_update_in_progress", "1");
     try {
-      const result = typeof update.applyUpdate === "function"
-        ? update.applyUpdate()
-        : window.location.reload();
-      if (result?.catch) {
-        result.catch(() => window.location.reload());
+      navigator.serviceWorker?.controller?.postMessage({ type: "NECALCUL8R_CLEAR_CACHES" });
+      if ("caches" in window) {
+        caches.keys().then((keys) => Promise.all(keys.map((key) => caches.delete(key)))).catch(() => undefined);
       }
     } catch {
-      window.location.reload();
+      /* native link navigation still proceeds */
     }
   };
 
@@ -42,14 +46,14 @@ export default function UpdateAvailablePrompt() {
               A newer version of NECalcul8r is ready. Update to get the latest fixes.
             </p>
             <div className="flex items-center gap-2 mt-3">
-              <button
-                type="button"
-                onClick={applyUpdate}
-                disabled={applying}
+              <a
+                href={updateUrl}
+                onClick={prepareUpdate}
+                aria-disabled={applying}
                 className="rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-xs font-bold px-3 py-1.5 transition-colors"
               >
                 {applying ? "Updating..." : "Update now"}
-              </button>
+              </a>
               <button
                 type="button"
                 onClick={() => setUpdate(null)}
