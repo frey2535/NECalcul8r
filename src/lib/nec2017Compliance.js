@@ -17,7 +17,6 @@
 export const POST_2017_ARTICLES = {
   "230.85": { addedIn: "2020", description: "Outdoor emergency disconnect for dwelling units" },
   "230.67":  { addedIn: "2020", description: "Surge-protective device (SPD) required for dwelling unit services" },
-  "625.54":  { addedIn: "2020", description: "GFCI protection for EVSE (EV charging)" },
   "220.57":  { addedIn: "2023", description: "EV minimum load for dwelling load calculations" },
   "210.8(A)(10)": { addedIn: "2020", description: "GFCI for laundry areas" },
   "210.8(A)(11)": { addedIn: "2020", description: "GFCI for dishwashers" },
@@ -30,7 +29,7 @@ export const POST_2017_ARTICLES = {
  * Used to warn that a 2017 verification must use the 2017-specific value, not a later one.
  */
 export const YEAR_SENSITIVE_FIELDS = {
-  EV_GFCI_REQUIRED:                   { nec2017: false,   changedIn: "2020", article: "625.54",     note: "GFCI for EVSE not required in 2017" },
+  EV_GFCI_REQUIRED:                   { nec2017: true,    changedIn: "2017", article: "625.54",     note: "GFCI required for covered EV charging receptacles in 2017" },
   DWELLING_OUTDOOR_DISCONNECT_REQUIRED:{ nec2017: false,   changedIn: "2020", article: "230.85",     note: "Outdoor emergency disconnect not required in 2017" },
   DWELLING_SPD_REQUIRED:               { nec2017: false,   changedIn: "2023", article: "230.67",     note: "SPD not required in 2017" },
   EV_MINIMUM_LOAD_VA:                  { nec2017: 0,       changedIn: "2023", article: "220.57",     note: "No minimum EV load in 2017" },
@@ -72,7 +71,7 @@ export const VALID_2017_ARTICLES = new Set([
   "440.22", "440.32",
   "450.3", "450.3(B)",
   "460.8",
-  "625.14", "625.17", "625.19", "625.42", // Note: 625.54 (GFCI for EVSE) was NOT in 2017
+  "625.14", "625.17", "625.19", "625.42", "625.54",
   "630.11", "630.12",
   "555.12", "555.19", "555.19(A)",
   "680.8", "680.22", "680.26", "680.43",

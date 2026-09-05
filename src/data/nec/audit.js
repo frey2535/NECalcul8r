@@ -410,12 +410,12 @@ export const CALCULATORS = [
     articles: [
       { ref: "625.42", desc: "EVSE continuous load — 125% of rating", changed: false, source: DEV, note: "125% multiplier reportedly stable. 2023 added minimum 7,200VA." },
       { ref: "625.42(A)", desc: "EVSE minimum load VA", changed: true, source: DEV, note: "2017:none, 2020:none, 2023:7,200VA. NEEDS VERIFICATION against NEC 2023 text." },
-      { ref: "625.54", desc: "GFCI protection for EVSE", changed: true, source: DEV, note: "2017:not req. 2020:required. NEEDS VERIFICATION against NEC 2020 text." },
+      { ref: "625.54", desc: "GFCI protection for EV charging receptacles", changed: false, source: DEV, note: "2017 and 2020 require GFCI for covered EV charging receptacles. Verify exact scope against adopted code text/amendments." },
       { ref: "230.67", desc: "SPD required for dwellings", changed: true, source: DEV, note: "2017:no, 2020+:yes. NEEDS VERIFICATION against NEC 2020 text." },
       { ref: "230.85", desc: "Outdoor emergency disconnect", changed: true, source: DEV, note: "2017:no, 2020:yes. NEEDS VERIFICATION against NEC 2020 text." },
       { ref: "240.6(A)", desc: "Standard OCPD sizes", changed: false, source: DEV },
     ],
-    sourceNotes: "The ONLY year-sensitive calculator. Uses three date-gated requirements: GFCI (2020+), minimum load VA (2023+), and SPD/disconnect (2020+). ALL of these critical thresholds need verification against the actual codebook text. The 2026 values are speculative.",
+    sourceNotes: "Year-sensitive calculator. Uses edition-gated requirements: EV charging receptacle GFCI (625.54, now required in 2017+), minimum load VA (2023+), and SPD/disconnect (2020+). Critical thresholds need verification against the actual codebook text. The 2026 values are speculative.",
     testInputs: { evseA: 32, voltage: 240, numUnits: 1 },
     calculate: (i, nec) => {
       const ca = i.evseA * nec.EV_CONTINUOUS_MULTIPLIER;
@@ -925,7 +925,7 @@ export const NEC_CHANGE_LOG = [
     id: "cl_230_85",
     article: "230.85",
     title: "Outdoor Emergency Disconnect — 1- and 2-Family Dwellings",
-    cycle: "2017→2020",
+    cycle: "2017 correction",
     affectedCalcs: ["dwelling_standard", "dwelling_optional", "ev_charging"],
     value2017: "Not required",
     value2020: "Required — readily accessible outdoor disconnect for one- and two-family dwellings",
@@ -964,11 +964,11 @@ export const NEC_CHANGE_LOG = [
     title: "GFCI Protection — EVSE (EV Charging)",
     cycle: "2017→2020",
     affectedCalcs: ["ev_charging"],
-    value2017: "Not required for EVSE installations",
-    value2020: "Required — GFCI protection for Level 1 and Level 2 EVSE outlet and hardwired installations",
+    value2017: "Required — GFCI protection for covered single-phase EV charging receptacles",
+    value2020: "Required — GFCI protection for EV charging receptacles; verify exact edition/adoption scope",
     verificationStatus: "pending_manual_review",
     sourceStatus: PEND,
-    notes: "Boolean field EV_GFCI_REQUIRED in year files. Displayed in EVCharging result section and NoteBox.",
+    notes: "Boolean field EV_GFCI_REQUIRED and display field EV_GFCI_REQUIREMENT_TEXT in year files. Displayed in EVCharging result section and NoteBox.",
   },
   {
     id: "cl_210_52c",

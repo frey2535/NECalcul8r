@@ -245,9 +245,9 @@ def("welding_receptacle", "Welder Load 630.11 / 630.12", calcWelderLoad, [
 def("ev_charging", "EV Charging 625.42", calcEVCharging, [
   {
     id: "ev_32a",
-    description: "625.42 125%; 2017 no 625.54 GFCI, no min load VA",
+    description: "625.42 125%; 2017 625.54 GFCI required for covered EV charging receptacles; no min load VA",
     inputs: { voltage: 240, evseA: 32, numUnits: 1, demandManaged: "no" },
-    expected: { conductorA_each: 40, ocpd_each_A: 40, feederAmps: 40, GFCI_required: false, min_load_VA: 0, SPD_required: false, outdoor_disconnect: false },
+    expected: { conductorA_each: 40, ocpd_each_A: 40, feederAmps: 40, GFCI_required: true, min_load_VA: 0, SPD_required: false, outdoor_disconnect: false },
   },
   {
     id: "ev_managed",
@@ -635,10 +635,10 @@ export function runRemaining2017Baseline() {
     }), [
       {
         id: "flags_2017",
-        description: "2017-only flags (no 625.54 / 230.67 / 230.85; 120% rule under 705.12(D))",
+        description: "2017-only flags (625.54 EV receptacle GFCI required; no 230.67 / 230.85; 120% rule under 705.12(D))",
         inputs: {},
         expected: {
-          EV_GFCI_REQUIRED: false,
+          EV_GFCI_REQUIRED: true,
           EV_MINIMUM_LOAD_VA: 0,
           SOLAR_120_RULE_ARTICLE: "705.12(D)(2)(3)(b)",
           POOL_PUMP_GFCI_REQUIRED: true,

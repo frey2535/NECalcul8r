@@ -56,7 +56,7 @@ export default function EVCharging({ category, necYear = "2023" }) {
           )}
         </ResultSection>
         <ResultSection title={`NEC ${necYear} Requirements`}>
-          <ResultRow label="GFCI Protection" value={nec.EV_GFCI_REQUIRED ? "Required (625.54)" : "Not required"} />
+          <ResultRow label="GFCI Protection" value={r.GFCI_required ? "Required (625.54)" : "Not required"} sub={r.GFCI_requirement_text} />
           <ResultRow label="Minimum Load per EVSE" value={nec.EV_MINIMUM_LOAD_VA > 0 ? `${nec.EV_MINIMUM_LOAD_VA}VA` : "None (use nameplate)"} sub="NEC 625.42" />
           {nec.DWELLING_SPD_REQUIRED !== undefined && (
             <ResultRow label="SPD Required (Dwelling)" value={nec.DWELLING_SPD_REQUIRED ? "Yes (230.67)" : "No"} />
@@ -78,9 +78,7 @@ export default function EVCharging({ category, necYear = "2023" }) {
           <ul className="list-disc pl-3.5 space-y-1">
             <li>NEC {necYear} 625.42: EVSE branch circuits are continuous loads — conductor and OCPD rated at 125% of nameplate.</li>
             <li>NEC 625.54 — GFCI:{" "}
-              {nec.EV_GFCI_REQUIRED
-                ? "required for Level 1 and Level 2 EVSE outlet and hardwired installations."
-                : "not broadly required for EVSE by this edition's model."}</li>
+              {r.GFCI_requirement_text}</li>
             {nec.EV_MINIMUM_LOAD_VA > 0 && (
               <li>NEC 625.42: minimum {nec.EV_MINIMUM_LOAD_VA}VA load per EVSE circuit applies.</li>
             )}

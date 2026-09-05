@@ -146,7 +146,7 @@ const SHARED_FIELDS = [
 ];
 
 const YEAR_FIELDS = [
-  "NEC_YEAR", "EV_GFCI_REQUIRED",
+  "NEC_YEAR", "EV_GFCI_REQUIRED", "EV_GFCI_REQUIREMENT_TEXT",
   "DWELLING_OUTDOOR_DISCONNECT_REQUIRED",
   "DWELLING_SPD_REQUIRED", "EV_MINIMUM_LOAD_VA",
   "DWELLING_MIN_SERVICE_AMPS", "VERIFIED",
@@ -350,7 +350,7 @@ const COVERAGE = [
     uiArticles: ["625.42", "625.54", "230.67", "230.85"],
     uiTables: ["240_6_std_sizes", "310_15_b_16_copper"],
     calcSharedFields: ["EV_CONTINUOUS_MULTIPLIER", "STD_OCPD_SIZES"],
-    calcYearFields: ["EV_GFCI_REQUIRED", "EV_MINIMUM_LOAD_VA", "DWELLING_SPD_REQUIRED", "DWELLING_OUTDOOR_DISCONNECT_REQUIRED"],
+    calcYearFields: ["EV_GFCI_REQUIRED", "EV_GFCI_REQUIREMENT_TEXT", "EV_MINIMUM_LOAD_VA", "DWELLING_SPD_REQUIRED", "DWELLING_OUTDOOR_DISCONNECT_REQUIRED"],
     flags: [],
   },
   {
@@ -932,7 +932,7 @@ export default function NECCoverageReport() {
             <li><strong>0 hardcoded value flags</strong> — all calculator values use shared.js or year files.</li>
             <li><strong>{YEAR_FIELDS.length - 1} of {YEAR_FIELDS.length} year fields</strong> are consumed by at least one calculator logic function. <strong>GFCI_210_8B_RULE</strong> is documented rule data — trace/coverage/audit only, no active calculator evaluation (see "Documented Rules" card above).</li>
             <li>ConduitFill reads FILL_LIMITS dynamically. PoolSpa/DataCenter use shared.js constants. DwellingStandard/Optional show SPD, disconnect, GFCI scope, and island/peninsula rule dynamically. ReceptacleLoad shows island/peninsula and GFCI scope notes per NEC year.</li>
-            <li><strong>2017→2020 changes encoded:</strong> GFCI scope expansion (210.8(A)), outdoor emergency disconnect (230.85), EV GFCI (625.54), island/peninsula rule change (210.52(C)) — all in year files, consumed dynamically by calculators.</li>
+            <li><strong>2017→2020 changes encoded:</strong> GFCI scope expansion (210.8(A)), outdoor emergency disconnect (230.85), island/peninsula rule change (210.52(C)) — all in year files, consumed dynamically by calculators. EV charging receptacle GFCI (625.54) is required in the 2017 model as well.</li>
             {ARTICLE_IMPLEMENTATION_INDEX.map(article => (
               <li key={article.article}><strong>{article.article} status — Implementation review complete, official NEC verification pending:</strong> {article.checklistEntry}</li>
             ))}

@@ -45,7 +45,7 @@
  *   406.9(C)      Bathtub/shower damp/wet receptacle rule
  *   406.12        Tamper-resistant receptacle expansion
  *   422.5         Dishwashers and sump pumps added to appliance GFCI list
- *   625.54        EV supply equipment GFCI (new in 2020)
+ *   625.54        EV charging receptacle GFCI carried forward from 2017; wording/scope reviewed per edition
  *   680.21(C)     Pool pump motor GFCI — scope expanded to all phase configs (pre-existing rule, expanded)
  *   680.21(D)     Pool pump motor replacement GFCI (new in 2020)
  *
@@ -427,11 +427,12 @@ export const TAMPER_RESISTANT_SCOPE =
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 625.54 — EV Supply Equipment GFCI
-// 2020 override — change-reviewed from Eaton 2020 NEC Code Changes PDF.
-//
-// New in 2020 (not required in 2017):
+// 2020 override — 2017 already requires GFCI for covered EV charging
+// receptacles. Keep this explicit so 2020 is not treated as the first
+// edition with a 625.54 requirement.
 // ─────────────────────────────────────────────────────────────────────────────
-export const EV_GFCI_REQUIRED = true;   // 625.54 — new in 2020
+export const EV_GFCI_REQUIRED = true;   // 625.54 — required for covered EV charging receptacles
+export const EV_GFCI_REQUIREMENT_TEXT = "Required by 625.54 for receptacles installed for electric vehicle charging. Verify exact outlet/receptacle scope against the adopted NEC edition and local amendments.";
 export const EV_MINIMUM_LOAD_VA = 0;    // Inherited from 2017 — no change in 2020
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -905,15 +906,15 @@ export const CHANGE_METADATA = [
   {
     article: "625.54",
     topic: "EV Supply Equipment GFCI",
-    rule_2017: "No GFCI requirement specific to EV supply equipment.",
-    rule_2020: "GFCI required for EV supply equipment (EVSE).",
-    exact_difference: "New requirement, no 2017 counterpart.",
+    rule_2017: "GFCI required by 625.54 for covered single-phase EV charging receptacles.",
+    rule_2020: "GFCI required by 625.54 for EV charging receptacles; verify adopted-edition scope.",
+    exact_difference: "2017 was incorrectly modeled as not requiring EV charging receptacle GFCI. The app now treats 625.54 as required in both 2017 and 2020.",
     affected_calculators: ["ev_charging"],
     impact_type: "compliance result (boolean requirement flag, not a numeric formula)",
     verification_source: "Eaton 2020 NEC Code Changes brochure (secondary source)",
     verification_status: "ai_reviewed_pending_human_approval",
-    known_answer_test: "EV_GFCI_REQUIRED should read false for 2017, true for 2020/2023/2026",
-    regression_2017_result: "EV_GFCI_REQUIRED = false in 2017.js",
+    known_answer_test: "EV_GFCI_REQUIRED should read true for 2017/2020/2023/2026",
+    regression_2017_result: "EV_GFCI_REQUIRED = true in 2017.js",
     expected_2020_result: "EV_GFCI_REQUIRED = true",
   },
   {

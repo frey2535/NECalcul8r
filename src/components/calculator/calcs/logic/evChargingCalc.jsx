@@ -41,6 +41,7 @@ export function calcEVCharging(v, nec) {
     totalKW: Math.round(totalKW * 10) / 10,
     min_load_VA: nec.EV_MINIMUM_LOAD_VA || 0,
     GFCI_required: !!nec.EV_GFCI_REQUIRED,
+    GFCI_requirement_text: nec.EV_GFCI_REQUIREMENT_TEXT || (nec.EV_GFCI_REQUIRED ? "GFCI protection required by NEC 625.54." : "No EV-specific GFCI requirement modeled for this NEC edition."),
     SPD_required: !!nec.DWELLING_SPD_REQUIRED,
     outdoor_disconnect: !!nec.DWELLING_OUTDOOR_DISCONNECT_REQUIRED,
     steps,
@@ -53,6 +54,6 @@ export function calcEVCharging(v, nec) {
       ...(nec.DWELLING_OUTDOOR_DISCONNECT_REQUIRED ? ["230.85"] : []),
     ],
     tables_used: ["Table 240.6(A)"],
-    fields_used: ["EV_CONTINUOUS_MULTIPLIER", "EV_GFCI_REQUIRED", "EV_MINIMUM_LOAD_VA", "STD_OCPD_SIZES", "DWELLING_SPD_REQUIRED", "DWELLING_OUTDOOR_DISCONNECT_REQUIRED"],
+    fields_used: ["EV_CONTINUOUS_MULTIPLIER", "EV_GFCI_REQUIRED", "EV_GFCI_REQUIREMENT_TEXT", "EV_MINIMUM_LOAD_VA", "STD_OCPD_SIZES", "DWELLING_SPD_REQUIRED", "DWELLING_OUTDOOR_DISCONNECT_REQUIRED"],
   });
 }
