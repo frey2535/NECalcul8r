@@ -720,6 +720,8 @@ export default function CodebookMatrix() {
   }, [activeTab, allRows, filterCalc, filterYear, filterStatus, referenceArticleRows, showInfoOnly]);
 
   const groupedFiltered = useMemo(() => {
+    if (activeTab !== "matrix") return [];
+
     const groups = {};
     for (const row of filtered) {
       if (!groups[row.calcId]) groups[row.calcId] = { calcName: row.calcName, calcId: row.calcId, rows: [] };
@@ -731,11 +733,11 @@ export default function CodebookMatrix() {
         const keyA = articleSortKey(a.articleRef);
         const keyB = articleSortKey(b.articleRef);
         if (keyA !== keyB) return keyA - keyB;
-        return a.necYear.localeCompare(b.necYear);
+        return String(a.necYear || "").localeCompare(String(b.necYear || ""));
       });
     }
     return Object.values(groups);
-  }, [filtered]);
+  }, [activeTab, filtered]);
 
   const statsRows      = activeTab === "matrix" ? allRows : referenceRows;
   const totalRows      = statsRows.length;

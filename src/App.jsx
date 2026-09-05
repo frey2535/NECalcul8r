@@ -94,6 +94,47 @@ function StartupLoadingScreen() {
   );
 }
 
+class AppErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { error: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { error };
+  }
+
+  componentDidCatch(error, info) {
+    console.error("NECalcul8r route failed to render", error, info);
+  }
+
+  refreshAndUpdate = async () => {
+    await refreshApp();
+  };
+
+  render() {
+    if (!this.state.error) return this.props.children;
+
+    return (
+      <div className="fixed inset-0 flex items-center justify-center bg-background px-6">
+        <div className="max-w-sm rounded-2xl border border-border bg-card p-5 text-center shadow-xl">
+          <p className="text-base font-bold text-foreground">NECalcul8r needs to refresh</p>
+          <p className="text-sm text-muted-foreground mt-2">
+            The app hit a loading problem. Refreshing clears old files and loads the newest version.
+          </p>
+          <button
+            type="button"
+            onClick={this.refreshAndUpdate}
+            className="mt-4 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold px-4 py-2 transition-colors"
+          >
+            Refresh / Update app
+          </button>
+        </div>
+      </div>
+    );
+  }
+}
+
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin, user } = useAuth();
   const location = useLocation();
@@ -156,7 +197,9 @@ function App() {
         <ThemeProvider>
         <QueryClientProvider client={queryClientInstance}>
           <Router>
-            <AuthenticatedApp />
+            <AppErrorBoundary>
+              <AuthenticatedApp />
+            </AppErrorBoundary>
             <InstallAppPrompt />
             <UpdateAvailablePrompt />
           </Router>
