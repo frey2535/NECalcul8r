@@ -19,7 +19,6 @@ import ProtectedRoute from '@/components/ProtectedRoute';
 import AdminRoute from '@/components/AdminRoute';
 import { useTrialStatus } from '@/hooks/useTrialStatus';
 import TrialExpiredScreen from '@/components/TrialExpiredScreen';
-import InstallAppPrompt from '@/components/InstallAppPrompt';
 import UpdateAvailablePrompt from '@/components/UpdateAvailablePrompt';
 import { refreshApp } from '@/lib/pwa';
 
@@ -200,7 +199,6 @@ function App() {
             <AppErrorBoundary>
               <AuthenticatedApp />
             </AppErrorBoundary>
-            <InstallAppPrompt />
             <UpdateAvailablePrompt />
           </Router>
           <Toaster />

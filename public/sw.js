@@ -1,5 +1,5 @@
 const CACHE = "necalcul8r-shell-v3";
-const SHELL_ASSETS = ["/manifest.json", "/icon-192.png", "/icon-512.png", "/apple-touch-icon.png"];
+const SHELL_ASSETS = ["/icon-192.png", "/icon-512.png", "/apple-touch-icon.png"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
