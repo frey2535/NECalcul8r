@@ -4,12 +4,10 @@ import { RefreshCw, X } from "lucide-react";
 export default function UpdateAvailablePrompt() {
   const [update, setUpdate] = useState(null);
   const [applying, setApplying] = useState(false);
-  const [updateUrl, setUpdateUrl] = useState("/");
 
   useEffect(() => {
     const onUpdateAvailable = (event) => {
       setUpdate(event.detail || { applyUpdate: () => window.location.reload() });
-      setUpdateUrl(`/?t=${Date.now()}`);
     };
     window.addEventListener("necalcul8r-update-available", onUpdateAvailable);
     return () => window.removeEventListener("necalcul8r-update-available", onUpdateAvailable);
@@ -17,7 +15,8 @@ export default function UpdateAvailablePrompt() {
 
   if (!update) return null;
 
-  const prepareUpdate = () => {
+  const applyUpdate = async () => {
+    if (applying) return;
     setApplying(true);
     if (update?.targetSha) {
       sessionStorage.setItem("necalcul8r_update_attempted_sha", update.targetSha);
@@ -29,8 +28,20 @@ export default function UpdateAvailablePrompt() {
         caches.keys().then((keys) => Promise.all(keys.map((key) => caches.delete(key)))).catch(() => undefined);
       }
     } catch {
-      /* native link navigation still proceeds */
+      /* cache clearing is best-effort; the fallback reload below still proceeds */
     }
+    try {
+      if (typeof update.applyUpdate === "function") {
+        await update.applyUpdate();
+        return;
+      }
+    } catch {
+      /* fall through to the hard reload below */
+    }
+    const nextUrl = new URL(window.location.href);
+    nextUrl.searchParams.set("t", String(Date.now()));
+    if (update?.targetSha) nextUrl.searchParams.set("build", update.targetSha);
+    window.location.replace(nextUrl.toString());
   };
 
   return (
@@ -46,14 +57,14 @@ export default function UpdateAvailablePrompt() {
               A newer version of NECalcul8r is ready. Update to get the latest fixes.
             </p>
             <div className="flex items-center gap-2 mt-3">
-              <a
-                href={updateUrl}
-                onClick={prepareUpdate}
-                aria-disabled={applying}
+              <button
+                type="button"
+                onClick={applyUpdate}
+                disabled={applying}
                 className="rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-xs font-bold px-3 py-1.5 transition-colors"
               >
                 {applying ? "Updating..." : "Update now"}
-              </a>
+              </button>
               <button
                 type="button"
                 onClick={() => setUpdate(null)}

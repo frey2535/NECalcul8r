@@ -1,9 +1,10 @@
-const CACHE = "necalcul8r-shell-v2";
+const CACHE = "necalcul8r-shell-v3";
+const SHELL_ASSETS = ["/manifest.json", "/icon-192.png", "/icon-512.png", "/apple-touch-icon.png"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
     caches.open(CACHE).then((cache) =>
-      cache.addAll(["/manifest.json", "/icon-192.png", "/icon-512.png", "/apple-touch-icon.png"]).catch(() => undefined)
+      cache.addAll(SHELL_ASSETS).catch(() => undefined)
     )
   );
 });
@@ -32,11 +33,18 @@ self.addEventListener("fetch", (event) => {
   if (url.origin !== self.location.origin) return;
   if (url.pathname.startsWith("/@") || url.pathname.startsWith("/node_modules") || url.search.includes("t=")) return;
   const isAppShell = request.mode === "navigate" || url.pathname === "/" || url.pathname.endsWith(".html") || url.pathname === "/build-version.json";
+  const isAppAsset = url.pathname.startsWith("/assets/");
 
   event.respondWith(
     fetch(request)
       .then((response) => {
-        if (!isAppShell && response && response.ok && request.url.startsWith(self.location.origin)) {
+        if (response.status === 404 && isAppAsset && url.pathname.endsWith(".js")) {
+          return new Response(
+            "window.location.replace('/?t=' + Date.now());\nexport default {};",
+            { headers: { "Content-Type": "application/javascript; charset=utf-8" } }
+          );
+        }
+        if (!isAppShell && !isAppAsset && response && response.ok && request.url.startsWith(self.location.origin)) {
           const copy = response.clone();
           caches.open(CACHE).then((cache) => cache.put(request, copy));
         }

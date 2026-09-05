@@ -1,6 +1,10 @@
 export function registerServiceWorker() {
-  if (typeof window === "undefined" || !("serviceWorker" in navigator)) return;
+  if (typeof window === "undefined") return;
   installStaleAssetRecovery();
+  if (!("serviceWorker" in navigator)) {
+    watchForBuildUpdates();
+    return;
+  }
   if (new URL(window.location.href).searchParams.has("t")) {
     window.setTimeout(() => {
       sessionStorage.removeItem("necalcul8r_update_in_progress");
@@ -14,7 +18,7 @@ export function registerServiceWorker() {
         window.dispatchEvent(new CustomEvent("necalcul8r-update-available", {
           detail: {
             source: "service-worker",
-            applyUpdate: reloadFresh,
+            applyUpdate: () => applyServiceWorkerUpdate(registration),
           },
         }));
       };
@@ -101,6 +105,16 @@ function watchForBuildUpdates() {
   });
 }
 
+async function applyServiceWorkerUpdate(registration) {
+  sessionStorage.setItem("necalcul8r_update_in_progress", "1");
+  try {
+    registration.waiting?.postMessage({ type: "NECALCUL8R_SKIP_WAITING" });
+  } catch {
+    /* skipWaiting is best-effort; the network reload below still fetches the newest app shell */
+  }
+  await reloadFresh();
+}
+
 async function reloadFresh(targetSha) {
   sessionStorage.setItem("necalcul8r_update_in_progress", "1");
   if (targetSha) sessionStorage.setItem("necalcul8r_update_attempted_sha", targetSha);
@@ -117,9 +131,10 @@ async function reloadFresh(targetSha) {
   } catch {
     /* cache clearing is best-effort */
   }
-  const root = new URL("/", window.location.origin);
-  root.searchParams.set("t", String(Date.now()));
-  window.location.assign(root.toString());
+  const nextUrl = new URL(window.location.href);
+  nextUrl.searchParams.set("t", String(Date.now()));
+  if (targetSha) nextUrl.searchParams.set("build", targetSha);
+  window.location.replace(nextUrl.toString());
 }
 
 export function isStandaloneDisplay() {
