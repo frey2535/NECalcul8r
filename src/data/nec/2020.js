@@ -101,10 +101,10 @@ export const EGC_TABLE = _EGC_TABLE.map((row) =>
     : row
 );
 
-export const RANGE_DEMAND_ARTICLE = "Table 220.60";
+export const RANGE_DEMAND_ARTICLE = "Table 220.55";
 
 // ─── Service Minimums ────────────────────────────────────────────────
-export const DWELLING_MIN_SERVICE_AMPS = 100;  // 230.42(B) — unchanged 2017–2026
+export const DWELLING_MIN_SERVICE_AMPS = 100;  // 230.79(C) — unchanged 2017–2026
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 210.8(A) — Dwelling Unit GFCI
@@ -646,7 +646,7 @@ export const SUPPLY_SIDE_DISCONNECT_NOTE =
 // ─────────────────────────────────────────────────────────────────────────────
 // Inherited from 2017 — no change in 2020
 // ─────────────────────────────────────────────────────────────────────────────
-// DWELLING_MIN_SERVICE_AMPS = 100         (230.42(B)) — inherited from 2017 baseline
+// DWELLING_MIN_SERVICE_AMPS = 100         (230.79(C)) — inherited from 2017 baseline
 // DWELLING_LIGHTING_VA_PER_SQFT = 3       (Table 220.12) — inherited from 2017 baseline
 // SMALL_APPLIANCE_VA = 1500               (220.52(A)) — inherited from 2017 baseline
 // LAUNDRY_VA = 1500                       (220.52(B)) — inherited from 2017 baseline
@@ -1031,7 +1031,7 @@ export const PENDING_IMPACT_LIST = [
     article: "Article 555 (Marina Shore Power)",
     item: "Article 555 was reorganized in the 2020 cycle (section numbering, demand-factor table identity/notes, receptacle grouping, phase balancing, GFPE/GFCI, disconnects).",
     status: "citation_gated_values_pending",
-    next_step: "2020 owns MARINA_DEMAND and cites Table 555.6; 71+ still 30% as a pending copy of 2017. Verify table notes, GFPE/GFCI, disconnects, and 555.11 numbering against NFPA 70-2020 before calling factors codebook-confirmed.",
+    next_step: "2020 owns MARINA_DEMAND and cites Table 555.6; 71+ still 30% as a pending copy of 2017. Verify table notes, GFPE/GFCI, disconnects, and 555.33(A) receptacle requirements against NFPA 70-2020 before calling factors codebook-confirmed.",
   },
 ];
 

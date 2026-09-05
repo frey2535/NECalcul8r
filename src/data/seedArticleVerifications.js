@@ -72,10 +72,10 @@ export const ARTICLE_VERIFICATION_SEED = [
   { calculator_id: "service_sizing", article_ref: "230.42(A)", nec_year: "2023", status: "verified_2023" },
   { calculator_id: "service_sizing", article_ref: "230.42(A)", nec_year: "2026", status: "pending_review", notes: "2026 code not yet published" },
 
-  { calculator_id: "service_sizing", article_ref: "230.42(B)", nec_year: "2017", status: "verified_2017" },
-  { calculator_id: "service_sizing", article_ref: "230.42(B)", nec_year: "2020", status: "verified_2020" },
-  { calculator_id: "service_sizing", article_ref: "230.42(B)", nec_year: "2023", status: "verified_2023" },
-  { calculator_id: "service_sizing", article_ref: "230.42(B)", nec_year: "2026", status: "pending_review", notes: "2026 code not yet published" },
+  { calculator_id: "service_sizing", article_ref: "230.79(C)", nec_year: "2017", status: "verified_2017" },
+  { calculator_id: "service_sizing", article_ref: "230.79(C)", nec_year: "2020", status: "verified_2020" },
+  { calculator_id: "service_sizing", article_ref: "230.79(C)", nec_year: "2023", status: "verified_2023" },
+  { calculator_id: "service_sizing", article_ref: "230.79(C)", nec_year: "2026", status: "pending_review", notes: "2026 code not yet published" },
 
   // ══════════════════════════════════════════════════════════════════════════
   // CONDUCTOR AMPACITY (calcConductorAmpacity)

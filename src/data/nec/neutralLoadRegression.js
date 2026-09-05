@@ -12,7 +12,7 @@
  *   - Four concepts distinguished: NEC fundamental, NEC reduction, external harmonic, final design.
  *
  * Source: 2020 NEC (NFPA 70-2020) Article 220.61
- * Verification Status: DEFECT CORRECTED — ADDITIONAL DEFECT FOUND
+ * Verification Status: Corrected model pending source verification
  */
 
 import { calcNeutralLoad } from "@/components/calculator/calcs/logic/neutralLoadCalc";

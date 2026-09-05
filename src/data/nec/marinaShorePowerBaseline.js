@@ -31,21 +31,21 @@ const TESTS = [
   },
   {
     id: "mar_5_90",
-    description: "5 receptacles — 90%",
-    inputs: { receptacles: [{ rating: "30A", quantity: 5 }] },
-    expected: { demandFactorPct: 90, demandLoadShore: 16200 },
+    description: "5 two-pole receptacles on each line — 90%",
+    inputs: { receptacles: [{ rating: "50A", quantity: 5 }] },
+    expected: { demandReceptacleCount: 5, demandFactorPct: 90, demandLoadShore: 54000 },
   },
   {
     id: "mar_15_70",
-    description: "15 receptacles — 70%",
-    inputs: { receptacles: [{ rating: "30A", quantity: 15 }] },
-    expected: { demandFactorPct: 70 },
+    description: "15 two-pole receptacles on each line — 70%",
+    inputs: { receptacles: [{ rating: "50A", quantity: 15 }] },
+    expected: { demandReceptacleCount: 15, demandFactorPct: 70 },
   },
   {
     id: "mar_71_30",
-    description: "2017: 71 plus at 30%",
-    inputs: { receptacles: [{ rating: "30A", quantity: 71 }] },
-    expected: { demandFactorPct: 30 },
+    description: "2017: 71 plus on each line at 30%",
+    inputs: { receptacles: [{ rating: "50A", quantity: 71 }] },
+    expected: { demandReceptacleCount: 71, demandFactorPct: 30 },
   },
   {
     id: "mar_50a_12000",
@@ -64,7 +64,7 @@ const TESTS = [
   },
   {
     id: "mar_default_mix",
-    description: "10×30A + 5×50A + 2×100A = 17 receptacles at 70%",
+    description: "10×30A balanced + 5×50A + 2×100A = 11 receptacles on max line at 80%",
     inputs: {
       receptacles: [
         { rating: "30A", quantity: 10 },
@@ -74,9 +74,27 @@ const TESTS = [
     },
     expected: {
       totalReceptacleCount: 17,
+      demandReceptacleCount: 11,
       totalConnectedReceptacles: 10 * 3600 + 5 * 12000 + 2 * 24000,
+      demandFactorPct: 80,
+      demandLoadShore: Math.round((36000 + 60000 + 48000) * 0.80),
+    },
+  },
+  {
+    id: "mar_balanced_line_count_basis",
+    description: "40 total receptacles can use the 15-30 row when balancing puts 27 on the max line",
+    inputs: {
+      receptacles: [
+        { rating: "30A", quantity: 20 },
+        { rating: "50A", quantity: 20 },
+      ],
+    },
+    expected: {
+      totalReceptacleCount: 40,
+      demandReceptacleCount: 27,
       demandFactorPct: 70,
-      demandLoadShore: Math.round((36000 + 60000 + 48000) * 0.70),
+      totalConnectedReceptacles: 312000,
+      demandLoadShore: 218400,
     },
   },
 ];

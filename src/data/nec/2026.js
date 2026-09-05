@@ -20,7 +20,7 @@ export const EGC_TABLE = _EGC_TABLE.map((row) =>
     : row
 );
 
-export const RANGE_DEMAND_ARTICLE = "Table 220.60";
+export const RANGE_DEMAND_ARTICLE = "Table 220.55";
 
 // ─── Table 220.12 — Occupancy Unit Loads (2026) ───────────────────────
 // 2026: ⚠️ PENDING VERIFICATION. Values below are COPIED FROM 2020 as
@@ -171,6 +171,6 @@ export const GFCI_210_8F_METADATA = {
 export const EV_MINIMUM_LOAD_VA = 7200;  // ⚠️ PENDING — same as 2023, subject to change
 
 // ─── Service Minimums ────────────────────────────────────────────────
-export const DWELLING_MIN_SERVICE_AMPS = 100;  // 230.42(B)
+export const DWELLING_MIN_SERVICE_AMPS = 100;  // 230.79(C)
 
 export const VERIFIED = false;  // ← CRITICAL: 2026 is NOT verified

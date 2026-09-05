@@ -50,15 +50,15 @@ export function runMarinaShorePower2020Baseline(calcFn = marina) {
     tests: [
       {
         id: "immut_mar_71_2017",
-        description: "2017 71 receptacles stay Table 555.12 at 30%",
-        inputs: { receptacles: [{ rating: "30A", quantity: 71 }] },
-        expected: { demandFactorPct: 30, demandTableRef: "Table 555.12" },
+        description: "2017 71 two-pole receptacles on each line stay Table 555.12 at 30%",
+        inputs: { receptacles: [{ rating: "50A", quantity: 71 }] },
+        expected: { demandReceptacleCount: 71, demandFactorPct: 30, demandTableRef: "Table 555.12" },
       },
       {
         id: "immut_mar_5_2017",
-        description: "2017 5 receptacles stay 90%",
-        inputs: { receptacles: [{ rating: "30A", quantity: 5 }] },
-        expected: { demandFactorPct: 90, demandLoadShore: 16200, demandTableRef: "Table 555.12" },
+        description: "2017 5 two-pole receptacles on each line stay 90%",
+        inputs: { receptacles: [{ rating: "50A", quantity: 5 }] },
+        expected: { demandReceptacleCount: 5, demandFactorPct: 90, demandLoadShore: 54000, demandTableRef: "Table 555.12" },
       },
     ],
   });
@@ -69,15 +69,32 @@ export function runMarinaShorePower2020Baseline(calcFn = marina) {
     tests: [
       {
         id: "mar20_table_555_6",
-        description: "2020 cites Table 555.6; 71 receptacles still 30% (pending-same factors)",
-        inputs: { receptacles: [{ rating: "30A", quantity: 71 }] },
-        expected: { demandFactorPct: 30, demandTableRef: "Table 555.6" },
+        description: "2020 cites Table 555.6; 71 two-pole receptacles on each line still 30% (pending-same factors)",
+        inputs: { receptacles: [{ rating: "50A", quantity: 71 }] },
+        expected: { demandReceptacleCount: 71, demandFactorPct: 30, demandTableRef: "Table 555.6" },
       },
       {
         id: "mar20_5_90",
-        description: "PENDING: 2020 5 receptacles still 90%",
-        inputs: { receptacles: [{ rating: "30A", quantity: 5 }] },
-        expected: { demandFactorPct: 90, demandLoadShore: 16200, demandTableRef: "Table 555.6" },
+        description: "PENDING: 2020 5 two-pole receptacles on each line still 90%",
+        inputs: { receptacles: [{ rating: "50A", quantity: 5 }] },
+        expected: { demandReceptacleCount: 5, demandFactorPct: 90, demandLoadShore: 54000, demandTableRef: "Table 555.6" },
+      },
+      {
+        id: "mar20_balanced_line_count_basis",
+        description: "2020 Table 555.6 uses max receptacles on any line, not total receptacles",
+        inputs: {
+          receptacles: [
+            { rating: "30A", quantity: 20 },
+            { rating: "50A", quantity: 20 },
+          ],
+        },
+        expected: {
+          totalReceptacleCount: 40,
+          demandReceptacleCount: 27,
+          demandFactorPct: 70,
+          demandLoadShore: 218400,
+          demandTableRef: "Table 555.6",
+        },
       },
       {
         id: "mar20_50a_12000",

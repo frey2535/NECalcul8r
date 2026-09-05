@@ -16,6 +16,10 @@
  */
 import { normalizeArticleVerificationStatus } from "@/lib/articleVerificationStatus";
 
+export function articleRefForYear(article, necYear) {
+  return article?.yearRefs?.[necYear] || article?.ref;
+}
+
 export function computeGate(calcId, articles, necYear, verificationMap) {
   // Pure-math calculators (no articles) — gate doesn't apply
   if (!articles || articles.length === 0) return "verified";
@@ -24,10 +28,11 @@ export function computeGate(calcId, articles, necYear, verificationMap) {
   if (necYear === "2026") return "invalid";
 
   const statuses = articles.map(a => {
-    const key = `${calcId}|${a.ref}|${necYear}`;
+    const articleRef = articleRefForYear(a, necYear);
+    const key = `${calcId}|${articleRef}|${necYear}`;
     const calcStatus = normalizeArticleVerificationStatus(verificationMap[key]);
     if (calcStatus !== "pending_review") return calcStatus;
-    return normalizeArticleVerificationStatus(verificationMap[`global|${a.ref}|${necYear}`]);
+    return normalizeArticleVerificationStatus(verificationMap[`global|${articleRef}|${necYear}`]);
   });
 
   // ai_reviewed_pending_human_approval does NOT count as verified for gate purposes

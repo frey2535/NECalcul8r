@@ -118,7 +118,7 @@ export const GFCI_210_8F_METADATA = {
 
 // ─── Dwelling Unit Requirements ─────────────────────────────────────
 export const DWELLING_OUTDOOR_DISCONNECT_REQUIRED = false;  // 230.85 — added in 2020
-export const DWELLING_SPD_REQUIRED = false;                  // 230.67 — added in 2023
+export const DWELLING_SPD_REQUIRED = false;                  // 230.67 — added in 2020
 
 // ─── Island / Peninsula Receptacles (NEC 210.52(C)) ─────────────────
 // 2017: at least one receptacle required for islands/peninsulas ≥ 12 sq ft
@@ -188,7 +188,7 @@ export const COMMERCIAL_KITCHEN_DEMAND = [
 ];
 
 // ─── Service Minimums ────────────────────────────────────────────────
-export const DWELLING_MIN_SERVICE_AMPS = 100;  // 230.42(B)
+export const DWELLING_MIN_SERVICE_AMPS = 100;  // 230.79(C)
 export const HVAC_OCPD_MULTIPLIER = 1.75; // 440.22(A) — 175%, next size down
 export const ARC_ENERGY_REDUCTION_THRESHOLD_AMPS = 1200; // 240.87 (2017)
 

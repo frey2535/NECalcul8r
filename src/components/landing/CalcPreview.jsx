@@ -178,7 +178,7 @@ export function DwellingLoadPreview() {
           <MockResultRow label="Range Demand (Table 220.55)" value="8,000" unit="VA" sub="Column C, 1 appliance" />
           <MockResultRow label="Dryer Demand" value="5,000" unit="VA" sub="Min 5,000W per 220.54" />
           <MockResultRow label="Total Service Load" value="18,700" unit="VA" highlight />
-          <MockResultRow label="Minimum Service Size" value="100" unit="A" highlight sub="Per NEC 230.42(B)" />
+          <MockResultRow label="Minimum Service Size" value="100" unit="A" highlight sub="Per NEC 230.79(C)" />
         </MockResultSection>
         <MockNoteBox>
           NEC 220.82: Standard method for single-family dwellings. General lighting at 3 VA/sq ft, minimum 2 small appliance circuits at 1,500 VA each, plus laundry circuit. Demand factors from Table 220.42 applied to lighting load.

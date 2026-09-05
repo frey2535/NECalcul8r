@@ -119,9 +119,9 @@ export const NEC_TABLES = [
     article: "NEC Table 220.55",
     yearRefs: {
       "2017": "Table 220.55",
-      "2020": "Table 220.60",
-      "2023": "Table 220.60",
-      "2026": "Table 220.60 (pending)",
+      "2020": "Table 220.55",
+      "2023": "Table 220.55",
+      "2026": "Table 220.55 (pending)",
     },
     title: "Demand Factors for Household Cooking Appliances (Nameplate >1¾ kW)",
     headers: ["Number of Appliances", "Column A — Less than 3½ kW (%)", "Column B — 3½ kW through 8¾ kW (%)", "Column C — Over 8¾ kW through 12 kW"],
@@ -157,7 +157,7 @@ export const NEC_TABLES = [
       ["51–60", "30%", "18%", "25 kW + 0.75 kW per range"],
       ["61 and over", "30%", "16%", "25 kW + 0.75 kW per range"],
     ],
-    note: "Column A applies to appliances rated <3½ kW. Column B applies to appliances rated 3½–8¾ kW. Column C applies to appliances rated >8¾ kW–12 kW. For ranges >12 kW, increase Column C demand by 5% per kW above 12 kW. 2017 reference: Table 220.55. 2020+ reference: Table 220.60.",
+    note: "Column A applies to appliances rated <3½ kW. Column B applies to appliances rated 3½–8¾ kW. Column C applies to appliances rated >8¾ kW–12 kW. For ranges >12 kW, increase Column C demand by 5% per kW above 12 kW. Household cooking appliances remain Table 220.55; NEC 220.60 is the separate noncoincident-load rule.",
   },
   {
     id: "220_56_kitchen_equipment_demand",
@@ -1314,7 +1314,7 @@ export const NEC_TABLES = [
       ["51–70", "40"],
       ["71 plus", "30"],
     ],
-    note: "NEC Table 555.12 (2017): Demand factors permitted for each service and/or feeder circuit supplying receptacles that provide shore power for boats. ARTICLE 555 REORGANIZED ACROSS EDITIONS: 2017 = Table 555.12; 2020 = Table 555.6 (renumbered); 2023 = Table 220.120 (moved to Article 220, section 555.6 now references 220.120). Demand factor VALUES are unchanged across editions. Note 1: Where shore power accommodations provide two receptacles specifically for an individual boat slip and these receptacles have different ratings (e.g., 30A and 50A), the demand factors apply to the sum of the ratings. Note 2: Where shore power accommodations supply two or more receptacles specifically for an individual boat slip, the demand factors apply to the sum of the ratings of the receptacles at that slip. Row selection is based on total receptacle COUNT (NEC-defined treatment), not input rows.",
+    note: "NEC Table 555.12 (2017): Demand factors permitted for each service and/or feeder circuit supplying receptacles that provide shore power for boats. ARTICLE 555 REORGANIZED ACROSS EDITIONS: 2017 = Table 555.12; 2020 = Table 555.6 (renumbered); 2023 = Table 220.120 (moved to Article 220, section 555.6 now references 220.120). Demand factor VALUES are unchanged across editions. Select the row from the maximum number of shore-power receptacles connected to any one line after balancing. Shore-power receptacles with different ratings at an individual slip are included by rating as required by the table notes.",
   },
 
   // ─── Informational / General ──────────────────────────────────────

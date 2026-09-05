@@ -96,7 +96,7 @@ export default function DwellingOptional({ category, necYear = "2023" }) {
             <li>NEC {necYear} {genArt}: general loads (lighting, small-appliance, laundry, and nameplate appliances such as range, dryer, water heater, dishwasher) — first 10,000 VA at 100%, remainder at {remainderPct}%. Table 220.55 / 220.54 demand factors are not used in this method.</li>
             <li>NEC {necYear} 220.82(C): HVAC is the <strong>largest</strong> of (C)(1)–(C)(6) — AC 100%, heat-pump compressor 100%, compressor + {suppPct}% supplemental (omit compressor from that selection if they cannot run together), space heat {lt4}% if fewer than 4 separately controlled units or {ge4}% if 4 or more, thermal storage / continuous heating 100%. Do not add heating and cooling.</li>
             {bothHeatSystems && <li>Electric space heating and thermal storage are both entered. A system that qualifies under (C)(6) must not also be calculated under (C)(4) or (C)(5). The calculator takes the larger selection; it does not add them.</li>}
-            <li>Minimum service: {nec.DWELLING_MIN_SERVICE_AMPS}A per 230.42(B).</li>
+            <li>Minimum one-family dwelling service: {nec.DWELLING_MIN_SERVICE_AMPS}A per 230.79(C).</li>
             {nec.DWELLING_SPD_REQUIRED && <li><strong>230.67 ({necYear}):</strong> SPD Type 1 or 2 required for this dwelling unit service.</li>}
             {nec.DWELLING_OUTDOOR_DISCONNECT_REQUIRED && <li><strong>230.85 ({necYear}):</strong> Outdoor emergency disconnect required for one- and two-family dwellings.</li>}
             {nec.GFCI_SCOPE_DWELLING && <li><strong>210.8(A) GFCI scope ({necYear}):</strong> {nec.GFCI_SCOPE_DWELLING}</li>}

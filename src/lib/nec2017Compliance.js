@@ -16,13 +16,13 @@
  */
 export const POST_2017_ARTICLES = {
   "230.85": { addedIn: "2020", description: "Outdoor emergency disconnect for dwelling units" },
-  "230.67":  { addedIn: "2023", description: "Surge-protective device (SPD) required for dwellings" },
+  "230.67":  { addedIn: "2020", description: "Surge-protective device (SPD) required for dwelling unit services" },
   "625.54":  { addedIn: "2020", description: "GFCI protection for EVSE (EV charging)" },
   "220.57":  { addedIn: "2023", description: "EV minimum load for dwelling load calculations" },
   "210.8(A)(10)": { addedIn: "2020", description: "GFCI for laundry areas" },
   "210.8(A)(11)": { addedIn: "2020", description: "GFCI for dishwashers" },
   "210.8(A)(12)": { addedIn: "2023", description: "GFCI for bathtubs and shower stalls" },
-  "230.67(A)": { addedIn: "2023", description: "SPD installation requirements" },
+  "230.67(A)": { addedIn: "2020", description: "SPD installation requirements" },
 };
 
 /**
@@ -74,6 +74,7 @@ export const VALID_2017_ARTICLES = new Set([
   "460.8",
   "625.14", "625.17", "625.19", "625.42", // Note: 625.54 (GFCI for EVSE) was NOT in 2017
   "630.11", "630.12",
+  "555.12", "555.19", "555.19(A)",
   "680.8", "680.22", "680.26", "680.43",
   "690.8", "690.8(B)(1)",
   "695.6",

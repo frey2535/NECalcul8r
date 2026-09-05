@@ -44,7 +44,7 @@ export function calcServiceSizing(v, nec) {
   }
   steps.push(
     { label: "Design Load (230.42)", formula: "I_design = max(I_adj, I_calc)", expression: `max(${Math.round(adjustedAmps * 10) / 10}, ${calculatedLoadA || 0})`, result: Math.round(designLoad * 10) / 10, unit: "A", note: designMethod },
-    { label: "Minimum Service Size", formula: "Size = next standard ≥ design load", expression: `next standard ≥ ${Math.round(designLoad * 10) / 10} A`, result: finalService, unit: "A", note: `Min residential: ${minResidential} A` },
+    { label: "Minimum Service Size", formula: "Size = next standard ≥ design load", expression: `next standard ≥ ${Math.round(designLoad * 10) / 10} A`, result: finalService, unit: "A", note: `Minimum one-family dwelling service: ${minResidential} A (230.79(C))` },
   );
   const result = {
     totalAmps: Math.round(totalAmps * 10) / 10,
@@ -59,7 +59,7 @@ export function calcServiceSizing(v, nec) {
     steps,
   };
   return withTrace(result, {
-    articles_used: ["230.42(A)", "230.42(B)", "230.67", "230.85"],
+    articles_used: ["230.42(A)", "230.79(C)", "230.67", "230.85"],
     tables_used: ["Table 240.6(A)"],
     fields_used: ["CONTINUOUS_LOAD_MULTIPLIER", "STD_OCPD_SIZES", "DWELLING_MIN_SERVICE_AMPS", "DWELLING_SPD_REQUIRED", "DWELLING_OUTDOOR_DISCONNECT_REQUIRED"],
   });

@@ -34,7 +34,7 @@ export default function ServiceSizing({ category, necYear = "2023" }) {
         </ResultSection>
         <ResultSection title="Service Equipment">
           <ResultRow label="Minimum Service Size" value={`${finalService}A`} highlight
-            sub="100A minimum per NEC 230.42 for residential" />
+            sub="100A minimum per NEC 230.79(C) for one-family dwellings" />
           <ResultRow label="Service Disconnect Rating" value={`${finalService}A`} sub="NEC 230.70" />
           {nec.DWELLING_SPD_REQUIRED !== undefined && (
             <ResultRow label="Dwelling SPD Required" value={nec.DWELLING_SPD_REQUIRED ? `Yes (${nec.SPD_ARTICLE || "230.67"})` : "No"} />
@@ -46,7 +46,7 @@ export default function ServiceSizing({ category, necYear = "2023" }) {
         <FormulaBox steps={steps} />
         <NoteBox>
           <ul className="list-disc pl-3.5 space-y-1">
-            <li>NEC {necYear} 230.42: Service conductor ampacity ≥ load. Continuous loads × {(nec.CONTINUOUS_LOAD_MULTIPLIER * 100).toFixed(0)}% for service sizing. Minimum {nec.DWELLING_MIN_SERVICE_AMPS}A residential service per NEC 230.42(B). NEC 240.6 standard ratings apply.</li>
+            <li>NEC {necYear} 230.42: Service conductor ampacity ≥ load. Continuous loads × {(nec.CONTINUOUS_LOAD_MULTIPLIER * 100).toFixed(0)}% for service sizing. Minimum {nec.DWELLING_MIN_SERVICE_AMPS}A one-family dwelling service per NEC 230.79(C). NEC 240.6 standard ratings apply.</li>
             {nec.DWELLING_SPD_TYPE && <li><strong>{nec.SPD_ARTICLE || "230.67"} SPD ({necYear}):</strong> {nec.DWELLING_SPD_TYPE}</li>}
             {nec.OVERVOLTAGE_ARTICLE_NOTE && <li><strong>Article {nec.OVERVOLTAGE_ARTICLE}:</strong> {nec.OVERVOLTAGE_ARTICLE_NOTE}</li>}
             {nec.SUPPLY_SIDE_DISCONNECT_NOTE && <li><strong>{nec.SUPPLY_SIDE_DISCONNECT_ARTICLE}:</strong> {nec.SUPPLY_SIDE_DISCONNECT_NOTE}</li>}

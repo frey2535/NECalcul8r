@@ -329,7 +329,7 @@ def("service_sizing", "Service Sizing 230.42", calcServiceSizing, [
   },
   {
     id: "svc_min_100",
-    description: "230.42(B) dwelling minimum 100 A",
+    description: "230.79(C) dwelling minimum 100 A",
     inputs: { totalVA: 5000, voltage: 240, phases: "single", continuousPct: 80 },
     expected: { minService_A: 100 },
   },
