@@ -12,8 +12,9 @@ import {
 
 const FORMULAS = [
   { label: "Straight Pull (314.28(A)(1))", formula: "Box length = 8 × largest raceway trade size", description: "For straight pulls, the length of the box shall not be less than eight times the trade size of the largest raceway." },
-  { label: "Angle/U Pull (314.28(A)(2))", formula: "Distance = 6 × largest in row + sum of additional raceway trade sizes in same row", description: "For angle or U pulls, the distance from each raceway entry to the opposite wall shall not be less than six times the trade size of the largest raceway in the row, plus the sum of the trade sizes of all additional raceway entries in the same row on the same wall." },
+  { label: "Angle/U Pull or Splice (314.28(A)(2))", formula: "Distance = 6 × largest in row + sum of additional raceway trade sizes in same row", description: "For angle pulls, U pulls, or splices, the distance from each raceway entry to the opposite wall shall not be less than six times the trade size of the largest raceway in the row, plus the sum of the trade sizes of all additional raceway entries in the same row on the same wall." },
   { label: "Connected-Entry Spacing (314.28(A)(2))", formula: "Spacing = 6 × largest raceway in path (connected entries only)", description: "For raceways enclosing the same conductors (the two ends of a conductor path), nearest-edge-to-nearest-edge spacing must be at least six times the trade size of the largest raceway. This spacing is calculated ONLY between connected entries — NOT automatically for every raceway in the same row." },
+  { label: "Conductors in Pull/Junction Boxes (314.28(B))", formula: "If any dimension exceeds 6 ft, conductors must be cabled or racked", description: "314.28(B) is not the splice-sizing rule; it addresses conductors in pull or junction boxes when a dimension exceeds 6 ft." },
 ];
 
 let _idCounter = 0;
@@ -24,6 +25,7 @@ const nextPathId = () => `p_${++_pathCounter}`;
 export default function PullBoxSizing({ category, necYear = "2020" }) {
   const nec = getNecData(necYear);
   const [conductorSize, setConductorSize] = useRestoredField("conductorSize", "4");
+  const [containsSplices, setContainsSplices] = useRestoredField("containsSplices", "false");
   const [raceways, setRaceways] = useRestoredField("raceways", [
     { id: nextId(), size: "3", wall: "left", row: "1" },
     { id: nextId(), size: "3", wall: "right", row: "1" },
@@ -61,7 +63,7 @@ export default function PullBoxSizing({ category, necYear = "2020" }) {
     setActualSpacings(prev => ({ ...prev, [pathId]: value }));
   };
 
-  const v = { conductorSize, raceways, paths, boxLength, boxWidth, actualSpacings };
+  const v = { conductorSize, containsSplices, raceways, paths, boxLength, boxWidth, actualSpacings };
   const r = calcPullBoxSizing(v, nec);
 
   // Group raceways by wall for display
@@ -103,6 +105,17 @@ export default function PullBoxSizing({ category, necYear = "2020" }) {
 
         <ResultSection title="Minimum Box Dimensions">
           <ResultRow label="Conductor Size" value={r.conductorSize} sub={r.applicable ? "314.28 applies (≥ 4 AWG)" : "314.28 does NOT apply (< 4 AWG)"} />
+          <ResultRow
+            label="Splices Present"
+            value={r.containsSplices ? "Yes" : "No"}
+            sub={r.containsSplices ? "Apply 314.28(A)(2) splice row dimensions in addition to other pull rules" : "No splice-only sizing added"}
+          />
+          <ResultRow
+            label="314.28(B) Cable/Rack"
+            value={r.requiresCableRacking ? "Required" : "Not triggered"}
+            sub={r.cableRackingNotice}
+            highlight={r.requiresCableRacking}
+          />
           <ResultRow
             label="Min Width (X — left↔right)"
             value={r.minX > 0 ? r.minX : "—"}
@@ -182,8 +195,15 @@ export default function PullBoxSizing({ category, necYear = "2020" }) {
         )}
 
         {/* Splice/termination info */}
-        {r.paths.some(p => p.type === "splice" || p.type === "termination") && (
+        {(r.containsSplices || r.paths.some(p => p.type === "splice" || p.type === "termination")) && (
           <ResultSection title="Splice / Termination Handling">
+            {r.containsSplices && (
+              <div className="p-2 rounded-lg bg-card border border-border text-[10px] space-y-1">
+                <div className="font-bold text-foreground">Box contains splices — NEC 314.28(A)(2)</div>
+                <div className="text-muted-foreground">{r.spliceTerminationInfo.splice}</div>
+                <div className="text-muted-foreground">{r.spliceTerminationInfo.articleB}</div>
+              </div>
+            )}
             {r.paths.filter(p => p.type === "splice" || p.type === "termination").map((p, i) => (
               <div key={i} className="p-2 rounded-lg bg-card border border-border text-[10px] space-y-1">
                 <div className="font-bold text-foreground">Path {p.id}: {p.type === "splice" ? "Splice" : "Termination"}</div>
@@ -215,9 +235,9 @@ export default function PullBoxSizing({ category, necYear = "2020" }) {
           <p className="font-bold mb-1">NEC 314.28 — Pull and Junction Box Sizing</p>
           <p className="mb-1"><strong>Applicability:</strong> 314.28 applies to boxes/conduit bodies containing conductors 4 AWG or larger. For smaller conductors, use NEC 314.16 (Box Fill).</p>
           <p className="mb-1"><strong>314.28(A)(1) — Straight Pulls:</strong> Box length ≥ 8 × trade size of largest raceway.</p>
-          <p className="mb-1"><strong>314.28(A)(2) — Angle/U Pulls:</strong> Distance to opposite wall ≥ 6 × largest raceway in row + sum of additional raceway trade sizes in same row on same wall.</p>
+          <p className="mb-1"><strong>314.28(A)(2) — Angle/U Pulls or Splices:</strong> Distance to opposite wall ≥ 6 × largest raceway in row + sum of additional raceway trade sizes in same row on same wall. If a straight-pull junction box contains splices, calculate both 314.28(A)(1) and 314.28(A)(2) and use the larger required dimension.</p>
           <p className="mb-1"><strong>Spacing (Corrected):</strong> The 6× spacing rule is calculated ONLY between connected entries (entries enclosing the same conductors). It is NOT applied automatically to every raceway in the same row.</p>
-          <p className="mb-1"><strong>314.28(B) — Splices:</strong> Where splices are made, the box may also need to satisfy 314.16 fill requirements. Applicability depends on conductor size and the actual installation — use professional judgment.</p>
+          <p className="mb-1"><strong>314.28(B) — Conductors in Pull/Junction Boxes:</strong> If any dimension of a pull or junction box exceeds 6 ft, the conductors must be cabled or racked in an approved manner.</p>
           <p className="mb-1"><strong>Splice/Termination:</strong> These are NOT treated as ordinary angle pulls. They have one entry, so the row requirement is calculated once. No connected-entry spacing is generated.</p>
           <p className="mb-1"><strong>Zero Axis:</strong> Where an axis returns zero, no 314.28 pull dimension was calculated for that axis. Other requirements may establish a minimum dimension.</p>
           <p className="mt-2 text-amber-700 dark:text-amber-400">
@@ -229,6 +249,17 @@ export default function PullBoxSizing({ category, necYear = "2020" }) {
       {/* Conductor Size */}
       <Field label="Conductor Size" hint="314.28 applies to conductors 4 AWG and larger">
         <Select value={conductorSize} onChange={setConductorSize} options={CONDUCTOR_SIZE_OPTIONS} />
+      </Field>
+
+      <Field label="Splices in Box" hint="Select Yes where 4 AWG or larger conductors are spliced in this pull/junction box. Splices are sized under 314.28(A)(2), not 314.28(B).">
+        <Select
+          value={containsSplices}
+          onChange={setContainsSplices}
+          options={[
+            { value: "false", label: "No — pulls only" },
+            { value: "true", label: "Yes — box contains splices" },
+          ]}
+        />
       </Field>
 
       {/* Raceway Entries */}

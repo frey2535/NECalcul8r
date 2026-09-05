@@ -10,12 +10,11 @@
  *              4 AWG or larger (NOT based on box volume).
  * 314.28(A) — General — boxes must be sized per (1) or (2) based on pull type
  * 314.28(A)(1) — Straight pulls: box length ≥ 8 × trade size of largest raceway
- * 314.28(A)(2) — Angle/U pulls: distance to opposite wall ≥ 6 × largest raceway
- *                 in row + sum of trade sizes of additional raceways in same
- *                 row on same wall.
- * 314.28(B) — Splices: box must also meet applicable fill requirements.
- *              314.16 fill applicability depends on conductor size and
- *              installation — NOT automatically required for every splice.
+ * 314.28(A)(2) — Angle/U pulls or splices: distance to opposite wall ≥
+ *                 6 × largest raceway in row + sum of trade sizes of
+ *                 additional raceways in same row on same wall.
+ * 314.28(B) — Conductors in pull or junction boxes: if any dimension exceeds
+ *              6 ft, conductors must be cabled or racked in an approved manner.
  *
  * NOTE: 314.28(C) does NOT establish a universal 4×4×2 in minimum for all
  * pull boxes. That minimum applies to specific small boxes, not to pull boxes
@@ -54,11 +53,10 @@
  * on that wall. Raceways in other rows on the same wall are NOT included.
  *
  * ─── SPLICE AND TERMINATION HANDLING ────────────────────────────────
- * Splice: Conductors enter through one raceway and are spliced in the box.
- *   The row dimension requirement (6× largest + sum of additional in row)
- *   applies to provide space for pulling and splicing. No connected-entry
- *   spacing is generated (only one entry). 314.16 box-fill applicability
- *   depends on conductor size and installation.
+ * Splices: Where splices are made, the 314.28(A)(2) row dimension requirement
+ *   (6× largest + sum of additional in row) applies to every occupied wall row.
+ *   A straight-pull box with splices must satisfy both 314.28(A)(1) and
+ *   314.28(A)(2), with the larger resulting dimension controlling.
  *
  * Termination: Conductors enter through one raceway and terminate on a device
  *   (lug, breaker, etc.) in the box. The row dimension requirement applies
@@ -230,6 +228,7 @@ function buildWallRowTrace(wallId, rowId, rowRaceways) {
  *   v.conductorSize: string — AWG or kcmil (determines 314.28 applicability)
  *   v.raceways: Array<{ id, size, wall, row }>
  *   v.paths: Array<{ id, entryA, entryB, type }>
+ *   v.containsSplices: boolean|string - true when 4 AWG+ conductors are spliced
  *   v.boxLength: string|number - optional user box length (Y, inches)
  *   v.boxWidth: string|number  - optional user box width (X, inches)
  *   v.actualSpacings: object - optional, keyed by path ID, actual spacing in inches
@@ -240,6 +239,7 @@ export function calcPullBoxSizing(v, nec) {
   const conductorSize = v.conductorSize || "4";
   const raceways = (v.raceways || []).filter(r => r.size && r.wall);
   const paths = (v.paths || []).filter(p => p.entryA || p.entryB);
+  const containsSplices = v.containsSplices === true || v.containsSplices === "true";
   const userBoxLength = parseFloat(v.boxLength) || 0;
   const userBoxWidth = parseFloat(v.boxWidth) || 0;
   const actualSpacings = v.actualSpacings || {};
@@ -273,6 +273,39 @@ export function calcPullBoxSizing(v, nec) {
 
   // ─── Track which wall/rows have been traced (avoid duplicates) ──
   const tracedWallRows = new Set();
+
+  if (applicable && containsSplices) {
+    for (const [wallId, rows] of Object.entries(byWallRow)) {
+      for (const [rowId, rowRaceways] of Object.entries(rows)) {
+        const rowKey = `${wallId}:${rowId}`;
+        const rowReq = calcRowRequirement(rowRaceways);
+        const wall = WALLS[wallId];
+        const dim = wall.controlsDim;
+
+        if (dim === "X") {
+          minX = Math.max(minX, rowReq);
+        } else {
+          minY = Math.max(minY, rowReq);
+        }
+
+        if (!tracedWallRows.has(rowKey)) {
+          tracedWallRows.add(rowKey);
+          wallRowTraces.push(buildWallRowTrace(wallId, rowId, rowRaceways));
+        }
+
+        steps.push({
+          label: `Splices Present — ${wall.label}, row ${rowId} → ${dim} (314.28(A)(2))`,
+          formula: "Distance = 6 × largest in row + sum of additional in row",
+          expression: rowRaceways.length === 1
+            ? `6 × ${rowRaceways[0].inches}"`
+            : `6 × ${Math.max(...rowRaceways.map(r => r.inches))}" + ${rowRaceways.map(r => r.inches).sort((a, b) => b - a).slice(1).map(s => `${s}"`).join(" + ")}`,
+          result: rowReq,
+          unit: "in",
+          note: "Box contains splices, so each occupied wall row must also satisfy the 314.28(A)(2) splice dimension. Straight-pull sizing, if present, still applies separately.",
+        });
+      }
+    }
+  }
 
   // ─── Classify paths and calculate path-specific requirements ─────
   for (const path of paths) {
@@ -437,7 +470,7 @@ export function calcPullBoxSizing(v, nec) {
         pathInfo.dimension = dim;
         pathInfo.rule = `314.28(A)(2) — ${type === "splice" ? "Splice" : "Termination"}`;
         pathInfo.spliceEffect = type === "splice"
-          ? "Conductors enter through one raceway and are spliced in the box. Row dimension requirement (6× largest + sum of additional in row) applies. No connected-entry spacing (only one entry). 314.16 box-fill applicability depends on conductor size and installation."
+          ? "Conductors enter through one raceway and are spliced in the box. The 314.28(A)(2) row dimension requirement (6× largest + sum of additional in row) applies. No connected-entry spacing is generated for this single-entry path."
           : "Conductors enter through one raceway and terminate on a device in the box. Row dimension requirement (6× largest + sum of additional in row) applies. No connected-entry spacing (only one entry).";
 
         if (dim === "X") {
@@ -503,6 +536,8 @@ export function calcPullBoxSizing(v, nec) {
   let unsupportedWarning = null;
   if (parsed.length === 0) {
     unsupportedWarning = "Add at least one raceway entry to calculate minimum box dimensions.";
+  } else if (paths.length === 0 && containsSplices) {
+    unsupportedWarning = "Splice row dimensions have been calculated for all raceways. Add conductor paths for any through conductors to include straight, angle, or U-pull requirements.";
   } else if (paths.length === 0) {
     unsupportedWarning = "Add at least one conductor path (connecting two raceway entries) to classify the pull type and calculate dimensions.";
   }
@@ -521,7 +556,9 @@ export function calcPullBoxSizing(v, nec) {
   const unmapped = parsed.filter(r => !mappedIds.has(r.id));
   let unmappedWarning = null;
   if (unmapped.length > 0) {
-    unmappedWarning = `${unmapped.length} raceway(s) not assigned to any conductor path. Add a path for each raceway to calculate its pull requirements.`;
+    unmappedWarning = containsSplices
+      ? `${unmapped.length} raceway(s) not assigned to a conductor path. Splice row dimensions include them, but add paths for any through conductors to include straight, angle, or U-pull requirements.`
+      : `${unmapped.length} raceway(s) not assigned to any conductor path. Add a path for each raceway to calculate its pull requirements.`;
   }
 
   // ─── Zero-axis messages ─────────────────────────────────────────
@@ -534,11 +571,17 @@ export function calcPullBoxSizing(v, nec) {
   // ─── Global conductor size notice ──────────────────────────────
   const conductorSizeNotice = "All configured raceways are assumed to contain the selected conductor size.";
 
+  const requiresCableRacking = minX > 72 || minY > 72;
+  const cableRackingNotice = requiresCableRacking
+    ? "314.28(B): At least one calculated box dimension exceeds 6 ft. Conductors must be cabled or racked in an approved manner."
+    : "314.28(B): No calculated box dimension exceeds 6 ft.";
+
   // ─── Splice/termination info ─────────────────────────────────────
   const spliceTerminationInfo = {
-    splice: "Conductors enter through one raceway and are spliced in the box. The row dimension requirement (6× largest + sum of additional in row) applies to provide space for pulling and splicing. No connected-entry spacing is generated (only one entry). 314.16 box-fill applicability depends on conductor size and installation — use professional judgment.",
+    splice: "Splices are sized under 314.28(A)(2), not 314.28(B). Where splices are made, every occupied wall row must satisfy 6× the largest raceway in that row plus the sum of the additional raceways in the same row. A straight-pull box with splices must satisfy both 314.28(A)(1) and 314.28(A)(2).",
     termination: "Conductors enter through one raceway and terminate on a device (lug, breaker, etc.) in the box. The row dimension requirement (6× largest + sum of additional in row) applies to provide space for pulling and terminating. No connected-entry spacing is generated (only one entry).",
     notAnglePull: "Splice and termination paths are NOT treated as ordinary angle pulls. They have only one entry, so the row requirement is calculated once (not twice as with angle pulls which have two entries on different walls).",
+    articleB: "314.28(B) addresses conductors in pull or junction boxes. If any box dimension exceeds 6 ft, the conductors must be cabled or racked in an approved manner.",
   };
 
   const allSteps = [...steps, ...complianceSteps];
@@ -546,6 +589,7 @@ export function calcPullBoxSizing(v, nec) {
   const result = {
     applicable,
     conductorSize,
+    containsSplices,
     minX: Math.round(minX * 100) / 100,
     minY: Math.round(minY * 100) / 100,
     minBoxDimensions: `${Math.round(minX * 100) / 100}" × ${Math.round(minY * 100) / 100}"`,
@@ -565,6 +609,8 @@ export function calcPullBoxSizing(v, nec) {
     xAxisMessage,
     yAxisMessage,
     conductorSizeNotice,
+    requiresCableRacking,
+    cableRackingNotice,
     spliceTerminationInfo,
   };
 
