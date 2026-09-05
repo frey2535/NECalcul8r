@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import {
   CheckCircle2, AlertTriangle, XCircle, ChevronDown, ChevronRight,
-  FileText, Database, Eye, EyeOff, Zap, ShieldCheck, ShieldAlert,
+  FileText, Eye, ShieldAlert,
   Layers, GitBranch, FileCheck,
 } from "lucide-react";
 

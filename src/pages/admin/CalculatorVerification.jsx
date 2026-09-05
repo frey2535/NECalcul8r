@@ -3,8 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import {
-  CheckCircle2, AlertTriangle, ShieldCheck, Layers, FileCheck, Search,
-  Calculator as CalcIcon,
+  AlertTriangle, ShieldCheck, Layers, FileCheck, Search,
 } from "lucide-react";
 import {
   CALCULATOR_VERIFICATION_INDEX,

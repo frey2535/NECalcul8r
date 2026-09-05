@@ -1,5 +1,5 @@
 import React from "react";
-import { MockHeader, MockField, MockResultRow, MockResultSection, MockNoteBox, MockFormulaBox } from "./MockPrimitives";
+import { MockHeader, MockField, MockResultRow, MockResultSection, MockFormulaBox } from "./MockPrimitives";
 
 // ─── Commercial Load ───
 export function CommercialLoadPreview() {
