@@ -16,7 +16,7 @@ export function lazyRetry(importFn, name = "chunk") {
     importFn().catch((error) => {
       const isChunkLoadError =
         error?.name === "ChunkLoadError" ||
-        /Failed to fetch dynamically imported module/i.test(error?.message || "");
+        /Failed to fetch dynamically imported module|error loading dynamically imported module|Importing a module script failed/i.test(error?.message || "");
 
       if (!isChunkLoadError) throw error;
 
@@ -31,7 +31,9 @@ export function lazyRetry(importFn, name = "chunk") {
         // sessionStorage may be unavailable (private mode) — skip the guard
       }
 
-      window.location.reload();
+      const url = new URL(window.location.href);
+      url.searchParams.set("t", String(Date.now()));
+      window.location.replace(url.toString());
       // Return a never-resolving promise so React Suspense stays pending
       // while the reload is in flight, instead of throwing immediately.
       return new Promise(() => {});

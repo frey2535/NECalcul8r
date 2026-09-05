@@ -23,23 +23,23 @@ import InstallAppPrompt from '@/components/InstallAppPrompt';
 import UpdateAvailablePrompt from '@/components/UpdateAvailablePrompt';
 
 // Lazy-loaded route components
-const NECCalculator = lazy(() => import('@/pages/NECCalculator'));
-const NECTables = lazy(() => import('@/pages/NECTables'));
-const History = lazy(() => import('@/pages/History'));
-const Projects = lazy(() => import('@/pages/Projects'));
-const NewAnalysis = lazy(() => import('@/pages/NewAnalysis'));
-const Results = lazy(() => import('@/pages/Results'));
-const UserManagement = lazy(() => import('@/pages/UserManagement'));
-const DeveloperAudit = lazy(() => import('@/pages/DeveloperAudit'));
-const DiscrepancyReports = lazy(() => import('@/pages/admin/DiscrepancyReports'));
-const NECCoverageReport = lazy(() => import('@/pages/NECCoverageReport'));
-const CodebookMatrix = lazy(() => import('@/pages/admin/CodebookMatrix'));
-const CalculatorVerification = lazy(() => import('@/pages/admin/CalculatorVerification'));
+const NECCalculator = lazy(lazyRetry(() => import('@/pages/NECCalculator'), 'NECCalculator'));
+const NECTables = lazy(lazyRetry(() => import('@/pages/NECTables'), 'NECTables'));
+const History = lazy(lazyRetry(() => import('@/pages/History'), 'History'));
+const Projects = lazy(lazyRetry(() => import('@/pages/Projects'), 'Projects'));
+const NewAnalysis = lazy(lazyRetry(() => import('@/pages/NewAnalysis'), 'NewAnalysis'));
+const Results = lazy(lazyRetry(() => import('@/pages/Results'), 'Results'));
+const UserManagement = lazy(lazyRetry(() => import('@/pages/UserManagement'), 'UserManagement'));
+const DeveloperAudit = lazy(lazyRetry(() => import('@/pages/DeveloperAudit'), 'DeveloperAudit'));
+const DiscrepancyReports = lazy(lazyRetry(() => import('@/pages/admin/DiscrepancyReports'), 'DiscrepancyReports'));
+const NECCoverageReport = lazy(lazyRetry(() => import('@/pages/NECCoverageReport'), 'NECCoverageReport'));
+const CodebookMatrix = lazy(lazyRetry(() => import('@/pages/admin/CodebookMatrix'), 'CodebookMatrix'));
+const CalculatorVerification = lazy(lazyRetry(() => import('@/pages/admin/CalculatorVerification'), 'CalculatorVerification'));
 const Landing = lazy(lazyRetry(() => import('@/pages/Landing'), 'Landing'));
-const Profile = lazy(() => import('@/pages/Profile'));
-const Purchase = lazy(() => import('@/pages/Purchase'));
-const PrivacyPolicy = lazy(() => import('@/pages/PrivacyPolicy'));
-const TermsOfService = lazy(() => import('@/pages/TermsOfService'));
+const Profile = lazy(lazyRetry(() => import('@/pages/Profile'), 'Profile'));
+const Purchase = lazy(lazyRetry(() => import('@/pages/Purchase'), 'Purchase'));
+const PrivacyPolicy = lazy(lazyRetry(() => import('@/pages/PrivacyPolicy'), 'PrivacyPolicy'));
+const TermsOfService = lazy(lazyRetry(() => import('@/pages/TermsOfService'), 'TermsOfService'));
 
 function PageLoader() {
   return (
