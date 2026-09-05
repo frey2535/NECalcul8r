@@ -52,7 +52,8 @@
  *  PB-06: U pull, 3" + 2" on left, same row → X = 6×3+2 = 20"
  *  PB-07: Angle pull, 3" left + 2" bottom → X=18, Y=12
  *  PB-08: U pull, two 2" on left, same row → X = 6×2+2 = 14", spacing = 12"
- *  PB-09: Splice box, straight pull 2" → X=16, splice note
+ *  PB-09: Splice box, straight pull 2" → X=16; checked under A(1) and A(2)
+ *  PB-09B: Straight pull with splices and four same-row 2" left entries → X=18 via A(2)
  *  PB-10: Compliance check PASS — 2" straight, box 18×6 → PASS
  *  PB-11: Compliance check FAIL — 3" straight, box 20×6 → FAIL
  *  PB-13: U pull, 3 raceways on left (3", 2", 1"), same row → X = 6×3+2+1 = 21"
@@ -198,6 +199,7 @@ const TESTS = [
     name: "Splice box — straight pull 2\" with splices",
     inputs: {
       conductorSize: "4",
+      containsSplices: true,
       raceways: [
         { id: "r1", size: "2", wall: "left", row: "1" },
         { id: "r2", size: "2", wall: "right", row: "1" },
@@ -206,8 +208,31 @@ const TESTS = [
         { id: "p1", entryA: "r1", entryB: "r2", type: "auto" },
       ],
     },
-    expected: { minX: 16, minY: 0, applicable: true },
-    note: "314.28(A)(1): X = 8 × 2\" = 16\". Y = 0 (no top/bottom). Splice note: 314.16 fill applicability depends on conductor size and installation.",
+    expected: { minX: 16, minY: 0, applicable: true, containsSplices: true, wallRowCount: 2 },
+    note: "Box contains splices, so calculate both 314.28(A)(1) and 314.28(A)(2). A(1): X = 8 × 2\" = 16\". A(2): each single-entry row = 6 × 2\" = 12\". X = 16\".",
+  },
+  {
+    id: "PB-09B",
+    name: "Splice box — straight pull plus additional same-row entries, A(2) controls",
+    inputs: {
+      conductorSize: "4",
+      containsSplices: true,
+      raceways: [
+        { id: "r1", size: "2", wall: "left", row: "1" },
+        { id: "r2", size: "2", wall: "right", row: "1" },
+        { id: "r3", size: "2", wall: "left", row: "1" },
+        { id: "r4", size: "2", wall: "left", row: "1" },
+        { id: "r5", size: "2", wall: "left", row: "1" },
+      ],
+      paths: [
+        { id: "p1", entryA: "r1", entryB: "r2", type: "auto" },
+        { id: "p2", entryA: "r3", entryB: null, type: "splice" },
+        { id: "p3", entryA: "r4", entryB: null, type: "splice" },
+        { id: "p4", entryA: "r5", entryB: null, type: "splice" },
+      ],
+    },
+    expected: { minX: 18, minY: 0, applicable: true, containsSplices: true, wallRowCount: 2 },
+    note: "Straight pull A(1): 8 × 2\" = 16\". Splice sizing A(2), left row with four 2\" entries: 6 × 2\" + 2\" + 2\" + 2\" = 18\". X = 18\".",
   },
   {
     id: "PB-10",
@@ -483,6 +508,9 @@ export function runPullBoxSizingTests() {
       } else if (key === "hasApplicabilityWarning") {
         actualVal = !!actual.applicabilityWarning;
         match = actualVal === expectedVal;
+      } else if (key === "containsSplices") {
+        actualVal = actual.containsSplices;
+        match = actualVal === expectedVal;
       } else {
         actualVal = actual[key];
         match = withinTolerance(actualVal, expectedVal);
@@ -514,6 +542,7 @@ export function runPullBoxSizingTests() {
         yAxisMessage: actual.yAxisMessage,
         conductorSizeNotice: actual.conductorSizeNotice,
         applicabilityWarning: actual.applicabilityWarning,
+        containsSplices: actual.containsSplices,
       },
     });
   }
