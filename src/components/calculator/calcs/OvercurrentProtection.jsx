@@ -20,6 +20,7 @@ export default function OvercurrentProtection({ category, necYear = "2023" }) {
 
   const r = calcOvercurrentProtection(v, nec);
   const { exactMatch, nextSizeUp, nextSizeDown, recommendedOCPD, requiredOCPD, smallCondMax, continuousPass, nextUpBlocked, steps } = r;
+  const arcEnergyArticle = r.arc_energy_reduction_article || nec.ARC_ENERGY_REDUCTION_ARTICLE || "240.87";
   const ampacity = parseFloat(v.conductorAmpacity) || 65;
   const contLoad = parseFloat(v.continuousLoad) || 0;
   const nonContLoad = parseFloat(v.noncontinuousLoad) || 0;
@@ -52,15 +53,15 @@ export default function OvercurrentProtection({ category, necYear = "2023" }) {
         <FormulaBox steps={steps} formulas={FORMULAS} />
         {TABLES.map(t => <NECTableDisplay key={t.id} title={t.article} headers={t.headers} rows={t.rows} note={t.note} compact />)}
         {r.arc_energy_reduction_applies && (
-          <ResultSection title="Arc Energy Reduction (NEC 240.67 / 240.87)">
+          <ResultSection title={`Arc Energy Reduction (NEC ${arcEnergyArticle})`}>
             <ResultRow label={`OCPD ≥ ${nec.ARC_ENERGY_REDUCTION_THRESHOLD_AMPS}A`} value="Arc energy reduction required" highlight
-              sub="Fuses (240.67) and circuit breakers (240.87) rated 1200A+" />
+              sub={arcEnergyArticle.includes("240.67") ? "Fuses (240.67) and circuit breakers (240.87) rated 1200A+" : "Circuit breakers (240.87) rated 1200A+"} />
           </ResultSection>
         )}
         <NoteBox>
           <ul className="list-disc pl-3.5 space-y-1">
             <li>NEC {necYear} 240.4(B): If conductor ampacity doesn't match a standard OCPD size, the next higher size may be used (unless ≥ 800A). NEC 240.4(D): {nec.SMALL_CONDUCTOR_MAX_OCPD ? Object.entries(nec.SMALL_CONDUCTOR_MAX_OCPD).map(([awg, max]) => `#${awg} max ${max}A`).join(", ") : ""}. NEC 210.20: OCPD ≥ {(nec.CONTINUOUS_LOAD_MULTIPLIER * 100).toFixed(0)}% of continuous loads.</li>
-            {nec.ARC_ENERGY_REDUCTION_NOTE && <li><strong>240.67/240.87 ({necYear}):</strong> {nec.ARC_ENERGY_REDUCTION_NOTE}</li>}
+            {nec.ARC_ENERGY_REDUCTION_NOTE && <li><strong>{arcEnergyArticle} ({necYear}):</strong> {nec.ARC_ENERGY_REDUCTION_NOTE}</li>}
           </ul>
         </NoteBox>
       </div>

@@ -43,6 +43,7 @@ export function calcOvercurrentProtection(v, nec) {
     smallCondMax: smallCondMax || null,
     continuousPass,
     nextUpBlocked,
+    arc_energy_reduction_article: nec.ARC_ENERGY_REDUCTION_ARTICLE || "240.87",
     arc_energy_reduction_threshold_A: nec.ARC_ENERGY_REDUCTION_THRESHOLD_AMPS || null,
     arc_energy_reduction_applies: ampacity >= (nec.ARC_ENERGY_REDUCTION_THRESHOLD_AMPS || Infinity),
     steps,

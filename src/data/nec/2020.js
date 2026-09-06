@@ -17,10 +17,11 @@
  *     Testing Agent validation.
  *
  * CORRECTIONS APPLIED (per audit request):
- *   - 240.67/240.87: NEITHER is new in 2020. 240.87 (breakers) existed since the
- *     2014 NEC; 240.67 (fuses) was added in the 2017 NEC. The 1200A threshold is
- *     unchanged 2017→2020. What actually changed in 2020 is documentation and
- *     the wording of 240.87(B) — see ARC_ENERGY_REDUCTION_NOTE below.
+ *   - 240.67/240.87: 240.87 (breakers) existed before 2020. 240.67 (fuses)
+ *     appears in the 2017 NEC with a January 1, 2020 effective date, so it is
+ *     not applied to the app's 2017 model. The 1200A threshold is unchanged.
+ *     2020 also revised documentation and wording in 240.87(B) — see
+ *     ARC_ENERGY_REDUCTION_NOTE below.
  *   - 680.21(C)/(D): GFCI for pool pump motors is NOT new in 2020 — 2017's
  *     680.21(C) already required it for single-phase 120–240V motors. The 2020
  *     change is a SCOPE EXPANSION of (C) to cover all pool pump motors
@@ -39,8 +40,8 @@
  *   210.52(G)     Garage/basement receptacle rule expanded to multifamily
  *   230.67        Dwelling SPD now required (Type 1 or Type 2)
  *   230.85        Emergency outdoor disconnect for 1- and 2-family dwellings
- *   240.67/240.87 Arc energy reduction — pre-existing rule; 2020 revised
- *                 documentation duty + prohibited "temporary" trip adjustment
+ *   240.67/240.87 Arc energy reduction — 240.67 effective date reached; 2020
+ *                 revised 240.87 documentation duty + prohibited "temporary" trip adjustment
  *   406.4(D)(4)   Receptacle replacement AFCI
  *   406.9(C)      Bathtub/shower damp/wet receptacle rule
  *   406.12        Tamper-resistant receptacle expansion
@@ -285,7 +286,7 @@ export const GFCI_EQUIPMENT_SERVICING_RECEPTACLE =
   "a 125V single-phase 15/20A receptacle within 25 ft of equipment; 210.8(E) makes " +
   "those GFCI-protected. Applies to all occupancies. " +
   "NEC 210.8(E) — 2020 section. " +
-  "2017 applicability pending verification against authorized NFPA 70-2017. " +
+  "2017: not applicable because 210.8(E) did not exist. " +
   "Source: Captain Code 2020 change guide + Eaton 2020 NEC Code Changes brochure (secondary); pending official NFPA 70-2020 verification.";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -381,9 +382,10 @@ export const DWELLING_OUTDOOR_DISCONNECT_NOTE =
 // 2020 override — change-reviewed from Mike Holt / ElectricalLicenseRenewal
 // side-by-side 2017→2020 text.
 //
-// CORRECTED: neither 240.67 (fuses, added in the 2017 NEC) nor 240.87
-// (breakers, in the NEC since 2014) is new in 2020, and the 1200A threshold
-// itself is UNCHANGED 2017→2020. What changed for 2020:
+// CORRECTED: 240.87 (breakers, in the NEC since 2014) applies to the 2017
+// model. 240.67 appears in the 2017 NEC, but its effective date was January 1,
+// 2020, so the app treats it as not applicable to the 2017 model. The 1200A
+// threshold itself is unchanged. What changed for 2020:
 //   • 240.87(A): documentation must now ALSO show that the chosen method is set
 //     to operate below the available arcing current (2017 only required
 //     documenting circuit breaker location).
@@ -393,15 +395,15 @@ export const DWELLING_OUTDOOR_DISCONNECT_NOTE =
 //   • 240.87(B)(5): explicit new prohibition on TEMPORARILY adjusting the
 //     instantaneous trip setting to fake compliance during servicing, then
 //     restoring it afterward — the final, as-left setting governs compliance.
-//   • 240.67 (fuses) was not found to have an equivalent 2020 text change in
-//     the sources reviewed; treated as inherited/unchanged pending confirmation.
+//   • 240.67 fuse arc-energy reduction is modeled beginning with 2020.
 // This remains a checklist/reference item — the app has no arc-flash/arcing
 // current calculation, so none of this changes a numeric output today.
 // ─────────────────────────────────────────────────────────────────────────────
 export const ARC_ENERGY_REDUCTION_THRESHOLD_AMPS = 1200;  // unchanged 2017→2020
+export const ARC_ENERGY_REDUCTION_ARTICLE = "240.67 / 240.87";
 export const ARC_ENERGY_REDUCTION_NOTE =
-  "Arc energy reduction required for fuses ≥1200A (240.67, added 2017 NEC) and circuit " +
-  "breakers ≥1200A (240.87, in NEC since 2014) — threshold itself unchanged in 2020. " +
+  "Arc energy reduction required for fuses ≥1200A (240.67, effective Jan. 1, 2020) and circuit " +
+  "breakers ≥1200A (240.87, in NEC since 2014). " +
   "2020 revisions to 240.87: documentation must show the chosen method operates below the " +
   "available arcing current; that requirement now applies to all 7 permitted methods " +
   "(previously only tied to methods 5 & 6); and temporarily adjusting the instantaneous " +
@@ -745,15 +747,15 @@ export const CHANGE_METADATA = [
   {
     article: "210.8(E)",
     topic: "GFCI for Equipment-Servicing Receptacles",
-    rule_2017: "2017 applicability pending verification against authorized NFPA 70-2017. 210.63 (equipment-servicing receptacle within 25 ft of HVAC/refrigeration) existed in 2017; whether GFCI was required for those receptacles has NOT been verified against the authorized NFPA 70-2017 source. No verified conclusion about 2017 requirements is implied.",
+    rule_2017: "No equivalent section — 210.8(E) did not exist in the 2017 NEC. 210.63 equipment-servicing receptacles existed, but 210.8(E) GFCI coverage begins in 2020.",
     rule_2020: "GFCI required for all receptacles installed per 210.63 (HVAC/refrigeration and similar equipment requiring service). Applies to all occupancies. No exceptions specific to 210.8(E) identified in the Captain Code guide.",
-    exact_difference: "2020 requires GFCI for 210.63 receptacles via 210.8(E). 2017 applicability pending verification against authorized NFPA 70-2017 — no verified conclusion about 2017 requirements is implied.",
+    exact_difference: "2020 added 210.8(E), requiring GFCI for 210.63 equipment-servicing receptacles. No 2017 210.8(E) counterpart.",
     affected_calculators: ["hvac_load"],
     impact_type: "display/reference only (NoteBox text — no numeric formula affected)",
     verification_source: "Captain Code 2020 NEC Code Changes guide + Eaton 2020 NEC Code Changes brochure (secondary sources); pending verification against authorized NFPA 70-2020",
     verification_status: "ai_reviewed_pending_human_approval",
     known_answer_test: "GFCI_EQUIPMENT_SERVICING_RECEPTACLE should be null for 2017 (note does not render), a nonempty string for 2020/2023/2026 (note renders in HVACLoad NoteBox). No numeric output changes.",
-    regression_2017_result: "GFCI_EQUIPMENT_SERVICING_RECEPTACLE is null in 2017.js — NoteBox item does not render. 2017 behavior preserved. No 2017 note is displayed because applicability remains pending authorized-source verification. All HVAC numeric outputs identical across years.",
+    regression_2017_result: "GFCI_EQUIPMENT_SERVICING_RECEPTACLE is null in 2017.js — NoteBox item does not render because 210.8(E) did not exist. All HVAC numeric outputs identical across years.",
     expected_2020_result: "GFCI_EQUIPMENT_SERVICING_RECEPTACLE returns the 2020 note; note renders in HVACLoad NoteBox. All HVAC numeric outputs identical to 2017.",
     implementationStatus: {
       documented: true,
@@ -766,8 +768,8 @@ export const CHANGE_METADATA = [
       officialNecVerified: false,
       officialSourceVerificationPending: true,
       noCalculatorByDesign: false,
-      applicability2017Pending: true,
-      status: "Implementation review complete — official NEC verification pending. Documented, traced, displayed (2020/2023/2026), year-aware, 2017 preserved. 2017 applicability pending authorized-source verification — no 2017 note displayed. Display/reference string only — not used in any numeric formula. Every NEC edition (2017/2020/2023/2026) owns its own 210.8(E) data explicitly — no hidden inheritance.",
+      applicability2017Pending: false,
+      status: "Implementation review complete — official NEC verification pending. Documented, traced, displayed (2020/2023/2026), year-aware, 2017 preserved. 2017: 210.8(E) did not exist, so no 2017 note is displayed. Display/reference string only — not used in any numeric formula. Every NEC edition (2017/2020/2023/2026) owns its own 210.8(E) data explicitly — no hidden inheritance.",
     },
   },
   {
@@ -856,16 +858,16 @@ export const CHANGE_METADATA = [
   {
     article: "240.67 / 240.87",
     topic: "Arc Energy Reduction (≥1200A fuses/breakers)",
-    rule_2017: "240.67 (fuses, added 2017 NEC) and 240.87 (breakers, in NEC since 2014) both already required arc energy reduction for OCPD ≥1200A via one of 7 listed methods; 240.87(A) required documenting circuit breaker location only.",
-    rule_2020: "Same ≥1200A threshold and same 7 methods. 240.87(A) documentation must ALSO show the chosen method operates below the available arcing current. 240.87(B) parent text now applies \"less than the available arcing current\" to ALL 7 methods (previously only methods 5 & 6). Method (5) explicitly bars temporarily adjusting the instantaneous trip setting to fake compliance during servicing.",
-    exact_difference: "No threshold or applicability change. 2020 changes are documentation scope (now covers arcing-current compliance, not just location) and an explicit anti-gaming rule for instantaneous trip settings.",
+    rule_2017: "240.87 applied to circuit breakers rated ≥1200A. 240.67 appears in the 2017 NEC but had a January 1, 2020 effective date, so it is not applied to the app's 2017 model.",
+    rule_2020: "240.67 fuse arc-energy reduction is effective. 240.87(A) documentation must ALSO show the chosen method operates below the available arcing current. 240.87(B) parent text now applies \"less than the available arcing current\" to ALL 7 methods (previously only methods 5 & 6). Method (5) explicitly bars temporarily adjusting the instantaneous trip setting to fake compliance during servicing.",
+    exact_difference: "2017 model: 240.87 only. 2020 model: 240.67 / 240.87, with 240.87 documentation/method wording changes.",
     affected_calculators: ["overcurrent_protection", "service_sizing"],
     impact_type: "display/reference only — no arc-flash/arcing-current calculation exists in this app",
     verification_source: "Mike Holt / ElectricalLicenseRenewal.com side-by-side 2017→2020 code text (secondary source)",
     verification_status: "ai_reviewed_pending_human_approval",
-    known_answer_test: "n/a — ARC_ENERGY_REDUCTION_THRESHOLD_AMPS must equal 1200 in both 2017 and 2020 (no regression difference expected)",
-    regression_2017_result: "n/a — no 2017 override exists for this constant today; threshold is identical in both years so no numeric difference should ever appear",
-    expected_2020_result: "ARC_ENERGY_REDUCTION_THRESHOLD_AMPS = 1200 (same as 2017); ARC_ENERGY_REDUCTION_NOTE reflects the corrected 2020 documentation/method wording above",
+    known_answer_test: "ARC_ENERGY_REDUCTION_THRESHOLD_AMPS must equal 1200 in both 2017 and 2020. ARC_ENERGY_REDUCTION_ARTICLE must be 240.87 for 2017 and 240.67 / 240.87 for 2020.",
+    regression_2017_result: "ARC_ENERGY_REDUCTION_ARTICLE = 240.87; 240.67 is not included in 2017 output because its effective date was January 1, 2020.",
+    expected_2020_result: "ARC_ENERGY_REDUCTION_THRESHOLD_AMPS = 1200; ARC_ENERGY_REDUCTION_ARTICLE = 240.67 / 240.87; ARC_ENERGY_REDUCTION_NOTE reflects the corrected 2020 documentation/method wording above",
   },
   {
     article: "406.4(D)(4)",

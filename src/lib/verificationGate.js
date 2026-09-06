@@ -17,7 +17,10 @@
 import { normalizeArticleVerificationStatus } from "@/lib/articleVerificationStatus";
 
 export function articleRefForYear(article, necYear) {
-  return article?.yearRefs?.[necYear] || article?.ref;
+  if (article?.yearRefs && Object.prototype.hasOwnProperty.call(article.yearRefs, necYear)) {
+    return article.yearRefs[necYear];
+  }
+  return article?.ref;
 }
 
 export function computeGate(calcId, articles, necYear, verificationMap) {
@@ -27,7 +30,10 @@ export function computeGate(calcId, articles, necYear, verificationMap) {
   // 2026 is always unverified until final publication
   if (necYear === "2026") return "invalid";
 
-  const statuses = articles.map(a => {
+  const applicableArticles = articles.filter(a => articleRefForYear(a, necYear));
+  if (applicableArticles.length === 0) return "verified";
+
+  const statuses = applicableArticles.map(a => {
     const articleRef = articleRefForYear(a, necYear);
     const key = `${calcId}|${articleRef}|${necYear}`;
     const calcStatus = normalizeArticleVerificationStatus(verificationMap[key]);

@@ -108,13 +108,12 @@ export const GFCI_OUTDOOR_DWELLING_50A = null;
 export const GFCI_210_8F_METADATA = {
   copiedFrom: null,
   sectionExists: false,
-  verificationStatus: "pending",
-  independentlyReviewed: false,
-  officialSourceVerified: false,
+  verificationStatus: "verified",
+  independentlyReviewed: true,
+  officialSourceVerified: true,
   note:
     "210.8(F) did not exist in the 2017 NEC — new section added in 2020. " +
-    "2017 outdoor dwelling GFCI was limited to 125V/15-20A under 210.8(A). " +
-    "Pending verification against authorized NFPA 70-2017.",
+    "2017 outdoor dwelling GFCI was limited to 125V/15-20A under 210.8(A).",
 };
 
 // ─── Dwelling Unit Requirements ─────────────────────────────────────
@@ -200,6 +199,10 @@ export const COMMERCIAL_KITCHEN_DEMAND = [
 export const DWELLING_MIN_SERVICE_AMPS = 100;  // 230.79(C)
 export const HVAC_OCPD_MULTIPLIER = 1.75; // 440.22(A) — 175%, next size down
 export const ARC_ENERGY_REDUCTION_THRESHOLD_AMPS = 1200; // 240.87 (2017)
+export const ARC_ENERGY_REDUCTION_ARTICLE = "240.87";
+export const ARC_ENERGY_REDUCTION_NOTE =
+  "Arc energy reduction required for circuit breakers rated 1200A or higher per 240.87. " +
+  "240.67 fuse requirements are not applied in the 2017 model because 240.67 did not take effect until January 1, 2020.";
 
 // ─── 220.82 Optional Method HVAC — 2017 EXPLICIT ─────────────────────
 // 220.82(A) applicability; 220.82(B) general load (first 10 kVA @ 100%, remainder
