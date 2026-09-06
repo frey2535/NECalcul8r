@@ -44,6 +44,7 @@ export default function DiscrepancyReports() {
 
   const handleStatus = async (reportId, newStatus) => {
     await base44.entities.DiscrepancyReport.update(reportId, { status: newStatus, admin_notes: adminNotes[reportId] || "" });
+    window.dispatchEvent(new CustomEvent("necalcul8r-reports-updated"));
     load();
   };
 

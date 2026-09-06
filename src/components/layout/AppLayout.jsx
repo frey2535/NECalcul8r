@@ -1,8 +1,9 @@
-import React, { useState, useRef, useCallback } from "react";
+import React, { useState, useRef, useCallback, useEffect } from "react";
 import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
 import { Zap, Calculator, BookOpen, UserCircle, Users, Calendar, ShieldCheck, FileCheck, Sun, Moon, FolderOpen, Flag } from "lucide-react";
 import TrialBanner from "@/components/TrialBanner";
 import { useAuth } from "@/lib/AuthContext";
+import { base44 } from "@/api/base44Client";
 import { cn } from "@/lib/utils";
 import {
   Drawer,
@@ -29,6 +30,7 @@ export default function AppLayout({ trialStatus }) {
   const location = useLocation();
   const navigate = useNavigate();
   const [profileOpen, setProfileOpen] = useState(false);
+  const [openReportCount, setOpenReportCount] = useState(0);
   // Store saved scroll positions per tab key
   const scrollPositions = useRef({ calculators: 0, tables: 0, projects: 0 });
 
@@ -50,6 +52,43 @@ export default function AppLayout({ trialStatus }) {
   };
 
   const isTabActive = (tab) => getActiveTabKey() === tab.key;
+
+  const refreshOpenReportCount = useCallback(async () => {
+    if (!isAdmin) {
+      setOpenReportCount(0);
+      return;
+    }
+    try {
+      const reports = await base44.entities.DiscrepancyReport.list("-created_date", 500);
+      setOpenReportCount(reports.filter((report) => (report.status || "open") === "open").length);
+    } catch {
+      setOpenReportCount(0);
+    }
+  }, [isAdmin]);
+
+  useEffect(() => {
+    refreshOpenReportCount();
+  }, [location.pathname, refreshOpenReportCount]);
+
+  useEffect(() => {
+    if (!isAdmin) return undefined;
+    window.addEventListener("focus", refreshOpenReportCount);
+    window.addEventListener("necalcul8r-reports-updated", refreshOpenReportCount);
+    const interval = window.setInterval(refreshOpenReportCount, 60 * 1000);
+    return () => {
+      window.removeEventListener("focus", refreshOpenReportCount);
+      window.removeEventListener("necalcul8r-reports-updated", refreshOpenReportCount);
+      window.clearInterval(interval);
+    };
+  }, [isAdmin, refreshOpenReportCount]);
+
+  const reportBadge = openReportCount > 0
+    ? (
+      <span className="min-w-4 h-4 rounded-full bg-rose-500 px-1 text-[9px] leading-4 text-white font-extrabold text-center shadow-sm">
+        {openReportCount > 99 ? "99+" : openReportCount}
+      </span>
+    )
+    : null;
 
   return (
     <div className="min-h-dvh bg-background flex flex-col">
@@ -135,6 +174,7 @@ export default function AppLayout({ trialStatus }) {
                     )}>
                       <Flag className="w-3.5 h-3.5" />
                       Reports
+                      {reportBadge}
                     </div>
                   </Link>
                 </>
@@ -204,8 +244,13 @@ export default function AppLayout({ trialStatus }) {
                   "flex flex-col items-center gap-1 py-1.5 rounded-xl mx-1 transition-all",
                   location.pathname === "/admin/reports" ? "text-blue-600" : "text-muted-foreground"
                 )}>
-                  <div className={cn("w-10 h-6 rounded-full flex items-center justify-center transition-all", location.pathname === "/admin/reports" ? "bg-blue-100" : "")}>
+                  <div className={cn("relative w-10 h-6 rounded-full flex items-center justify-center transition-all", location.pathname === "/admin/reports" ? "bg-blue-100" : "")}>
                     <Flag className="w-5 h-5" />
+                    {openReportCount > 0 && (
+                      <span className="absolute -top-1 -right-0.5 min-w-4 h-4 rounded-full bg-rose-500 px-1 text-[9px] leading-4 text-white font-extrabold text-center shadow-sm">
+                        {openReportCount > 99 ? "99+" : openReportCount}
+                      </span>
+                    )}
                   </div>
                   <span className={cn("text-[10px] font-semibold", location.pathname === "/admin/reports" ? "text-blue-600" : "text-muted-foreground")}>Reports</span>
                 </div>
