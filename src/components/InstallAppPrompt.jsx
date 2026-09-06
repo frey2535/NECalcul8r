@@ -43,7 +43,8 @@ export default function InstallAppPrompt() {
     window.addEventListener("necalcul8r-show-install", onForceShow);
 
     const timer = window.setTimeout(() => {
-      if (!isStandaloneDisplay() && !wasDismissedRecently()) setOpen(true);
+      const { isMobile } = getInstallPlatform();
+      if (isMobile && !isStandaloneDisplay() && !wasDismissedRecently()) setOpen(true);
     }, 900);
 
     return () => {
@@ -109,7 +110,7 @@ export default function InstallAppPrompt() {
             </div>
           </div>
           <p className="text-sm text-blue-50 mt-3 leading-relaxed">
-            Put it on your home screen for one-tap access in the field. Works offline for saved jobs on this phone.
+            Put it on your home screen for one-tap access in the field and quick update prompts.
           </p>
         </div>
 

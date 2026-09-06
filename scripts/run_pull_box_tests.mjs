@@ -1,6 +1,7 @@
 import { build } from 'esbuild';
 import { fileURLToPath } from 'url';
 import path from 'path';
+import os from 'os';
 import * as fs from 'fs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -42,9 +43,10 @@ const plugin = {
   },
 };
 
-const entryPath = path.resolve(root, '.tmp_pb_entry.mjs');
+const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'necalcul8r-pull-box-'));
+const entryPath = path.join(tempDir, 'entry.mjs');
 fs.writeFileSync(entryPath, `export { runPullBoxSizingTests } from '@/data/nec/pullBoxSizingRegression';`);
-const outfile = path.resolve(root, '.tmp_pb_bundle.mjs');
+const outfile = path.join(tempDir, 'bundle.mjs');
 
 try {
   await build({
@@ -85,6 +87,5 @@ try {
   console.error(e.stack);
   process.exit(1);
 } finally {
-  fs.unlinkSync(entryPath);
-  try { fs.unlinkSync(outfile); } catch {}
+  fs.rmSync(tempDir, { recursive: true, force: true });
 }

@@ -1,6 +1,6 @@
 # NEC Calculator — Final QA & Release Checklist
 
-**Date:** June 24, 2026 | **Status:** ✅ **READY FOR PRODUCTION**
+**Date:** September 6, 2026 | **Status:** ✅ **RELEASE CANDIDATE — BEHAVIOR TESTS PASS**
 
 ---
 
@@ -8,9 +8,9 @@
 
 | Item | Status | Notes |
 |------|--------|-------|
-| **2017 NEC Year** | ✅ Complete | VERIFIED=true. Correct EV, GFCI, SPD, disconnect rules. |
-| **2020 NEC Year** | ✅ Complete | VERIFIED=true. EV GFCI, outdoor disconnect added. |
-| **2023 NEC Year** | ✅ Complete | VERIFIED=true. SPD required, EV 7.2kVA minimum load. |
+| **2017 NEC Year** | ✅ Regression-gated | Calculator behavior passes the 2017 frozen baseline suite. Codebook verification status remains controlled by ArticleVerification records. |
+| **2020 NEC Year** | ✅ Regression-gated | 2020 gates pass, including corrected EV GFCI and high-unit multifamily demand bands. Codebook verification status remains controlled by ArticleVerification records. |
+| **2023 NEC Year** | ⚠️ Reference-only | Some values are copied from 2020/2023 source work and must not be marketed as independently codebook-verified unless ArticleVerification records say so. |
 | **2026 NEC Year** | ⚠️ Pending | VERIFIED=false. Marked "Pending Publication" in UI & data. |
 | **Ampacity Tables** | ✅ Sourced | Copper/aluminum per NEC Table 310.15(B)(16). |
 | **Grounding Tables** | ✅ Sourced | GEC, EGC, bonding jumpers per NEC 250.66, 250.122, 250.102(C)(1). |
@@ -62,30 +62,32 @@
 | **Responsive Design** | ✅ Yes | Tailwind breakpoints (sm, md, lg). Mobile drawer UI for selects. |
 | **Touch-Friendly UI** | ✅ Yes | Buttons, inputs, selects optimized for tap (h-9–h-11). |
 | **No Console Errors** | ⚠️ Check | Run dev console on target device to confirm no runtime errors. |
-| **Network Requests** | ✅ Valid | All API calls use base44 SDK or backend functions; no unhandled 4xx/5xx. |
+| **Network Requests** | ✅ Valid | API calls use the app facade with local demo storage or Supabase-backed services; no unhandled 4xx/5xx expected. |
 | **Dark Mode** | ✅ Yes | CSS vars + `.dark` class auto-applied per system preference. |
-| **PWA Manifest** | ⚠️ Create | `manifest.json` referenced in index.html but not found. See below. |
-| **Service Worker** | ⚠️ Optional | Not required for iOS/Android release. Base44 handles deployment. |
+| **PWA Manifest** | ✅ Present | `public/manifest.json` is linked from `index.html` and includes 192×192, 512×512, maskable, and shortcut metadata. |
+| **Service Worker** | ✅ Present | `public/sw.js` provides install/update support; `build-version.json` is generated during build for PR-deployed update detection. |
+| **Install Prompt** | ✅ Mounted | `InstallAppPrompt` is mounted in `App.jsx`; it auto-opens on mobile web and responds to Profile → Install. |
+| **Update Cache Policy** | ✅ Present | `public/_headers` revalidates `index.html`, `sw.js`, and `build-version.json`; hashed assets remain immutable. |
 
 ---
 
-## 📱 Missing: App Store Packaging Files
+## 📱 App Store Packaging Inputs
 
-To complete iOS/Android app publishing, you'll need:
+To complete iOS/Android app publishing, confirm these inputs in the store or native-wrapper dashboard:
 
-1. **manifest.json** — PWA metadata  
-   - App name, short_name, description, icons (192×192, 512×512)  
-   - display: standalone | fullscreen  
-   - start_url: "/"  
-   - scope: "/"  
-   - theme_color, background_color
+1. **PWA metadata** — present in the repo
+   - `public/manifest.json`
+   - `public/icon-192.png`
+   - `public/icon-512.png`
+   - `public/apple-touch-icon.png`
+   - `index.html` manifest and iOS metadata
 
-2. **iOS-specific** (via Base44 dashboard):
+2. **iOS-specific**:
    - Bundle ID (e.g., com.yourcompany.necalc8r)
    - App name, version, build number
    - Privacy policy URL
 
-3. **Android-specific** (via Base44 dashboard):
+3. **Android-specific**:
    - Package name (e.g., com.yourcompany.necalc8r)
    - Version code, version name
    - Keystore/signing certificate
@@ -99,7 +101,8 @@ To complete iOS/Android app publishing, you'll need:
 - [x] **Admin access**: Protected routes, role checks, error handling.
 - [x] **Form validation**: Required fields, inline errors, debounce.
 - [x] **Year selection**: Context, localStorage, blocking UI for invalid years.
-- [x] **All 37 calculators**: Routed, tested, consuming correct NEC data.
+- [x] **All 44 calculators**: Routed, tested, consuming correct NEC data.
+- [x] **Expanded release regressions**: Full Neutral Load and Pull Box regression scripts are part of `npm run verify:release`.
 - [x] **Error boundaries**: Graceful failures, no silent fallbacks.
 - [x] **Responsive design**: Mobile-first, dark mode, touch-optimized.
 - [x] **No critical/high issues remaining**.
@@ -108,26 +111,27 @@ To complete iOS/Android app publishing, you'll need:
 
 ## 🎯 Ready to Deploy
 
-**Recommendation:** Create `manifest.json` per PWA spec above, then submit to Base44 for iOS/Android app store release.
+**Recommendation:** Use the pull-request deployment flow, verify the production URL on physical iOS and Android devices, then submit through the chosen store/native-wrapper process.
 
 **Next Steps:**
-1. Create manifest.json (5 min)
-2. Test on physical device (iOS + Android simulators)
-3. Submit bundle to App Store / Google Play via Base44 dashboard
-4. Monitor for crash reports & discrepancy submissions in first week
+1. Merge the release PR after review.
+2. Confirm the deployed `build-version.json` SHA changes and installed copies show the update prompt.
+3. Test on physical device (iOS + Android simulators).
+4. Submit bundle to App Store / Google Play.
+5. Monitor for crash reports & discrepancy submissions in first week.
 
 **Release Notes (suggested):**
 ```
 NECalcul8r v1.0 — Production Release
 
 ✨ Features:
-- 37 electrical code calculators (NEC 2017–2026)
+- 44 electrical code calculators (NEC 2017–2026)
 - Voltage drop, conduit fill, grounding, load calculations
 - Community discrepancy reporting & admin review
 
 📊 Support:
-- NEC 2023 fully verified
-- NEC 2017, 2020 verified
+- NEC 2017 and 2020 calculator behavior regression-gated
+- Admin codebook verification dashboard included
 - NEC 2026 pending code publication (beta data)
 
 🔐 Admin dashboard with audit trail, user management

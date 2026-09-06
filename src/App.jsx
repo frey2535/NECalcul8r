@@ -20,6 +20,7 @@ import AdminRoute from '@/components/AdminRoute';
 import { useTrialStatus } from '@/hooks/useTrialStatus';
 import TrialExpiredScreen from '@/components/TrialExpiredScreen';
 import UpdateAvailablePrompt from '@/components/UpdateAvailablePrompt';
+import InstallAppPrompt from '@/components/InstallAppPrompt';
 import { refreshApp } from '@/lib/pwa';
 
 // Lazy-loaded route components
@@ -200,6 +201,7 @@ function App() {
               <AuthenticatedApp />
             </AppErrorBoundary>
             <UpdateAvailablePrompt />
+            <InstallAppPrompt />
           </Router>
           <Toaster />
         </QueryClientProvider>
