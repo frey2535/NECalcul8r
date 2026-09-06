@@ -869,8 +869,14 @@ export const CALCULATORS = [
   { id: "power_factor", name: "Power Factor Correction", category: "Power Calculations", usesGetNecData: true, yearSensitive: false, articles: [{ ref: "460.8", desc: "Capacitor conductor — 135% of rated current", changed: false, source: DEV }], sourceNotes: "One NEC reference: 460.8 capacitor conductor sizing. Pure trig otherwise." },
   { id: "three_phase_power", name: "Three-Phase Power", category: "Power Calculations", usesGetNecData: false, yearSensitive: false, articles: [], sourceNotes: "Pure electrical formulas. No NEC data consumed." },
   { id: "single_phase_power", name: "Single-Phase Power", category: "Power Calculations", usesGetNecData: false, yearSensitive: false, articles: [], sourceNotes: "Pure electrical formulas. No NEC data consumed." },
-  { id: "short_circuit", name: "Short Circuit Current", category: "Others", usesGetNecData: false, yearSensitive: false, articles: [], sourceNotes: "Pure engineering math. No NEC data consumed." },
-  { id: "multiwire_branch", name: "Multiwire Branch Circuits", category: "Others", usesGetNecData: false, yearSensitive: false, articles: [], sourceNotes: "Circuit analysis. No NEC data consumed." },
+  { id: "short_circuit", name: "Short Circuit Current", category: "Others", usesGetNecData: false, yearSensitive: false, articles: [
+    { ref: "110.9", desc: "Equipment interrupting rating not less than available fault current", changed: false, source: DEV },
+    { ref: "110.10", desc: "Circuit impedance and short-circuit current ratings selected to withstand available fault current", changed: false, source: DEV },
+  ], sourceNotes: "Engineering AFC math plus NEC 110.9/110.10 equipment-rating checks displayed in the UI. AIC standard rating list needs codebook/manufacturer verification." },
+  { id: "multiwire_branch", name: "Multiwire Branch Circuits", category: "Others", usesGetNecData: false, yearSensitive: false, articles: [
+    { ref: "210.4", desc: "Multiwire branch-circuit simultaneous disconnect and grouping requirements", changed: false, source: DEV },
+    { ref: "210.12", desc: "Dwelling AFCI applicability note", changed: true, source: PEND, note: "Displayed in result section as a dwelling-condition note; not part of neutral-current math." },
+  ], sourceNotes: "Circuit-analysis math plus NEC 210.4 simultaneous disconnect display. AFCI note is conditional/display-only and needs per-year verification." },
 
   // ═══ PULL BOX SIZING ═══════════════════════════════════════════════════
   {
