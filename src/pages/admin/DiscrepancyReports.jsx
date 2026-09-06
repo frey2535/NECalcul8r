@@ -25,6 +25,7 @@ export default function DiscrepancyReports() {
   const [expandedId, setExpandedId] = useState(null);
   const [adminNotes, setAdminNotes] = useState({});
   const [loadError, setLoadError] = useState("");
+  const [attachmentUrls, setAttachmentUrls] = useState({});
   const debounceTimers = useRef({});
 
   const load = useCallback(async () => {
@@ -41,6 +42,30 @@ export default function DiscrepancyReports() {
   }, [filter]);
 
   useEffect(() => { load(); }, [load]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function resolveAttachmentUrls() {
+      const fileUrls = [...new Set(
+        reports.flatMap((report) => Array.isArray(report.file_urls) ? report.file_urls : [])
+      )];
+      const next = {};
+      await Promise.all(fileUrls.map(async (url) => {
+        try {
+          next[url] = base44.integrations.Core.CreateSignedFileUrl
+            ? await base44.integrations.Core.CreateSignedFileUrl(url)
+            : url;
+        } catch {
+          next[url] = "";
+        }
+      }));
+      if (!cancelled) setAttachmentUrls(next);
+    }
+
+    resolveAttachmentUrls();
+    return () => { cancelled = true; };
+  }, [reports]);
 
   const handleStatus = async (reportId, newStatus) => {
     await base44.entities.DiscrepancyReport.update(reportId, { status: newStatus, admin_notes: adminNotes[reportId] || "" });
@@ -223,12 +248,24 @@ export default function DiscrepancyReports() {
                       <div>
                         <span className="text-[10px] font-semibold uppercase text-muted-foreground">Attachments</span>
                         <div className="flex flex-wrap gap-2 mt-1">
-                          {r.file_urls.map((url, i) => (
-                            <a key={i} href={url} target="_blank" rel="noreferrer"
-                              className="block max-w-[200px] rounded-lg border border-border overflow-hidden hover:ring-2 hover:ring-blue-400 transition-all">
-                              <img src={url} alt={`Attachment ${i + 1}`} className="w-full h-32 object-cover" />
-                            </a>
-                          ))}
+                          {r.file_urls.map((url, i) => {
+                            const displayUrl = Object.prototype.hasOwnProperty.call(attachmentUrls, url)
+                              ? attachmentUrls[url]
+                              : url;
+                            if (!displayUrl) {
+                              return (
+                                <div key={i} className="w-[200px] h-32 flex items-center justify-center rounded-lg border border-border bg-muted text-xs text-muted-foreground px-3 text-center">
+                                  Attachment unavailable
+                                </div>
+                              );
+                            }
+                            return (
+                              <a key={i} href={displayUrl} target="_blank" rel="noreferrer"
+                                className="block max-w-[200px] rounded-lg border border-border overflow-hidden hover:ring-2 hover:ring-blue-400 transition-all">
+                                <img src={displayUrl} alt={`Attachment ${i + 1}`} className="w-full h-32 object-cover" />
+                              </a>
+                            );
+                          })}
                         </div>
                       </div>
                     )}

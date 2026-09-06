@@ -165,7 +165,7 @@ export default function Profile() {
       {/* App info */}
       <div className="text-center text-[11px] text-muted-foreground space-y-2 pb-4">
         <p className="font-bold">NEC Suite · Electrical Tools</p>
-        <p>NEC 2017 / 2020 / 2023 calculator tools</p>
+        <p>NEC 2017 / 2020 verified · 2023 / 2026 pending</p>
         <div className="flex items-center justify-center gap-3">
           <Link to="/privacy" className="underline underline-offset-2 hover:text-foreground">
             Privacy Policy

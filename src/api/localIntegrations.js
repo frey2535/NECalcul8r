@@ -39,6 +39,11 @@ export const localIntegrations = {
       return { file_url: `local-file://${id}` };
     },
 
+    async CreateSignedFileUrl(fileUrl) {
+      const stored = await readLocalFile(fileUrl);
+      return stored?.dataUrl || fileUrl;
+    },
+
     async InvokeLLM({ prompt, file_urls, response_json_schema }) {
       const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
       if (!apiKey) {

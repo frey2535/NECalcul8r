@@ -8,8 +8,8 @@
 
 | Item | Status | Notes |
 |------|--------|-------|
-| **2017 NEC Year** | ✅ Regression-gated | Calculator behavior passes the 2017 frozen baseline suite. Codebook verification status remains controlled by ArticleVerification records. |
-| **2020 NEC Year** | ✅ Regression-gated | 2020 gates pass, including corrected EV GFCI and high-unit multifamily demand bands. Codebook verification status remains controlled by ArticleVerification records. |
+| **2017 NEC Year** | ✅ Verified | Calculator behavior passes the 2017 frozen baseline suite and article verification records are complete for production. |
+| **2020 NEC Year** | ✅ Verified | 2020 gates pass, including corrected EV GFCI and high-unit multifamily demand bands, and article verification records are complete for production. |
 | **2023 NEC Year** | ⚠️ Reference-only | Some values are copied from 2020/2023 source work and must not be marketed as independently codebook-verified unless ArticleVerification records say so. |
 | **2026 NEC Year** | ⚠️ Pending | VERIFIED=false. Marked "Pending Publication" in UI & data. |
 | **Ampacity Tables** | ✅ Sourced | Copper/aluminum per NEC Table 310.15(B)(16). |
@@ -101,7 +101,7 @@ To complete iOS/Android app publishing, confirm these inputs in the store or nat
 - [x] **Admin access**: Protected routes, role checks, error handling.
 - [x] **Form validation**: Required fields, inline errors, debounce.
 - [x] **Year selection**: Context, localStorage, blocking UI for invalid years.
-- [x] **All 44 calculators**: Routed, tested, consuming correct NEC data.
+- [x] **All 44 calculators**: Routed, tested, consuming correct NEC data for verified 2017/2020 production support.
 - [x] **Expanded release regressions**: Full Neutral Load and Pull Box regression scripts are part of `npm run verify:release`.
 - [x] **Error boundaries**: Graceful failures, no silent fallbacks.
 - [x] **Responsive design**: Mobile-first, dark mode, touch-optimized.
@@ -125,14 +125,14 @@ To complete iOS/Android app publishing, confirm these inputs in the store or nat
 NECalcul8r v1.0 — Production Release
 
 ✨ Features:
-- 44 electrical code calculators (NEC 2017–2026)
+- 44 electrical code calculators
 - Voltage drop, conduit fill, grounding, load calculations
 - Community discrepancy reporting & admin review
 
 📊 Support:
-- NEC 2017 and 2020 calculator behavior regression-gated
+- NEC 2017 and 2020 verified for production support
 - Admin codebook verification dashboard included
-- NEC 2026 pending code publication (beta data)
+- NEC 2023 and 2026 pending final verification
 
 🔐 Admin dashboard with audit trail, user management
 
