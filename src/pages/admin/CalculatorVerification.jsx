@@ -23,7 +23,7 @@ const STATUS_DOT = {
 };
 
 const STATUS_LABEL = {
-  verified: "VERIFIED",
+  verified: "SOURCE VERIFIED",
   correct: "VERIFIED (pure math)",
   needs_verification: "NEEDS VERIFICATION",
   assumed: "ASSUMED",
@@ -75,7 +75,7 @@ export default function CalculatorVerification() {
           <div className="text-2xl font-bold text-emerald-600">
             {summary.status2020.correct + summary.status2020.verified}
           </div>
-          <div className="text-xs text-muted-foreground">2020 verified / correct</div>
+          <div className="text-xs text-muted-foreground">2020 source verified / correct</div>
         </CardContent></Card>
         <Card className="shadow-sm"><CardContent className="p-4">
           <div className="text-2xl font-bold text-amber-600">
@@ -87,7 +87,7 @@ export default function CalculatorVerification() {
           <div className="text-2xl font-bold text-blue-600">
             {summary.verifiedDependencies} / {summary.totalDependencies}
           </div>
-          <div className="text-xs text-muted-foreground">Dependencies verified</div>
+          <div className="text-xs text-muted-foreground">Dependencies source verified</div>
         </CardContent></Card>
       </div>
 
@@ -99,7 +99,7 @@ export default function CalculatorVerification() {
           </p>
           <p className="text-xs text-muted-foreground">
             Every calculator and its 2020 verification status. A calculator is only marked
-            "VERIFIED" when every applicable NEC dependency has been reviewed against the
+            "SOURCE VERIFIED" when every applicable NEC dependency has been reviewed against the
             official 2020 NEC text.
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-0.5 text-xs font-mono">
@@ -139,7 +139,7 @@ export default function CalculatorVerification() {
             </div>
             <div>
               <div className="font-bold text-lg text-emerald-600">{summary.verifiedDependencies}</div>
-              <div className="text-muted-foreground">Verified dependencies</div>
+              <div className="text-muted-foreground">Source-verified dependencies</div>
             </div>
             <div>
               <div className="font-bold text-lg text-amber-600">{summary.displayOnlyDependencies}</div>
@@ -182,7 +182,7 @@ export default function CalculatorVerification() {
             <AlertTriangle className="w-4 h-4" /> Verification Limitation
           </p>
           <p className="text-xs text-muted-foreground">
-            No calculator can be marked "2020 VERIFIED" until every NEC dependency has been
+            No calculator can be marked "2020 SOURCE VERIFIED" until every NEC dependency has been
             reviewed against the official NFPA 70-2020 codebook text. Current source data is
             based on recognized secondary sources (Eaton, Mike Holt, Captain Code/IAEI) and
             developer assumptions — none are verified against authorized primary NEC text.

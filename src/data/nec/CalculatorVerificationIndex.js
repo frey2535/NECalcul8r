@@ -927,6 +927,12 @@ export const CALCULATOR_VERIFICATION_INDEX = CALCULATORS.map((calc, i) => {
   const consumerAudit = buildConsumerAudit(calc);
   const regressionResults = buildRegressionResults(calc);
   const override = VERIFICATION_RESULTS[calc.id] || {};
+  const overriddenStatus2020 = override.status2020 || status2020;
+  const hasUnverifiedDependencies = dependencies.some((dependency) => !dependency.verified);
+  const sourceAwareStatus2020 =
+    overriddenStatus2020 === "verified" && hasUnverifiedDependencies
+      ? "needs_verification"
+      : overriddenStatus2020;
 
   return {
     calculatorId: calc.id,
@@ -939,7 +945,7 @@ export const CALCULATOR_VERIFICATION_INDEX = CALCULATORS.map((calc, i) => {
     yearSensitive: calc.yearSensitive,
     dependencies,
     // STEP 2: 2020 NEC comparison
-    status2020: override.status2020 || status2020,
+    status2020: sourceAwareStatus2020,
     // STEP 5: Verification status (pending until every dependency is reviewed)
     verificationStatus: override.verificationStatus || "pending",
     // STEP 3: Consumer audit
