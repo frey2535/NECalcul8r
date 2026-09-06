@@ -1,14 +1,17 @@
 import React, { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { base44 } from "@/api/base44Client";
 import {
   AlertTriangle, ShieldCheck, Layers, FileCheck, Search,
 } from "lucide-react";
 import {
   CALCULATOR_VERIFICATION_INDEX,
-  CALCULATOR_VERIFICATION_SUMMARY,
+  applyArticleVerificationRecords,
   getCalculatorsByCategory,
+  summarizeCalculatorVerification,
 } from "@/data/nec/CalculatorVerificationIndex";
 import CalculatorVerificationCard from "@/components/CalculatorVerificationCard";
 
@@ -34,21 +37,33 @@ const STATUS_LABEL = {
 
 export default function CalculatorVerification() {
   const [search, setSearch] = useState("");
-  const grouped = useMemo(() => getCalculatorsByCategory(), []);
+  const {
+    data: articleVerificationRecords = [],
+    isLoading: loadingArticleVerifications,
+    error: articleVerificationError,
+  } = useQuery({
+    queryKey: ["article-verification-records"],
+    queryFn: () => base44.entities.ArticleVerification.list("-updated_date", 5000),
+  });
+  const calculators = useMemo(
+    () => applyArticleVerificationRecords(CALCULATOR_VERIFICATION_INDEX, articleVerificationRecords),
+    [articleVerificationRecords]
+  );
+  const grouped = useMemo(() => getCalculatorsByCategory(calculators), [calculators]);
 
   const filtered = useMemo(() => {
-    if (!search.trim()) return CALCULATOR_VERIFICATION_INDEX;
+    if (!search.trim()) return calculators;
     const q = search.toLowerCase();
-    return CALCULATOR_VERIFICATION_INDEX.filter(
+    return calculators.filter(
       (c) =>
         c.calculatorName.toLowerCase().includes(q) ||
         c.calculatorId.toLowerCase().includes(q) ||
         c.category.toLowerCase().includes(q) ||
         c.dependencies.some((d) => d.necArticle.toLowerCase().includes(q))
     );
-  }, [search]);
+  }, [calculators, search]);
 
-  const summary = CALCULATOR_VERIFICATION_SUMMARY;
+  const summary = useMemo(() => summarizeCalculatorVerification(calculators), [calculators]);
 
   return (
     <div className="max-w-6xl mx-auto p-4 sm:p-6 space-y-6">
@@ -60,9 +75,17 @@ export default function CalculatorVerification() {
         </h1>
         <p className="text-sm text-muted-foreground mt-1">
           Calculator-centric verification: "Can every calculator be trusted for the 2020 NEC?"
-          Each calculator's dependency matrix shows every NEC article, table, exception, note, and
-          calculation that affects it — and whether each dependency is implemented, verified, or missing.
+          This page now reuses the article/year records from Codebook Matrix, so each NEC article only
+          needs to be verified once per edition.
         </p>
+        {loadingArticleVerifications && (
+          <p className="text-xs text-muted-foreground mt-1">Loading article verification records…</p>
+        )}
+        {articleVerificationError && (
+          <p className="text-xs text-red-600 mt-1">
+            Unable to load Codebook Matrix records: {articleVerificationError.message}
+          </p>
+        )}
       </div>
 
       {/* Summary Cards */}
@@ -182,11 +205,10 @@ export default function CalculatorVerification() {
             <AlertTriangle className="w-4 h-4" /> Verification Limitation
           </p>
           <p className="text-xs text-muted-foreground">
-            No calculator can be marked "2020 SOURCE VERIFIED" until every NEC dependency has been
-            reviewed against the official NFPA 70-2020 codebook text. Current source data is
-            based on recognized secondary sources (Eaton, Mike Holt, Captain Code/IAEI) and
-            developer assumptions — none are verified against authorized primary NEC text.
-            The dependency matrix above identifies exactly what remains before release.
+            This dashboard uses Codebook Matrix ArticleVerification records as the source of truth.
+            A calculator is marked "2020 SOURCE VERIFIED" only when every applicable 2020 article/table
+            dependency has a verified record. Any missing, pending, or needs-correction article record
+            remains visible here so article-level review does not have to be repeated per calculator.
           </p>
         </CardContent>
       </Card>
