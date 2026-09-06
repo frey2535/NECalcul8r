@@ -142,25 +142,25 @@ export const ARTICLE_VERIFICATION_SEED = [
   // ══════════════════════════════════════════════════════════════════════════
   // MOTOR BRANCH CIRCUIT (calcMotorBranchCircuit)
   // ══════════════════════════════════════════════════════════════════════════
-  { calculator_id: "motor_branch_circuit", article_ref: "430.22", nec_year: "2017", status: "verified_2017" },
-  { calculator_id: "motor_branch_circuit", article_ref: "430.22", nec_year: "2020", status: "verified_2020" },
-  { calculator_id: "motor_branch_circuit", article_ref: "430.22", nec_year: "2023", status: "verified_2023" },
-  { calculator_id: "motor_branch_circuit", article_ref: "430.22", nec_year: "2026", status: "pending_review", notes: "2026 code not yet published" },
+  { calculator_id: "motor_full_load", article_ref: "430.22", nec_year: "2017", status: "verified_2017" },
+  { calculator_id: "motor_full_load", article_ref: "430.22", nec_year: "2020", status: "verified_2020" },
+  { calculator_id: "motor_full_load", article_ref: "430.22", nec_year: "2023", status: "verified_2023" },
+  { calculator_id: "motor_full_load", article_ref: "430.22", nec_year: "2026", status: "pending_review", notes: "2026 code not yet published" },
 
-  { calculator_id: "motor_branch_circuit", article_ref: "430.52(C)", nec_year: "2017", status: "verified_2017" },
-  { calculator_id: "motor_branch_circuit", article_ref: "430.52(C)", nec_year: "2020", status: "verified_2020" },
-  { calculator_id: "motor_branch_circuit", article_ref: "430.52(C)", nec_year: "2023", status: "verified_2023" },
-  { calculator_id: "motor_branch_circuit", article_ref: "430.52(C)", nec_year: "2026", status: "pending_review", notes: "2026 code not yet published" },
+  { calculator_id: "motor_full_load", article_ref: "430.52(C)", nec_year: "2017", status: "verified_2017" },
+  { calculator_id: "motor_full_load", article_ref: "430.52(C)", nec_year: "2020", status: "verified_2020" },
+  { calculator_id: "motor_full_load", article_ref: "430.52(C)", nec_year: "2023", status: "verified_2023" },
+  { calculator_id: "motor_full_load", article_ref: "430.52(C)", nec_year: "2026", status: "pending_review", notes: "2026 code not yet published" },
 
-  { calculator_id: "motor_branch_circuit", article_ref: "430.32", nec_year: "2017", status: "verified_2017" },
-  { calculator_id: "motor_branch_circuit", article_ref: "430.32", nec_year: "2020", status: "verified_2020" },
-  { calculator_id: "motor_branch_circuit", article_ref: "430.32", nec_year: "2023", status: "verified_2023" },
-  { calculator_id: "motor_branch_circuit", article_ref: "430.32", nec_year: "2026", status: "pending_review", notes: "2026 code not yet published" },
+  { calculator_id: "motor_full_load", article_ref: "430.32", nec_year: "2017", status: "verified_2017" },
+  { calculator_id: "motor_full_load", article_ref: "430.32", nec_year: "2020", status: "verified_2020" },
+  { calculator_id: "motor_full_load", article_ref: "430.32", nec_year: "2023", status: "verified_2023" },
+  { calculator_id: "motor_full_load", article_ref: "430.32", nec_year: "2026", status: "pending_review", notes: "2026 code not yet published" },
 
-  { calculator_id: "motor_branch_circuit", article_ref: "430.6", nec_year: "2017", status: "verified_2017" },
-  { calculator_id: "motor_branch_circuit", article_ref: "430.6", nec_year: "2020", status: "verified_2020" },
-  { calculator_id: "motor_branch_circuit", article_ref: "430.6", nec_year: "2023", status: "verified_2023" },
-  { calculator_id: "motor_branch_circuit", article_ref: "430.6", nec_year: "2026", status: "pending_review", notes: "2026 code not yet published" },
+  { calculator_id: "motor_full_load", article_ref: "430.6", nec_year: "2017", status: "verified_2017" },
+  { calculator_id: "motor_full_load", article_ref: "430.6", nec_year: "2020", status: "verified_2020" },
+  { calculator_id: "motor_full_load", article_ref: "430.6", nec_year: "2023", status: "verified_2023" },
+  { calculator_id: "motor_full_load", article_ref: "430.6", nec_year: "2026", status: "pending_review", notes: "2026 code not yet published" },
 
   // ══════════════════════════════════════════════════════════════════════════
   // MOTOR FEEDER (calcMotorFeeder)
@@ -188,12 +188,10 @@ export const ARTICLE_VERIFICATION_SEED = [
   { calculator_id: "ev_charging", article_ref: "625.54", nec_year: "2023", status: "verified_2023" },
   { calculator_id: "ev_charging", article_ref: "625.54", nec_year: "2026", status: "pending_review", notes: "2026 code not yet published" },
 
-  { calculator_id: "ev_charging", article_ref: "230.67", nec_year: "2017", status: "verified_2017" },
   { calculator_id: "ev_charging", article_ref: "230.67", nec_year: "2020", status: "verified_2020" },
   { calculator_id: "ev_charging", article_ref: "230.67", nec_year: "2023", status: "verified_2023" },
   { calculator_id: "ev_charging", article_ref: "230.67", nec_year: "2026", status: "pending_review", notes: "2026 code not yet published" },
 
-  { calculator_id: "ev_charging", article_ref: "230.85", nec_year: "2017", status: "verified_2017" },
   { calculator_id: "ev_charging", article_ref: "230.85", nec_year: "2020", status: "verified_2020" },
   { calculator_id: "ev_charging", article_ref: "230.85", nec_year: "2023", status: "verified_2023" },
   { calculator_id: "ev_charging", article_ref: "230.85", nec_year: "2026", status: "pending_review", notes: "2026 code not yet published" },

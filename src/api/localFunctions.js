@@ -1,5 +1,6 @@
 import { ARTICLE_VERIFICATION_SEED } from "@/data/seedArticleVerifications";
 import { CALCULATORS } from "@/data/nec/audit";
+import { articleRefForYear } from "@/lib/verificationGate";
 import { localEntities } from "./localEntities";
 import { localIntegrations } from "./localIntegrations";
 import { requireAdmin, requireUser } from "./localAuth";
@@ -184,7 +185,7 @@ async function seedArticleVerificationsComplete() {
     "conduit_fill",
     "box_fill",
     "transformer_sizing",
-    "motor_branch_circuit",
+    "motor_full_load",
     "motor_feeder",
     "ev_charging",
   ];
@@ -194,9 +195,11 @@ async function seedArticleVerificationsComplete() {
     if (!TOP_10.includes(calc.id) || !calc.articles?.length) continue;
     for (const article of calc.articles) {
       for (const year of NEC_YEARS) {
+        const articleRef = articleRefForYear(article, year);
+        if (!articleRef) continue;
         records.push({
           calculator_id: calc.id,
-          article_ref: article.ref,
+          article_ref: articleRef,
           nec_year: year,
           status: year === "2026" ? "pending_review" : "verified",
           notes: year === "2026" ? "2026 code not yet published" : null,
