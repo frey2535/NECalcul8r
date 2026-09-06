@@ -95,11 +95,13 @@ export default function NECTables() {
   const { year } = useNECYear();
 
   const filtered = search.trim()
-    ? NEC_TABLES.filter(t =>
-        t.title.toLowerCase().includes(search.toLowerCase()) ||
-        t.article.toLowerCase().includes(search.toLowerCase()) ||
-        t.rows.some(row => row.some(cell => String(cell).toLowerCase().includes(search.toLowerCase())))
-      )
+    ? NEC_TABLES.filter(t => {
+        const resolved = resolveNecTable(t, year);
+        const q = search.toLowerCase();
+        return resolved.title.toLowerCase().includes(q) ||
+          resolved.article.toLowerCase().includes(q) ||
+          resolved.rows.some(row => row.some(cell => String(cell).toLowerCase().includes(q)));
+      })
     : null;
 
   return (
@@ -116,7 +118,7 @@ export default function NECTables() {
         <h1 className="text-2xl font-extrabold leading-tight">Code Tables</h1>
         <p className="text-sm text-purple-100 mt-1">{NEC_TABLES.length} tables · Tap any to expand</p>
         <p className="text-xs text-purple-100/80 mt-1">
-          Showing NEC {year} — tables that changed by year (e.g. Table 220.12) resolve from the same centralized data the calculators use.
+          Showing NEC {year} — tables that changed by year (e.g. 2017/2020 Table 220.12 → 2023 Table 220.42(A)) resolve from the same centralized data the calculators use.
         </p>
       </div>
 

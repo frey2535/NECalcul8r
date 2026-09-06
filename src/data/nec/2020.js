@@ -35,7 +35,7 @@
  *   210.8(D)      Specific appliances GFCI
  *   210.8(E)      GFCI for equipment-servicing receptacles (new)
  *   210.8(F)      GFCI for outdoor outlets ≤50A (new)
- *   210.52(C)(2)  Island/peninsula sq-footage rule replaces area-threshold rule
+ *   210.52(C)(2)  Island/peninsula sq-footage rule replaces 2017 dimension rule
  *   210.52(G)     Garage/basement receptacle rule expanded to multifamily
  *   230.67        Dwelling SPD now required (Type 1 or Type 2)
  *   230.85        Emergency outdoor disconnect for 1- and 2-family dwellings
@@ -308,12 +308,12 @@ export const GFCI_OUTDOOR_DWELLING_50A =
 // 2020 override — change-reviewed from Eaton 2020 NEC Code Changes PDF.
 //
 // Changes from 2017:
-//   • 2017 rule: ≥12 sq ft countertop → at least 1 receptacle
+//   • 2017 rule: island and peninsula spaces used 24 in. × 12 in. dimensions
 //   • 2020 rule: square-footage-based tiered count:
 //       - First 9 sq ft or fraction thereof → at least 1 receptacle
 //       - Each additional 18 sq ft or fraction → 1 additional receptacle
 //       - Peninsular countertop: one receptacle must be within 2 ft of outer end
-//   • Pop-up/below-counter outlets permitted per Exception
+//   • Required outlets are located per 210.52(C)(3)
 //
 // NOTE: ISLAND_FIRST_BLOCK_SQFT / ISLAND_ADDITIONAL_SQFT are exported for future
 // use but are NOT currently consumed by calcReceptacleLoad() — today this is
@@ -325,8 +325,9 @@ export const ISLAND_PENINSULA_RULE =
   "≥1 receptacle for first 9 sq ft or fraction thereof; " +
   "+1 receptacle per additional 18 sq ft or fraction thereof. " +
   "Peninsular countertop: one receptacle must be within 2 ft of outer end. " +
-  "Below-counter and pop-up outlets permitted per Exception. " +
-  "NEC 210.52(C)(2) — 2020 override (replaces 2017 ≥12 sq ft threshold rule).";
+  "Required outlets are located per 210.52(C)(3). " +
+  "NEC 210.52(C)(2) — 2020 override (replaces 2017 24 in. × 12 in. island/peninsula thresholds).";
+export const ISLAND_PENINSULA_ARTICLE = "210.52(C)(2)";
 
 // Helper constants for calculator logic
 export const ISLAND_FIRST_BLOCK_SQFT    = 9;   // sq ft triggering first required receptacle
@@ -517,6 +518,10 @@ export const DWELLING_LIGHTING_VA_PER_SQFT = 3; // 220.14(J) — value unchanged
 export const DWELLING_LIGHTING_ARTICLE = "220.14(J)";
 export const HOTEL_LIGHTING_ARTICLE = "220.14(M)";
 export const OCCUPANCY_UNIT_LOAD_TABLE = "Table 220.12";
+export const LIGHTING_DEMAND_TABLE = "Table 220.42";
+export const OCCUPANCY_UNIT_LOAD_ARTICLES = Object.fromEntries(
+  Object.keys(OCCUPANCY_UNIT_LOADS).map((key) => [key, "Table 220.12"])
+);
 export const SOLAR_120_RULE_ARTICLE = "705.12(B)(2)(3)(a)";
 
 // Table 220.42 — 2020 owns a copy. Bands match 2017/shared; not independently
@@ -795,7 +800,7 @@ export const CHANGE_METADATA = [
   {
     article: "210.52(C)(2)",
     topic: "Island / Peninsula Countertop Receptacle Count",
-    rule_2017: "≥12 sq ft countertop area requires at least 1 receptacle (single area threshold).",
+    rule_2017: "Island/peninsula countertop spaces require at least 1 receptacle when the long dimension is ≥24 in. and the short dimension is ≥12 in.",
     rule_2020: "Tiered sq-ft rule: first 9 sq ft (or fraction) requires 1 receptacle; each additional 18 sq ft (or fraction) requires 1 more; peninsula receptacle must be within 2 ft of the outer end.",
     exact_difference: "2017 was a single pass/fail area threshold (12 sq ft). 2020 is a tiered count formula that can require more than one receptacle as area grows.",
     affected_calculators: ["receptacle_load"],
@@ -803,7 +808,7 @@ export const CHANGE_METADATA = [
     verification_source: "Eaton 2020 NEC Code Changes brochure (secondary source)",
     verification_status: "ai_reviewed_pending_human_approval",
     known_answer_test: "Pending — once wired into calcReceptacleLoad, test 9 sq ft → 1 receptacle, 27 sq ft → 2 receptacles, 45 sq ft → 3 receptacles",
-    regression_2017_result: "ISLAND_PENINSULA_RULE returns the 2017 ≥12 sq ft threshold string; no receptacle-count formula exists in either year today",
+    regression_2017_result: "ISLAND_PENINSULA_RULE returns the 2017 24 in. × 12 in. island/peninsula dimension string; no receptacle-count formula exists in either year today",
     expected_2020_result: "ISLAND_PENINSULA_RULE returns the 2020 tiered rule string; no receptacle-count formula exists yet in either year",
   },
   {

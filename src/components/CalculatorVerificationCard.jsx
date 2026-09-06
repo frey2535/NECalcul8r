@@ -55,7 +55,16 @@ function DependencyMatrix({ dependencies }) {
         <tbody className="divide-y divide-border">
           {dependencies.map((d, i) => (
             <tr key={i} className={!d.verified ? "bg-amber-50/40 dark:bg-amber-950/10" : ""}>
-              <td className="px-2 py-1.5 font-mono font-semibold">{d.necArticle}</td>
+              <td className="px-2 py-1.5 font-mono font-semibold">
+                <span>{d.necArticle}</span>
+                {d.yearRefs && (
+                  <div className="mt-1 space-y-0.5 text-[9px] font-normal text-muted-foreground">
+                    {Object.entries(d.yearRefs).map(([year, ref]) => (
+                      <div key={year}>{year}: {ref}</div>
+                    ))}
+                  </div>
+                )}
+              </td>
               <td className="px-2 py-1.5 border-l border-border font-mono text-muted-foreground">{d.section || "—"}</td>
               <td className="px-2 py-1.5 border-l border-border font-mono text-muted-foreground">{d.table || "—"}</td>
               <td className="px-2 py-1.5 border-l border-border">{d.formula}</td>

@@ -377,7 +377,7 @@ export const VERIFICATION_RESULTS = {
       "210.8(A) (GFCI scope — display only)",
       "210.8(D)/422.5 (appliance GFCI — display only)",
       "210.8(F) (outdoor 50A GFCI — display only)",
-      "210.52(C)(2) (island/peninsula — display only)",
+      "2017 210.52(C)(2)/(C)(3); 2020+ 210.52(C)(2) (island/peninsula — display only)",
       "210.52(G) (garage/basement — display only)",
     ],
     // STEP 2: Entire rule verification
@@ -450,7 +450,7 @@ export const VERIFICATION_RESULTS = {
       "STD_OCPD_SIZES (NEC 240.6(A), unchanged)",
       "DWELLING_MIN_SERVICE_AMPS = 100 (NEC 230.79(C), now explicit in all year files)",
     ],
-    displayOnlyNotes: "SPD (230.67), outdoor disconnect (230.85), GFCI scope (210.8(A)), island/peninsula (210.52(C)(2)), garage/basement (210.52(G)), appliance GFCI (210.8(D)/422.5), outdoor 50A GFCI (210.8(F)) — all display-only, based on secondary sources, pending official NEC verification. Do not block launch.",
+    displayOnlyNotes: "SPD (230.67), outdoor disconnect (230.85), GFCI scope (210.8(A)), island/peninsula (2017 210.52(C)(2)/(C)(3); 2020+ 210.52(C)(2)), garage/basement (210.52(G)), appliance GFCI (210.8(D)/422.5), outdoor 50A GFCI (210.8(F)) — all display-only, based on secondary sources, pending official NEC verification. Do not block launch.",
     buildResult: "pass",
     remainingBlockers: [],
     // ─── ANNEX D BENCHMARK ───
@@ -525,7 +525,7 @@ export const VERIFICATION_RESULTS = {
       "210.8(A) (GFCI scope — display only)",
       "210.8(D)/422.5 (appliance GFCI — display only)",
       "210.8(F) (outdoor 50A GFCI — display only)",
-      "210.52(C)(2) (island/peninsula — display only)",
+      "2017 210.52(C)(2)/(C)(3); 2020+ 210.52(C)(2) (island/peninsula — display only)",
       "210.52(G) (garage/basement — display only)",
     ],
     // STEP 2: Entire rule verification

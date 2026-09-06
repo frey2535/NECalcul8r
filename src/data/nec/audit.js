@@ -38,6 +38,46 @@ const INHERITED_VERIFIED   = "inherited verified reference";
 const PENDING_CODEBOOK     = "pending manual/codebook verification";
 const UNVERIFIED           = "unverified";
 
+const DWELLING_LIGHTING_YEAR_REFS = {
+  "2017": "220.12",
+  "2020": "220.12",
+  "2023": "220.41",
+  "2026": "220.41 (pending)",
+};
+
+const DWELLING_LIGHTING_TABLE_YEAR_REFS = {
+  "2017": "Table 220.12",
+  "2020": "Table 220.12",
+  "2023": "220.41",
+  "2026": "220.41 (pending)",
+};
+
+const OCCUPANCY_UNIT_LOAD_TABLE_YEAR_REFS = {
+  "2017": "Table 220.12",
+  "2020": "Table 220.12",
+  "2023": "Table 220.42(A)",
+  "2026": "Table 220.42(A) (pending)",
+};
+
+const LIGHTING_DEMAND_TABLE_YEAR_REFS = {
+  "2017": "Table 220.42",
+  "2020": "Table 220.42",
+  "2023": "Table 220.45",
+  "2026": "Table 220.45 (pending)",
+};
+
+const ISLAND_PENINSULA_YEAR_REFS = {
+  "2017": "210.52(C)(2)/(C)(3)",
+  "2020": "210.52(C)(2)",
+  "2023": "210.52(C)(2)",
+  "2026": "210.52(C)(2) (pending)",
+};
+
+const ISLAND_PENINSULA_NOTE =
+  "2017: at least one receptacle for island and peninsular countertop spaces with long dimension ≥24 in. and short dimension ≥12 in. (island C(2), peninsula C(3)). " +
+  "2020: at least one receptacle for first 9 sq ft or fraction, plus one for each additional 18 sq ft or fraction; peninsula requires one within 2 ft of outer end. " +
+  "2023: receptacles are optional for islands/peninsulas; if none is provided, provisions for future addition are required. Displayed in NoteBox.";
+
 // ─── Helpers used by the audit page ──────────────────────────────────────
 
 /** Compute verification status per year from article sources. */
@@ -116,12 +156,12 @@ export const CALCULATORS = [
     id: "dwelling_standard", name: "Dwelling Standard (220.40)",
     category: "Load Calculations", usesGetNecData: true, yearSensitive: true,
     articles: [
-      { ref: "220.12", desc: "Dwelling lighting — 3 VA/sq ft; exclude unused cellar, unfinished attic, open porches", changed: false, source: N17 },
+      { ref: "220.12", desc: "Dwelling lighting — 3 VA/sq ft; exclude unused cellar, unfinished attic, open porches", changed: true, source: N17, yearRefs: DWELLING_LIGHTING_YEAR_REFS, note: "2023 Article 220 reorganization moved the former 220.12 dwelling lighting rule to 220.41." },
       { ref: "220.14(J)", desc: "Dwelling lighting/receptacle load — bathroom circuits not extra 1500 VA", changed: false, source: N17 },
       { ref: "220.40", desc: "Standard method — sum of computed loads", changed: false, source: N17 },
       { ref: "220.52", desc: "Small appliance circuits — 1,500 VA each (min 2)", changed: false, source: N17 },
       { ref: "220.52(B)", desc: "Laundry circuit — 1,500 VA (min 1)", changed: false, source: N17 },
-      { ref: "Table 220.42", desc: "Lighting demand — 100%/35%/25% dwelling tiers", changed: false, source: N17 },
+      { ref: "Table 220.42", desc: "Lighting demand — 100%/35%/25% dwelling tiers", changed: true, source: N17, yearRefs: LIGHTING_DEMAND_TABLE_YEAR_REFS, note: "2023 Article 220 reorganization moved the former Table 220.42 lighting demand factors to Table 220.45." },
       { ref: "Table 220.55", desc: "Cooking equipment demand — Columns A/B/C + Note 1", changed: false, source: N17 },
       { ref: "220.54", desc: "Household dryer — 5,000 W or nameplate, larger", changed: false, source: N17 },
       { ref: "220.53", desc: "75% for 4+ fastened appliances other than range/dryer/HVAC", changed: false, source: N17 },
@@ -131,13 +171,13 @@ export const CALCULATORS = [
       { ref: "230.85", desc: "Outdoor emergency disconnect (2020+)", changed: true, source: PEND, note: "2017: not required. 2020+: required for 1- and 2-family dwellings. Displayed in NoteBox." },
       { ref: "230.67", desc: "SPD required for dwelling services (2020+)", changed: true, source: PEND, note: "2017: not required. 2020+: Type 1 or Type 2 SPD required. Displayed in NoteBox." },
       { ref: "210.8(A)", desc: "GFCI scope — dwelling receptacles", changed: true, source: PEND, note: "2017: narrower 125V/15-20A scope. 2020: expanded to 250V, more areas, laundry, all kitchen. Displayed in NoteBox." },
-      { ref: "210.52(C)(2)", desc: "Island/peninsula sq-ft receptacle rule", changed: true, source: PEND, note: "2017: required if ≥12 sq ft. 2020: sq-ft tiered rule (first 9 sq ft, +1 per 18 sq ft). Displayed in NoteBox." },
+      { ref: "210.52(C)(2)", desc: "Island/peninsula countertop receptacle rule", changed: true, source: PEND, yearRefs: ISLAND_PENINSULA_YEAR_REFS, note: ISLAND_PENINSULA_NOTE },
       { ref: "210.52(G)", desc: "Garage/basement/accessory receptacle — multifamily expansion", changed: true, source: PEND, note: "2020: expanded to include multifamily dwellings. Displayed in NoteBox." },
       { ref: "210.8(D)", desc: "Specific appliance GFCI (dishwasher/sump pump)", changed: true, source: PEND, note: "2020: dishwasher GFCI expanded beyond dwelling-only; sump pumps added to 422.5 list. Displayed in NoteBox." },
       { ref: "210.8(F)", desc: "GFCI for outdoor dwelling outlets ≤50A", changed: true, source: PEND, note: "2020: new section — GFCI required for outdoor dwelling outlets ≤150V/≤50A. Displayed in NoteBox." },
       { ref: "422.5", desc: "Appliance GFCI list (dishwashers, sump pumps)", changed: true, source: PEND, note: "2020: dishwashers and sump pumps added. Displayed in NoteBox." },
     ],
-    sourceNotes: "2017 standard method: Table 220.12/220.42/220.54/220.55, 220.52 mins, 220.14(J), 220.53, 220.60. Neutral 220.61 and D1(b) 430.24 are other calculators. Installation notes year-gated.",
+    sourceNotes: "2017/2020 standard method uses former 220.12 for dwelling lighting and Table 220.42 for demand. 2023 reorganizes those to 220.41 and Table 220.45. Other standard-method items: Table 220.54/220.55, 220.52 mins, 220.14(J), 220.53, 220.60. Neutral 220.61 and D1(b) 430.24 are other calculators. Installation notes year-gated.",
     testInputs: { sqft: 2000, smallAppliance: 2, laundry: 1, range: 12000, dryer: 5000, dishwasher: 0, disposer: 0, waterHeater: 0, hvac: 0, other: 0, voltage: 240 },
     calculate: (i, nec) => {
       const r = calcDwellingStandard(i, nec);
@@ -148,7 +188,7 @@ export const CALCULATORS = [
     id: "dwelling_optional", name: "Dwelling Optional (220.82)",
     category: "Load Calculations", usesGetNecData: true, yearSensitive: true,
     articles: [
-      { ref: "220.12", desc: "Dwelling lighting — 3 VA/sq ft", changed: false, source: DEV },
+      { ref: "220.12", desc: "Dwelling lighting — 3 VA/sq ft", changed: true, source: DEV, yearRefs: DWELLING_LIGHTING_YEAR_REFS, note: "2023 Article 220 reorganization moved the former 220.12 dwelling lighting rule to 220.41." },
       { ref: "220.52", desc: "Small appliance / laundry VA", changed: false, source: DEV },
       { ref: "220.82(A)", desc: "Optional method applicability — 100 A min, 3-wire dwelling", changed: false, source: N17, note: "2017: one- and two-family (and dwelling portion of farm as used). Displayed in NoteBox." },
       { ref: "220.82(B)", desc: "General loads — 100% first 10 kVA + 40% remainder, nameplate appliances", changed: false, source: N17, note: "40% remainder factor. Range/dryer at nameplate, not Table 220.55/220.54." },
@@ -157,7 +197,7 @@ export const CALCULATORS = [
       { ref: "230.85", desc: "Outdoor emergency disconnect (2020+)", changed: true, source: PEND, note: "2017: not required. 2020+: required for 1- and 2-family dwellings. Displayed in NoteBox." },
       { ref: "230.67", desc: "SPD required for dwelling services (2020+)", changed: true, source: PEND, note: "2017: not required. 2020+: required. Displayed in NoteBox." },
       { ref: "210.8(A)", desc: "GFCI scope — dwelling receptacles", changed: true, source: PEND, note: "2017: narrower scope. 2020: expanded. Displayed in NoteBox." },
-      { ref: "210.52(C)(2)", desc: "Island/peninsula sq-ft receptacle rule", changed: true, source: PEND, note: "2017: ≥12 sq ft threshold. 2020: sq-ft tiered rule. Displayed in NoteBox." },
+      { ref: "210.52(C)(2)", desc: "Island/peninsula countertop receptacle rule", changed: true, source: PEND, yearRefs: ISLAND_PENINSULA_YEAR_REFS, note: ISLAND_PENINSULA_NOTE },
       { ref: "210.52(G)", desc: "Garage/basement/accessory receptacle — multifamily expansion", changed: true, source: PEND, note: "2020: expanded to multifamily dwellings. Displayed in NoteBox." },
       { ref: "210.8(D)", desc: "Specific appliance GFCI (dishwasher/sump pump)", changed: true, source: PEND, note: "2020: expanded dishwasher scope; sump pumps added. Displayed in NoteBox." },
       { ref: "210.8(F)", desc: "GFCI for outdoor dwelling outlets ≤50A", changed: true, source: PEND, note: "2020: new section. Displayed in NoteBox." },
@@ -171,11 +211,11 @@ export const CALCULATORS = [
     },
   },
   {
-    id: "commercial_load", name: "Commercial Load (220.12 / 220.42 / 220.44)",
+    id: "commercial_load", name: "Commercial Load (220 lighting / 220.44)",
     category: "Load Calculations", usesGetNecData: true, yearSensitive: false,
     articles: [
-      { ref: "Table 220.12", desc: "Unit loads by occupancy (VA/sq ft)", changed: false, source: DEV, note: "Office 3.5, store 3.0, school 3.0, etc. Needs per-occupancy verification." },
-      { ref: "Table 220.42", desc: "Lighting demand factors", changed: false, source: DEV },
+      { ref: "Table 220.12", desc: "Non-dwelling unit loads by occupancy (VA/sq ft)", changed: true, source: DEV, yearRefs: OCCUPANCY_UNIT_LOAD_TABLE_YEAR_REFS, note: "2023 Article 220 reorganization moved former Table 220.12 non-dwelling unit loads to Table 220.42(A)." },
+      { ref: "Table 220.42", desc: "Lighting demand factors", changed: true, source: DEV, yearRefs: LIGHTING_DEMAND_TABLE_YEAR_REFS, note: "2023 Article 220 reorganization moved former Table 220.42 demand factors to Table 220.45." },
       { ref: "220.14(I) / 220.44", desc: "Receptacle demand — 180 VA, 100%/50% tiers", changed: false, source: DEV },
       { ref: "210.8(B)", desc: "Other-than-dwelling GFCI scope", changed: true, source: PEND, note: "2020: expanded 125V-250V coverage; kitchens/food-prep, damp/wet, accessory buildings, laundry, bathtub/shower. Displayed in NoteBox." },
     ],
@@ -196,8 +236,8 @@ export const CALCULATORS = [
     id: "multifamily_standard", name: "Multifamily (220.40 Standard)",
     category: "Load Calculations", usesGetNecData: true, yearSensitive: false,
     articles: [
-      { ref: "Table 220.12", desc: "Dwelling lighting — 3 VA/sq ft per unit", changed: false, source: DEV },
-      { ref: "Table 220.42", desc: "Lighting demand — 100%/35%/25% tiers", changed: false, source: DEV },
+      { ref: "Table 220.12", desc: "Dwelling lighting — 3 VA/sq ft per unit", changed: true, source: DEV, yearRefs: DWELLING_LIGHTING_TABLE_YEAR_REFS, note: "2023 Article 220 reorganization moved the former Table 220.12 dwelling lighting value to 220.41." },
+      { ref: "Table 220.42", desc: "Lighting demand — 100%/35%/25% tiers", changed: true, source: DEV, yearRefs: LIGHTING_DEMAND_TABLE_YEAR_REFS, note: "2023 Article 220 reorganization moved former Table 220.42 demand factors to Table 220.45." },
       { ref: "220.52(A)", desc: "Small appliance — 1500 VA/circuit (min 2 per unit)", changed: false, source: DEV },
       { ref: "220.52(B)", desc: "Laundry — 1500 VA/circuit (min 1 per unit)", changed: false, source: DEV },
       { ref: "Table 220.55", desc: "Range demand — Column C for multiple ranges", changed: false, source: DEV },
@@ -205,7 +245,7 @@ export const CALCULATORS = [
       { ref: "220.40", desc: "Standard method structure", changed: false, source: DEV },
       { ref: "240.6(A)", desc: "Standard OCPD sizes", changed: false, source: DEV },
     ],
-    sourceNotes: "Standard method for multifamily dwellings per NEC 220.40. General lighting, small appliance, and laundry summed across all units and demand-factored per Table 220.42. Ranges per Table 220.55 Column C. Dryers per Table 220.54. Heating at 100%.",
+    sourceNotes: "Standard method for multifamily dwellings per NEC 220.40. General lighting, small appliance, and laundry summed across all units and demand-factored per the edition's lighting demand table (Table 220.42 in 2017/2020; Table 220.45 in 2023). Ranges per Table 220.55 Column C. Dryers per Table 220.54. Heating at 100%.",
     testInputs: { numUnits: 20, sqftPerUnit: 1000, rangeKW: 12, dryerKW: 5, heatingVA: 170000, voltage: 240, phases: "single" },
     calculate: (i, nec) => {
       const lv = i.numUnits * i.sqftPerUnit * nec.DWELLING_LIGHTING_VA_PER_SQFT;
@@ -282,7 +322,7 @@ export const CALCULATORS = [
     articles: [
       { ref: "220.14(I)", desc: "Receptacle load — 180 VA each", changed: false, source: DEV, note: "180 VA per yoke. Needs verification across editions." },
       { ref: "220.44", desc: "Receptacle demand — 100%/50% tiers", changed: false, source: DEV },
-      { ref: "210.52(C)(2)", desc: "Island/peninsula sq-ft receptacle rule", changed: true, source: PEND, note: "2017: required if ≥12 sq ft. 2020: sq-ft tiered rule. Displayed in NoteBox." },
+      { ref: "210.52(C)(2)", desc: "Island/peninsula countertop receptacle rule", changed: true, source: PEND, yearRefs: ISLAND_PENINSULA_YEAR_REFS, note: ISLAND_PENINSULA_NOTE },
       { ref: "210.52(G)", desc: "Garage/basement/accessory receptacle — multifamily expansion", changed: true, source: PEND, note: "2020: expanded to multifamily dwellings. Displayed in NoteBox." },
       { ref: "210.8(A)", desc: "GFCI scope — dwelling receptacles", changed: true, source: PEND, note: "2017: narrower scope. 2020: expanded to 250V and more areas. Displayed in NoteBox." },
       { ref: "210.8(B)", desc: "GFCI scope — other-than-dwelling receptacles", changed: true, source: PEND, note: "2020: expanded coverage. Displayed in NoteBox." },
@@ -295,11 +335,12 @@ export const CALCULATORS = [
     },
   },
   {
-    id: "lighting_load", name: "Lighting Load (220.12 / 220.42)",
+    id: "lighting_load", name: "Lighting Load (Article 220)",
     category: "Equipment / Appliance", usesGetNecData: true, yearSensitive: true,
     articles: [
-      { ref: "Table 220.12", desc: "Unit loads by occupancy type", changed: false, source: DEV },
-      { ref: "Table 220.42", desc: "Lighting demand factors", changed: false, source: DEV },
+      { ref: "Table 220.12", desc: "Non-dwelling unit loads by occupancy type", changed: true, source: DEV, yearRefs: OCCUPANCY_UNIT_LOAD_TABLE_YEAR_REFS, note: "2023 Article 220 reorganization moved former Table 220.12 non-dwelling unit loads to Table 220.42(A)." },
+      { ref: "220.12", desc: "Dwelling unit lighting load — 3 VA/sq ft", changed: true, source: DEV, yearRefs: DWELLING_LIGHTING_YEAR_REFS, note: "2023 Article 220 reorganization moved the former 220.12 dwelling lighting rule to 220.41." },
+      { ref: "Table 220.42", desc: "Lighting demand factors", changed: true, source: DEV, yearRefs: LIGHTING_DEMAND_TABLE_YEAR_REFS, note: "2023 Article 220 reorganization moved former Table 220.42 demand factors to Table 220.45." },
     ],
     sourceNotes: "Same tables as Commercial Load. See that entry.",
     testInputs: { sqft: 3000, occupancy: "dwelling", voltage: 120, phases: "single" },
@@ -754,8 +795,8 @@ export const CALCULATORS = [
       { ref: "Table 430.248", desc: "1-phase motor FLC (motor loads)", changed: false, source: INHERITED_VERIFIED, note: "Inherited from centralized necTables.js — same data used by Motor calculators." },
       { ref: "440.6", desc: "HVAC conductor ampacity (HVAC loads)", changed: false, source: INHERITED_VERIFIED, note: "Inherited from shared.js — same data used by HVAC Load calculator." },
       { ref: "440.22", desc: "HVAC OCPD sizing (HVAC loads)", changed: false, source: INHERITED_VERIFIED, note: "Inherited from centralized necTables.js — same data used by HVAC Load calculator." },
-      { ref: "220.12", desc: "Lighting load unit loads by occupancy (lighting loads)", changed: false, source: INHERITED_VERIFIED, note: "Inherited from centralized necTables.js — same data used by Lighting/Commercial calculators." },
-      { ref: "220.42", desc: "Lighting demand factors (lighting loads)", changed: false, source: INHERITED_VERIFIED, note: "Inherited from centralized necTables.js — same data used by Lighting calculators." },
+      { ref: "Table 220.12", desc: "Lighting load unit loads by occupancy (lighting loads)", changed: true, source: INHERITED_VERIFIED, yearRefs: OCCUPANCY_UNIT_LOAD_TABLE_YEAR_REFS, note: "Inherited from centralized necTables.js — same data used by Lighting/Commercial calculators. 2023 non-dwelling unit-load table is Table 220.42(A)." },
+      { ref: "Table 220.42", desc: "Lighting demand factors (lighting loads)", changed: true, source: INHERITED_VERIFIED, yearRefs: LIGHTING_DEMAND_TABLE_YEAR_REFS, note: "Inherited from centralized necTables.js — same data used by Lighting calculators. 2023 demand table is Table 220.45." },
       { ref: "210.19", desc: "Voltage drop — Informational Note recommendation (NOT mandatory)", changed: false, source: PENDING_CODEBOOK, note: "NEC Informational Note (formerly Fine Print Note) — 3% branch circuit VD is a RECOMMENDATION, not a mandatory requirement. Needs codebook verification of exact text in each edition." },
       { ref: "215.2", desc: "Feeder voltage drop — Informational Note recommendation (NOT mandatory)", changed: false, source: PENDING_CODEBOOK, note: "NEC Informational Note — 3% feeder VD is a RECOMMENDATION, not a mandatory requirement. Combined branch+feeder 5% is also informational. Needs codebook verification." },
     ],
@@ -976,10 +1017,11 @@ export const NEC_CHANGE_LOG = [
     id: "cl_210_52c",
     article: "210.52(C)",
     title: "Island and Peninsula Receptacle Requirement",
-    cycle: "2017→2020",
+    cycle: "2017→2020→2023",
     affectedCalcs: ["dwelling_standard", "dwelling_optional", "receptacle_load"],
-    value2017: "At least 1 receptacle required for islands/peninsulas ≥12 sq ft countertop area and ≥12 in. wide. May be supplied from countertop, wall, or base cabinet.",
-    value2020: "CHANGED: Required for ALL islands/peninsulas regardless of area. Below-counter and pop-up-style receptacles now permitted (previously disallowed). Removable supply cord exception added.",
+    value2017: "At least 1 receptacle required at each island countertop space and each peninsular countertop space with long dimension ≥24 in. and short dimension ≥12 in.; island and peninsula were separate subsections 210.52(C)(2)/(C)(3).",
+    value2020: "CHANGED: 210.52(C)(2) combines island/peninsular countertop and work surfaces; at least 1 receptacle for first 9 sq ft or fraction thereof, plus 1 for each additional 18 sq ft or fraction thereof; peninsula requires at least 1 within 2 ft of outer end.",
+    value2023: "CHANGED: 2020 square-footage receptacle count removed. Receptacles serving islands/peninsulas are optional; if none is provided, provisions for future addition are required.",
     verificationStatus: "pending_manual_review",
     sourceStatus: PEND,
     notes: "Description stored per year in ISLAND_PENINSULA_RULE. Displayed in NoteBox of dwelling and receptacle calculators.",

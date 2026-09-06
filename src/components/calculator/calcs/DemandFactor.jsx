@@ -20,7 +20,7 @@ export default function DemandFactor({ category, necYear = "2023" }) {
   const set = k => val => setV(p => ({ ...p, [k]: val }));
 
   const r = calcDemandFactor(v, nec);
-  const { totalVA: total, demandVA: demand, savingsVA, savingsPct, explanation, steps } = r;
+  const { totalVA: total, demandVA: demand, savingsVA, savingsPct, explanation, lightingDemandTable, steps } = r;
 
   return (
     <CalcLayout category={category} necYear={necYear} inputValues={v} outputValues={r} result={
@@ -39,9 +39,9 @@ export default function DemandFactor({ category, necYear = "2023" }) {
     }>
       <Field label="Load Type / NEC Table">
         <Select value={v.loadType} onChange={set("loadType")} options={[
-          { value: "lighting_dwelling", label: "Dwelling Lighting (NEC Table 220.42)" },
-          { value: "lighting_hotel", label: "Hotel/Motel Lighting (NEC Table 220.42)" },
-          { value: "lighting_warehouse", label: "Warehouse Lighting (NEC Table 220.42)" },
+          { value: "lighting_dwelling", label: `Dwelling Lighting (NEC ${lightingDemandTable})` },
+          { value: "lighting_hotel", label: `Hotel/Motel Lighting (NEC ${lightingDemandTable})` },
+          { value: "lighting_warehouse", label: `Warehouse Lighting (NEC ${lightingDemandTable})` },
           { value: "receptacle_commercial", label: "Commercial Receptacles (NEC 220.44)" },
           { value: "dryer_dwelling", label: "Electric Dryers — 1 unit (NEC 220.54)" },
           { value: "fixed_appliance", label: "Fixed Appliances ≥4 units (NEC 220.53)" },

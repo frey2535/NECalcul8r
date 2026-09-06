@@ -21,7 +21,7 @@ export default function LightingLoad({ category, necYear = "2023" }) {
   const occLabel = OCCUPANCY_LABELS[v.occupancy] || v.occupancy;
   const sqft = parseFloat(v.sqft) || 0;
   const r = calcLightingLoad(v, nec);
-  const { occVA, nec_VA, demand, designVA, totalAmps, actualAmps, numCircuits, steps } = r;
+  const { occVA, nec_VA, demand, designVA, totalAmps, actualAmps, numCircuits, lightingArticle, lightingDemandTable, steps } = r;
   const actualW = parseFloat(v.actualFixtureW) || 0;
   const useActual = actualW > 0;
 
@@ -29,11 +29,11 @@ export default function LightingLoad({ category, necYear = "2023" }) {
     <CalcLayout category={category} necYear={necYear} inputValues={v} outputValues={r} result={
       <div className="space-y-2">
         <ResultSection title="NEC Required Lighting Load">
-          <ResultRow label="Unit Load" value={`${occVA} VA/sq ft`} sub="NEC Table 220.12" />
+          <ResultRow label="Unit Load" value={`${occVA} VA/sq ft`} sub={lightingArticle} />
           <ResultRow label="Floor Area" value={sqft.toFixed(0)} unit="sq ft" />
           <ResultRow label="Total Required Load" value={nec_VA.toFixed(0)} unit="VA" highlight />
         </ResultSection>
-        <ResultSection title="After Demand Factor (NEC 220.42)">
+        <ResultSection title={`After Demand Factor (${lightingDemandTable})`}>
           <ResultRow label="Demand Load" value={demand.toFixed(0)} unit="VA" highlight />
           <ResultRow label="Design Load Used" value={(designVA || demand).toFixed(0)} unit="VA" />
           <ResultRow label="Total Current Required" value={totalAmps.toFixed(1)} unit="A" />
@@ -48,7 +48,7 @@ export default function LightingLoad({ category, necYear = "2023" }) {
           </ResultSection>
         )}
         <FormulaBox steps={steps} />
-        <NoteBox>          NEC {necYear} 220.12 / Table 220.12: General lighting load calculated at VA/sq ft by occupancy type. The larger of NEC-required or actual fixture load must be used. Demand factors per 220.42 apply.</NoteBox>
+        <NoteBox>NEC {necYear} {lightingArticle}: general lighting load calculated at VA/sq ft by occupancy type. The larger of NEC-required or actual fixture load must be used. Demand factors per {lightingDemandTable} apply.</NoteBox>
       </div>
     }>
       <Field label="Occupancy Type">

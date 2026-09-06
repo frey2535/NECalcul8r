@@ -122,9 +122,12 @@ export const DWELLING_OUTDOOR_DISCONNECT_REQUIRED = false;  // 230.85 — added 
 export const DWELLING_SPD_REQUIRED = false;                  // 230.67 — added in 2020
 
 // ─── Island / Peninsula Receptacles (NEC 210.52(C)) ─────────────────
-// 2017: at least one receptacle required for islands/peninsulas ≥ 12 sq ft
-// (countertop area) if ≥ 12 in. wide. Supply via countertop, wall, or base.
-export const ISLAND_PENINSULA_RULE = "≥12 sq ft countertop area: at least 1 receptacle required. May be supplied from countertop, wall, or base cabinet. NEC 210.52(C)(2)/(C)(3).";
+// 2017: island and peninsular countertops were separate subsections. Each
+// required at least one receptacle when the long dimension was at least
+// 24 in. and the short dimension was at least 12 in.
+export const ISLAND_PENINSULA_RULE =
+  "At least 1 receptacle required at each island countertop space (210.52(C)(2)) and each peninsular countertop space (210.52(C)(3)) with a long dimension ≥24 in. and short dimension ≥12 in.";
+export const ISLAND_PENINSULA_ARTICLE = "210.52(C)(2)/(C)(3)";
 
 // ─── EV Service Load (NEC 220.57) ───────────────────────────────────
 export const EV_SERVICE_LOAD_MINIMUM_VA = 0; // Article 220.57 EV service-load minimum was added in 2023
@@ -179,6 +182,10 @@ export const RECEPTACLE_YOKE_VA = 180; // 220.14(I)
 export const DWELLING_LIGHTING_ARTICLE = "Table 220.12";
 export const HOTEL_LIGHTING_ARTICLE = "Table 220.12";
 export const OCCUPANCY_UNIT_LOAD_TABLE = "Table 220.12";
+export const LIGHTING_DEMAND_TABLE = "Table 220.42";
+export const OCCUPANCY_UNIT_LOAD_ARTICLES = Object.fromEntries(
+  Object.keys(OCCUPANCY_UNIT_LOADS).map((key) => [key, "Table 220.12"])
+);
 
 // ─── Commercial Kitchen Demand: NEC Table 220.56 (2017) ─────────
 // 2017 NEC Table 220.56 — "6 and over" is a flat 65% (later editions

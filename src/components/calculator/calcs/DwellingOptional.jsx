@@ -13,9 +13,11 @@ function formulasFor(nec) {
   const ge4 = Math.round((hvac.spaceHeatGe4Factor ?? 0.40) * 100);
   const supp = Math.round((hvac.supplementalHeatFactor ?? 0.65) * 100);
   const remainder = Math.round((nec.OPTIONAL_DEMAND_FACTOR ?? 0.4) * 100);
+  const lightingArticle = nec.DWELLING_LIGHTING_ARTICLE || "Table 220.12";
+  const islandPeninsulaArticle = nec.ISLAND_PENINSULA_ARTICLE || "210.52(C)(2)";
   const genArt = nec.OPTIONAL_GENERAL_LOAD_ARTICLE || "220.82(B)";
   return [
-    { label: `General Demand (NEC ${genArt})`, formula: `Demand = 100%(first 10kVA) + ${remainder}%(remainder)`, description: "Applied to general loads at nameplate: lighting + small appliance + laundry + appliances (range, dryer, water heater, etc.)" },
+    { label: `General Demand (NEC ${genArt})`, formula: `Demand = 100%(first 10kVA) + ${remainder}%(remainder)`, description: `Applied to general loads at nameplate: lighting (${lightingArticle}) + small appliance + laundry + appliances (range, dryer, water heater, etc.)` },
     { label: "AC / Heat Pump Compressor (NEC 220.82(C)(1)(2))", formula: "Cooling = max(AC, Heat Pump compressor) at 100%", description: "Air conditioning and heat pump compressor at nameplate rating" },
     { label: "Heat Pump + Supplemental (NEC 220.82(C)(3))", formula: `Heating = compressor 100% + supplemental ${supp}% (omit compressor if they cannot run together)`, description: "Take this selection vs cooling; do not add coincident heating and cooling" },
     { label: "Electric Space Heating (NEC 220.82(C)(4)(5))", formula: `Heat = heatStrip × ${lt4}% (<4 units) or ${ge4}% (4+ units)`, description: "Demand factor based on separately controlled units. 2017: 65% if fewer than four; 40% if four or more." },
@@ -57,6 +59,7 @@ export default function DwellingOptional({ category, necYear = "2023" }) {
   const ge4 = Math.round((hvac.spaceHeatGe4Factor ?? 0.40) * 100);
   const suppPct = Math.round((hvac.supplementalHeatFactor ?? 0.65) * 100);
   const remainderPct = (nec.OPTIONAL_DEMAND_FACTOR * 100).toFixed(0);
+  const lightingArticle = nec.DWELLING_LIGHTING_ARTICLE || "Table 220.12";
   const genArt = nec.OPTIONAL_GENERAL_LOAD_ARTICLE || "220.82(B)";
   const applyArt = nec.OPTIONAL_APPLICABILITY_ARTICLE || "220.82(A)";
   const bothHeatSystems = (parseFloat(v.heatStrip) || 0) > 0 && (parseFloat(v.spaceHeater) || 0) > 0;
@@ -76,7 +79,7 @@ export default function DwellingOptional({ category, necYear = "2023" }) {
           <ResultRow label={`HVAC Load (${noncoincidentSelected})`} value={hvacLoad} unit="VA" highlight />
         </ResultSection>
         <ResultSection title={`General Load (${genArt})`}>
-          <ResultRow label="General Lighting (3 VA/sqft)" value={generalLighting} unit="VA" />
+          <ResultRow label={`General Lighting (${lightingArticle})`} value={generalLighting} unit="VA" />
           <ResultRow label="Small Appliance (min 2 ckts) — 210.11(C)(1)" value={smallAppliance} unit="VA" />
           <ResultRow label="Laundry Circuit — 210.11(C)(2)" value={laundry} unit="VA" />
           <ResultRow label="Other Appliances (nameplate)" value={other} unit="VA" />
@@ -93,14 +96,14 @@ export default function DwellingOptional({ category, necYear = "2023" }) {
         <NoteBox>
           <ul className="list-disc pl-3.5 space-y-1">
             <li>NEC {necYear} {applyArt}: optional method for one- and two-family dwellings (and the dwelling portion of a farm service as used) served by a single 120/240 V or 120/208 V 3-wire service or feeder rated 100 A or more.</li>
-            <li>NEC {necYear} {genArt}: general loads (lighting, small-appliance, laundry, and nameplate appliances such as range, dryer, water heater, dishwasher) — first 10,000 VA at 100%, remainder at {remainderPct}%. Table 220.55 / 220.54 demand factors are not used in this method.</li>
+            <li>NEC {necYear} {genArt}: general loads (lighting per {lightingArticle}, small-appliance, laundry, and nameplate appliances such as range, dryer, water heater, dishwasher) — first 10,000 VA at 100%, remainder at {remainderPct}%. Table 220.55 / 220.54 demand factors are not used in this method.</li>
             <li>NEC {necYear} 220.82(C): HVAC is the <strong>largest</strong> of (C)(1)–(C)(6) — AC 100%, heat-pump compressor 100%, compressor + {suppPct}% supplemental (omit compressor from that selection if they cannot run together), space heat {lt4}% if fewer than 4 separately controlled units or {ge4}% if 4 or more, thermal storage / continuous heating 100%. Do not add heating and cooling.</li>
             {bothHeatSystems && <li>Electric space heating and thermal storage are both entered. A system that qualifies under (C)(6) must not also be calculated under (C)(4) or (C)(5). The calculator takes the larger selection; it does not add them.</li>}
             <li>Minimum one-family dwelling service: {nec.DWELLING_MIN_SERVICE_AMPS}A per 230.79(C).</li>
             {nec.DWELLING_SPD_REQUIRED && <li><strong>230.67 ({necYear}):</strong> SPD Type 1 or 2 required for this dwelling unit service.</li>}
             {nec.DWELLING_OUTDOOR_DISCONNECT_REQUIRED && <li><strong>230.85 ({necYear}):</strong> Outdoor emergency disconnect required for one- and two-family dwellings.</li>}
             {nec.GFCI_SCOPE_DWELLING && <li><strong>210.8(A) GFCI scope ({necYear}):</strong> {nec.GFCI_SCOPE_DWELLING}</li>}
-            {nec.ISLAND_PENINSULA_RULE && <li><strong>210.52(C)(2) Island/Peninsula ({necYear}):</strong> {nec.ISLAND_PENINSULA_RULE}</li>}
+            {nec.ISLAND_PENINSULA_RULE && <li><strong>{islandPeninsulaArticle} Island/Peninsula ({necYear}):</strong> {nec.ISLAND_PENINSULA_RULE}</li>}
             {nec.GARAGE_BASEMENT_RECEPTACLE_SCOPE && <li><strong>210.52(G) Garage/Basement ({necYear}):</strong> {nec.GARAGE_BASEMENT_RECEPTACLE_SCOPE}</li>}
             {(nec.DISHWASHER_GFCI_REQUIRED || nec.SUMP_PUMP_GFCI_REQUIRED) && <li><strong>210.8(D)/422.5 Appliance GFCI ({necYear}):</strong> {nec.GFCI_SPECIFIC_APPLIANCES}</li>}
             {nec.GFCI_OUTDOOR_DWELLING_50A && <li><strong>210.8(F) Outdoor Outlets ({necYear}):</strong> {nec.GFCI_OUTDOOR_DWELLING_50A}</li>}

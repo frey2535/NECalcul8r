@@ -1,5 +1,5 @@
 /**
- * Pure calculation logic for Commercial Load (NEC 220.12 / 220.42 / 220.44 / 220.14).
+ * Pure calculation logic for Commercial Load (NEC Article 220 lighting / receptacle demand).
  */
 
 import { withTrace } from "@/lib/calculatorTrace";
@@ -14,6 +14,9 @@ function occupancyUnitLoad(nec, occupancy) {
 function lightingLoadCite(nec, occupancy) {
   if (occupancy === "dwelling") return nec.DWELLING_LIGHTING_ARTICLE || "Table 220.12";
   if (occupancy === "hotel_motel" || occupancy === "hotel") return nec.HOTEL_LIGHTING_ARTICLE || nec.OCCUPANCY_UNIT_LOAD_TABLE || "Table 220.12";
+  if (nec.OCCUPANCY_UNIT_LOAD_ARTICLES?.[occupancy]) {
+    return nec.OCCUPANCY_UNIT_LOAD_ARTICLES[occupancy];
+  }
   return nec.OCCUPANCY_UNIT_LOAD_TABLE || "Table 220.12";
 }
 
@@ -27,9 +30,10 @@ export function calcCommercialLoad(v, nec) {
   const unitLoad = occupancyUnitLoad(nec, occupancy);
   const lightingVA = sqft * unitLoad;
   const lightingArticle = lightingLoadCite(nec, occupancy);
+  const lightingDemandTable = nec.LIGHTING_DEMAND_TABLE || "Table 220.42";
 
   const lightingDemandCfg = nec.LIGHTING_DEMAND?.[occupancy] || { tiers: [{ band: Infinity, factor: 1.00 }] };
-  // Table 220.42 footnote: demand factors shall not apply to hospitals/hotels/motels
+  // Lighting-demand footnote: demand factors shall not apply to hospitals/hotels/motels
   // where the entire lighting is likely to be used at one time.
   const skipLightingDemand =
     v.lightingUsedAtOneTime === true || v.lightingUsedAtOneTime === "true";
@@ -78,7 +82,7 @@ export function calcCommercialLoad(v, nec) {
 
   const steps = [
     { label: `Lighting Load (${lightingArticle})`, formula: "VA = sqft × unit load (VA/ft²)", expression: `${sqft} ft² × ${unitLoad} VA/ft²`, result: Math.round(lightingVA), unit: "VA", note: `${occupancy} occupancy` },
-    { label: "Lighting Demand (Table 220.42)", formula: skipLightingDemand ? "Table 220.42 footnote — demand not applied (lighting likely used at one time)" : "Demand = tiered factors by occupancy; All Others 100%", expression: skipLightingDemand ? `${Math.round(lightingVA)} @ 100%` : "Tiered demand factors", result: Math.round(lightingDemand), unit: "VA" },
+    { label: `Lighting Demand (${lightingDemandTable})`, formula: skipLightingDemand ? `${lightingDemandTable} footnote — demand not applied (lighting likely used at one time)` : "Demand = tiered factors by occupancy; All Others 100%", expression: skipLightingDemand ? `${Math.round(lightingVA)} @ 100%` : "Tiered demand factors", result: Math.round(lightingDemand), unit: "VA" },
     { label: "Receptacle Load (220.14(I))", formula: "VA = yokes × 180 VA", expression: `${Math.max(0, parseFloat(v.receptacles) || 0)} × ${yokeVA} VA`, result: Math.round(receptacleTotal), unit: "VA" },
     { label: "Receptacle Demand (220.44)", formula: "First 10,000 @ 100% + remainder @ 50%" + (officeMinApplies ? "; not less than 1 VA/ft² (220.14(K))" : ""), expression: officeMinApplies && recMinVA > receptacleDemand ? `max(220.44, ${sqft} × 1)` : "First 10,000 @ 100% + remainder @ 50%", result: Math.round(receptacleDemand), unit: "VA" },
     { label: "Show Window (220.14(G))", formula: "VA = linear feet × 200 VA/ft", expression: `${showFt} ft × ${showPerFt}`, result: Math.round(showWindowVA), unit: "VA" },
@@ -90,6 +94,7 @@ export function calcCommercialLoad(v, nec) {
     lightingVA: Math.round(lightingVA),
     lightingDemand: Math.round(lightingDemand),
     lightingArticle,
+    lightingDemandTable,
     unitLoad,
     receptacleTotal: Math.round(receptacleTotal),
     receptacleDemand: Math.round(receptacleDemand),
@@ -104,8 +109,8 @@ export function calcCommercialLoad(v, nec) {
     steps,
   };
   return withTrace(result, {
-    articles_used: ["220.12", "220.14(F)", "220.14(G)", "220.14(I)", "220.14(K)", "220.40", "220.42", "220.44", "210.8(B)"],
-    tables_used: ["Table 220.12", "Table 220.42", "Table 220.44"],
-    fields_used: ["OCCUPANCY_UNIT_LOADS", "OCCUPANCY_UNIT_LOAD_DEFAULT", "LIGHTING_DEMAND", "RECEPTACLE_DEMAND_TIERS", "OFFICE_RECEPTACLE_MIN_VA_PER_SQFT", "SHOW_WINDOW_VA_PER_FOOT", "SIGN_OUTLET_MIN_VA", "RECEPTACLE_YOKE_VA"],
+    articles_used: [lightingArticle, "220.14(F)", "220.14(G)", "220.14(I)", "220.14(K)", "220.40", lightingDemandTable, "220.44", "210.8(B)"],
+    tables_used: [lightingArticle.startsWith("Table ") ? lightingArticle : null, lightingDemandTable, "Table 220.44"].filter(Boolean),
+    fields_used: ["OCCUPANCY_UNIT_LOADS", "OCCUPANCY_UNIT_LOAD_ARTICLES", "OCCUPANCY_UNIT_LOAD_DEFAULT", "OCCUPANCY_UNIT_LOAD_TABLE", "LIGHTING_DEMAND", "LIGHTING_DEMAND_TABLE", "RECEPTACLE_DEMAND_TIERS", "OFFICE_RECEPTACLE_MIN_VA_PER_SQFT", "SHOW_WINDOW_VA_PER_FOOT", "SIGN_OUTLET_MIN_VA", "RECEPTACLE_YOKE_VA"],
   });
 }

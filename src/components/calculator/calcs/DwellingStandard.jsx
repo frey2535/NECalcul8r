@@ -8,12 +8,14 @@ import { getNecData } from "@/data/nec";
 import { calcDwellingStandard } from "./logic/dwellingCalcs";
 
 function buildFormulas(nec) {
+  const lightingArticle = nec.DWELLING_LIGHTING_ARTICLE || "Table 220.12";
+  const demandArticle = nec.LIGHTING_DEMAND_TABLE || "Table 220.42";
   const demandDesc = nec.DWELLING_DEMAND_TABLE.map(t =>
     `${(t.factor * 100).toFixed(0)}%${t.band < Infinity ? ` first ${t.band.toLocaleString()} VA` : " remainder"}`
   ).join(" + ");
   return [
-    { label: "General Lighting Load", formula: `Lighting VA = Floor Area (sq ft) × ${nec.DWELLING_LIGHTING_VA_PER_SQFT} VA/sq ft`, description: `NEC 220.12 Table — dwellings use ${nec.DWELLING_LIGHTING_VA_PER_SQFT} VA/sq ft` },
-    { label: "Lighting Demand (NEC 220.42)", formula: `Demand = ${demandDesc}`, description: "Applied to general lighting + small appliance + laundry circuits" },
+    { label: "General Lighting Load", formula: `Lighting VA = Floor Area (sq ft) × ${nec.DWELLING_LIGHTING_VA_PER_SQFT} VA/sq ft`, description: `${lightingArticle} — dwellings use ${nec.DWELLING_LIGHTING_VA_PER_SQFT} VA/sq ft` },
+    { label: `Lighting Demand (${demandArticle})`, formula: `Demand = ${demandDesc}`, description: "Applied to general lighting + small appliance + laundry circuits" },
     { label: "Range Demand", formula: "Col A: <3½ kW % of nameplate | Col B: 3½–8¾ kW | Col C: table kW (8¾–12 kW) | Note 1: +5% per kW or major fraction over 12 kW", description: "Cooking demand table: Table 220.55. NEC 220.60 is the separate noncoincident-load rule. One 12 kW range = 8 kW. Ranges ≤8¾ kW use Column A/B percent of nameplate, not 8 kW flat." },
     { label: "Service Amperage", formula: "A = Total VA / Voltage", description: "For 240V single-phase service" },
   ];
@@ -43,6 +45,9 @@ export default function DwellingStandard({ category, necYear = "2023" }) {
     subtotal_VA: subtotal, lightingDemand_VA: lightingDemand, rangeDemand_VA: rangeDemand,
     dryerDemand_VA: dryerDemand, fixedLoads_VA: fixedLoads, totalVA, totalAmps, minService_A: minService, steps } = r;
   const rangeDemandArticle = r.rangeDemandArticle || "Table 220.55";
+  const dwellingLightingArticle = nec.DWELLING_LIGHTING_ARTICLE || "Table 220.12";
+  const lightingDemandArticle = nec.LIGHTING_DEMAND_TABLE || "Table 220.42";
+  const islandPeninsulaArticle = nec.ISLAND_PENINSULA_ARTICLE || "210.52(C)(2)";
   const bathroomCount = parseFloat(v.bathroom) || 0;
 
   return (
@@ -56,7 +61,7 @@ export default function DwellingStandard({ category, necYear = "2023" }) {
           <ResultRow label="Subtotal (before demand)" value={subtotal.toFixed(0)} unit="VA" />
         </ResultSection>
         <ResultSection title="After Demand Factors">
-          <ResultRow label="Lighting Demand (220.42)" value={lightingDemand.toFixed(0)} unit="VA" />
+          <ResultRow label={`Lighting Demand (${lightingDemandArticle})`} value={lightingDemand.toFixed(0)} unit="VA" />
           <ResultRow label={`Range Demand (${rangeDemandArticle})`} value={rangeDemand.toFixed(0)} unit="VA" />
           <ResultRow label="Dryer Demand (220.54)" value={dryerDemand.toFixed(0)} unit="VA" />
           <ResultRow label={r.fixedApplianceDemandApplied ? "Fixed Appliances (220.53 at 75%)" : "Fixed Appliances (nameplate)"} value={fixedLoads.toFixed(0)} unit="VA" />
@@ -70,7 +75,7 @@ export default function DwellingStandard({ category, necYear = "2023" }) {
         {TABLES.map(t => <NECTableDisplay key={t.id} title={t.article} headers={t.headers} rows={t.rows} note={t.note} compact />)}
         <NoteBox>
           <ul className="list-disc pl-3.5 space-y-1">
-            <li>NEC {necYear} 220.40 Standard Method. Floor area per Table 220.12 excludes unused cellars, unfinished attics, and open porches. Lighting demand (Table 220.42 dwelling): {nec.DWELLING_DEMAND_TABLE.map((t) => `${(t.factor * 100).toFixed(0)}%${t.band < Infinity ? ` first ${t.band.toLocaleString()} VA` : " remainder"}`).join(", ")}.</li>
+            <li>NEC {necYear} 220.40 Standard Method. General dwelling lighting uses {dwellingLightingArticle}; lighting demand ({lightingDemandArticle} dwelling): {nec.DWELLING_DEMAND_TABLE.map((t) => `${(t.factor * 100).toFixed(0)}%${t.band < Infinity ? ` first ${t.band.toLocaleString()} VA` : " remainder"}`).join(", ")}.</li>
             <li>220.52 / 210.11(C): minimum 2 small-appliance circuits and 1 laundry circuit at 1500 VA each. 210.11(C)(3) bathroom circuit is required but is not an extra 1500 VA — 220.14(J).</li>
             <li>Range per {rangeDemandArticle} (Columns A/B/C and Note 1). One household dryer: 5000 W or nameplate, 220.54. 220.53 75% applies only with 4+ fastened appliances other than range, dryer, space heating, or AC. Enter the larger of heating vs cooling in HVAC.</li>
             <li>Feeder/service neutral (220.61) is not calculated here — use the Neutral Load calculator. D1(b) motor/A/C additions (430.24 / 440) are not in this calculator.</li>
@@ -78,7 +83,7 @@ export default function DwellingStandard({ category, necYear = "2023" }) {
             {nec.DWELLING_SPD_REQUIRED && <li><strong>230.67 ({necYear}):</strong> SPD Type 1 or 2 required for this dwelling unit service.</li>}
             {nec.DWELLING_OUTDOOR_DISCONNECT_REQUIRED && <li><strong>230.85 ({necYear}):</strong> Outdoor emergency disconnect required for one- and two-family dwellings.</li>}
             {nec.GFCI_SCOPE_DWELLING && <li><strong>210.8(A) GFCI scope ({necYear}):</strong> {nec.GFCI_SCOPE_DWELLING}</li>}
-            {nec.ISLAND_PENINSULA_RULE && <li><strong>210.52(C)(2) Island/Peninsula ({necYear}):</strong> {nec.ISLAND_PENINSULA_RULE}</li>}
+            {nec.ISLAND_PENINSULA_RULE && <li><strong>{islandPeninsulaArticle} Island/Peninsula ({necYear}):</strong> {nec.ISLAND_PENINSULA_RULE}</li>}
             {nec.GARAGE_BASEMENT_RECEPTACLE_SCOPE && <li><strong>210.52(G) Garage/Basement ({necYear}):</strong> {nec.GARAGE_BASEMENT_RECEPTACLE_SCOPE}</li>}
             {(nec.DISHWASHER_GFCI_REQUIRED || nec.SUMP_PUMP_GFCI_REQUIRED) && <li><strong>210.8(D)/422.5 Appliance GFCI ({necYear}):</strong> {nec.GFCI_SPECIFIC_APPLIANCES}</li>}
             {nec.GFCI_OUTDOOR_DWELLING_50A && <li><strong>210.8(F) Outdoor Outlets ({necYear}):</strong> {nec.GFCI_OUTDOOR_DWELLING_50A}</li>}
