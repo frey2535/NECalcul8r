@@ -32,8 +32,8 @@ export default function PrivacyPolicy() {
           <section>
             <h2 className="text-lg font-semibold mb-3">1. Overview</h2>
             <p className="text-muted-foreground">
-              NECalcul8r is a professional electrical code calculation and reference tool built on the
-              Base44 platform. It helps engineers, electricians, inspectors, and students perform and
+              NECalcul8r is a professional electrical code calculation and reference tool. It helps
+              engineers, electricians, inspectors, and students perform and
               verify electrical calculations based on NEC (National Electrical Code) standards. This
               policy explains what data we collect, why we collect it, how it is stored, and how you
               can manage or delete it.
@@ -79,10 +79,11 @@ export default function PrivacyPolicy() {
           <section>
             <h2 className="text-lg font-semibold mb-3">3. Authentication</h2>
             <p className="text-muted-foreground">
-              Authentication is managed by the Base44 platform. You may register with an email and
-              password or sign in with Google. Passwords are hashed and never stored in plain text.
-              Authentication tokens are issued per session and expire automatically. We do not store
-              your Google password — Google handles authentication through its secure OAuth flow.
+              Authentication is managed by the app's configured backend. The public demo may use
+              local browser storage, while commercial deployments can use Supabase authentication.
+              You may register with an email and password or sign in with Google when those options
+              are enabled. Passwords are never stored in plain text by the app. We do not store your
+              Google password — Google handles authentication through its secure OAuth flow.
             </p>
           </section>
 
@@ -107,9 +108,10 @@ export default function PrivacyPolicy() {
             </p>
             <ul className="space-y-2 text-muted-foreground list-disc pl-5">
               <li>
-                <strong className="text-foreground">Base44:</strong> Hosting, database, authentication,
-                file storage, and backend infrastructure. Your data is stored on Base44's secure
-                servers.
+                <strong className="text-foreground">Hosting and backend providers:</strong> Static
+                hosting, authentication, database, file storage, and backend infrastructure may be
+                provided by services such as GitHub Pages, Cloudflare Pages, Supabase, or equivalent
+                providers configured for the deployment.
               </li>
               <li>
                 <strong className="text-foreground">Google:</strong> Optional sign-in via Google OAuth,
@@ -117,7 +119,7 @@ export default function PrivacyPolicy() {
                 not access your Google password or other Google account data.
               </li>
               <li>
-                <strong className="text-foreground">Payment provider (Stripe / Wix Payments):</strong>{" "}
+                <strong className="text-foreground">Payment provider (Stripe or app-store billing):</strong>{" "}
                 Processes subscription payments. Card data is handled entirely by the payment provider
                 and is never stored or accessible to the app.
               </li>
@@ -203,8 +205,8 @@ export default function PrivacyPolicy() {
               rights (including account deletion requests), please contact us:
             </p>
             <ul className="space-y-1 text-muted-foreground list-disc pl-5">
-              <li>Through the contact information listed on the NECalcul8r Google Play Store listing.</li>
-              <li>Through the Base44 platform support channel.</li>
+              <li>Through the contact information listed on the NECalcul8r App Store or Google Play listing.</li>
+              <li>Through the support channel or email address published for the app.</li>
             </ul>
             <p className="text-muted-foreground mt-3">
               We will respond to your request within a reasonable timeframe, and no later than 30 days
