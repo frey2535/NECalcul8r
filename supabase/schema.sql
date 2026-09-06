@@ -350,6 +350,7 @@ begin
 end;
 $$;
 
+drop policy if exists "profiles read own org" on public.profiles;
 create policy "profiles read own org"
   on public.profiles for select
   using (
@@ -358,10 +359,12 @@ create policy "profiles read own org"
     or (public.current_profile_org_role() = 'owner' and org_id = public.current_profile_org_id())
   );
 
+drop policy if exists "profiles insert own" on public.profiles;
 create policy "profiles insert own"
   on public.profiles for insert
   with check (id = auth.uid());
 
+drop policy if exists "profiles update own or org owner" on public.profiles;
 create policy "profiles update own or org owner"
   on public.profiles for update
   using (
@@ -375,6 +378,7 @@ create policy "profiles update own or org owner"
     or (public.current_profile_org_role() = 'owner' and org_id = public.current_profile_org_id())
   );
 
+drop policy if exists "organizations read own" on public.organizations;
 create policy "organizations read own"
   on public.organizations for select
   using (
@@ -382,10 +386,12 @@ create policy "organizations read own"
     or id = public.current_profile_org_id()
   );
 
+drop policy if exists "organizations create" on public.organizations;
 create policy "organizations create"
   on public.organizations for insert
   with check (auth.uid() is not null);
 
+drop policy if exists "organizations update owner" on public.organizations;
 create policy "organizations update owner"
   on public.organizations for update
   using (
@@ -393,6 +399,7 @@ create policy "organizations update owner"
     or (public.current_profile_org_role() = 'owner' and id = public.current_profile_org_id())
   );
 
+drop policy if exists "entitlements read assigned" on public.entitlements;
 create policy "entitlements read assigned"
   on public.entitlements for select
   using (
@@ -401,6 +408,7 @@ create policy "entitlements read assigned"
     or org_id = public.current_profile_org_id()
   );
 
+drop policy if exists "subscriptions read assigned" on public.subscriptions;
 create policy "subscriptions read assigned"
   on public.subscriptions for select
   using (
@@ -409,6 +417,7 @@ create policy "subscriptions read assigned"
     or org_id = public.current_profile_org_id()
   );
 
+drop policy if exists "memberships read own org" on public.organization_memberships;
 create policy "memberships read own org"
   on public.organization_memberships for select
   using (
@@ -417,6 +426,7 @@ create policy "memberships read own org"
     or org_id = public.current_profile_org_id()
   );
 
+drop policy if exists "app records read scoped" on public.app_records;
 create policy "app records read scoped"
   on public.app_records for select
   using (
@@ -425,10 +435,12 @@ create policy "app records read scoped"
     or public.current_is_platform_admin()
   );
 
+drop policy if exists "app records create own" on public.app_records;
 create policy "app records create own"
   on public.app_records for insert
   with check (created_by_id = auth.uid());
 
+drop policy if exists "app records update own" on public.app_records;
 create policy "app records update own"
   on public.app_records for update
   using (
@@ -442,6 +454,7 @@ create policy "app records update own"
     or (entity_type = 'ArticleVerification' and public.current_can_manage_codebook())
   );
 
+drop policy if exists "app records delete own" on public.app_records;
 create policy "app records delete own"
   on public.app_records for delete
   using (
@@ -449,6 +462,39 @@ create policy "app records delete own"
     or public.current_is_platform_admin()
     or (entity_type = 'ArticleVerification' and public.current_can_manage_codebook())
   );
+
+-- Discrepancy report attachments. Object paths are scoped by user id:
+--   <auth.uid()>/<timestamp>-<random>-<filename>
+-- Public reads allow admins to view report screenshots directly from the
+-- Discrepancy Reports page; randomized paths avoid guessable URLs.
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values (
+  'discrepancy-report-attachments',
+  'discrepancy-report-attachments',
+  true,
+  10485760,
+  array['image/png', 'image/jpeg', 'image/webp', 'image/gif']
+)
+on conflict (id) do update
+set
+  public = excluded.public,
+  file_size_limit = excluded.file_size_limit,
+  allowed_mime_types = excluded.allowed_mime_types;
+
+drop policy if exists "report attachments authenticated upload" on storage.objects;
+create policy "report attachments authenticated upload"
+  on storage.objects for insert
+  to authenticated
+  with check (
+    bucket_id = 'discrepancy-report-attachments'
+    and (storage.foldername(name))[1] = auth.uid()::text
+  );
+
+drop policy if exists "report attachments public read" on storage.objects;
+create policy "report attachments public read"
+  on storage.objects for select
+  to public
+  using (bucket_id = 'discrepancy-report-attachments');
 
 -- Writes to subscriptions, entitlements, and purchase_events should be performed
 -- by Supabase Edge Functions using the service role key after verifying Stripe,

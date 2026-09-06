@@ -39,7 +39,7 @@ The seed data (in the earlier conversation) was manually created as a hardcoded 
 | conduit_fill | 3 articles | 3 articles | 0 | ✅ Correct |
 | box_fill | 1 article | 2 articles | 0 (but see note) | ✅ Correct* |
 | transformer_sizing | 2 articles | 1 article | 1 | ⚠️ **HIGH** |
-| motor_branch_circuit | 5 articles | 4 articles | 1 | ⚠️ **MEDIUM** |
+| motor_full_load | 5 articles | 4 articles | 1 | ⚠️ **MEDIUM** |
 | motor_feeder | 3 articles | 2 articles | 1 | ⚠️ **MEDIUM** |
 | ev_charging | 6 articles | 4 articles | 2 | ⚠️ **CRITICAL** |
 
@@ -122,7 +122,7 @@ The seed data (in the earlier conversation) was manually created as a hardcoded 
 
 ---
 
-### motor_branch_circuit (⚠️ MEDIUM — 1 MISSING)
+### motor_full_load (⚠️ MEDIUM — 1 MISSING)
 
 **In Audit:**
 1. Table 430.248 ❌ **MISSING** — Single-phase motor FLC
@@ -149,7 +149,7 @@ The seed data (in the earlier conversation) was manually created as a hardcoded 
 
 **In Audit:**
 1. 430.24 ✅ Seeded
-2. 430.62 ✅ Seeded (as "430.62(A)")
+2. 430.62 ✅ Seeded
 3. Table 430.250 ❌ **MISSING** — Three-phase motor FLC
 
 **Expected Records:** 3 articles × 4 years = 12  
@@ -205,7 +205,7 @@ The seed data (in the earlier conversation) was manually created as a hardcoded 
 | | 230.42(B) | ❌ | ❌ | ❌ | ❌ | **MISSING** |
 | | 240.6(A) | ❌ | ❌ | ❌ | ❌ | **MISSING** |
 | **conductor_ampacity** | 310.15(B)(16) | ✅ | ✅ | ✅ | ✅ | Seeded |
-| | 310.15(B)(2)(c) | ✅ | ✅ | ✅ | ✅ | Seeded |
+| | Table 310.15(B)(2)(a) / Table 310.15(B)(1) | ✅ | ✅ | ✅ | ✅ | Seeded |
 | | 310.15(C)(1) | ✅ | ✅ | ✅ | ✅ | Seeded |
 | | 110.14(C) | ✅ | ✅ | ✅ | ✅ | Seeded |
 | **conduit_fill** | Ch.9 Table 1 | ✅ | ✅ | ✅ | ✅ | Seeded |
@@ -215,13 +215,13 @@ The seed data (in the earlier conversation) was manually created as a hardcoded 
 | | 314.16(B) | ✅ | ✅ | ✅ | ✅ | Seeded |
 | **transformer_sizing** | 450.3(B) | ✅ | ✅ | ✅ | ✅ | Seeded |
 | | 240.6(A) | ❌ | ❌ | ❌ | ❌ | **MISSING** |
-| **motor_branch_circuit** | Table 430.248 | ❌ | ❌ | ❌ | ❌ | **MISSING** |
+| **motor_full_load** | Table 430.248 | ❌ | ❌ | ❌ | ❌ | **MISSING** |
 | | Table 430.250 | ❌ | ❌ | ❌ | ❌ | **MISSING** |
 | | 430.22 | ✅ | ✅ | ✅ | ✅ | Seeded |
 | | Table 430.52 | ❌ | ❌ | ❌ | ❌ | **MISSING** |
 | | Table 310.15(B)(16) | ❌ | ❌ | ❌ | ❌ | **MISSING** |
 | **motor_feeder** | 430.24 | ✅ | ✅ | ✅ | ✅ | Seeded |
-| | 430.62(A) | ✅ | ✅ | ✅ | ✅ | Seeded |
+| | 430.62 | ✅ | ✅ | ✅ | ✅ | Seeded |
 | | Table 430.250 | ❌ | ❌ | ❌ | ❌ | **MISSING** |
 | **ev_charging** | 625.40 | ⚠️ | ⚠️ | ⚠️ | ⚠️ | Branch-circuit assumption |
 | | 625.41 | ⚠️ | ⚠️ | ⚠️ | ⚠️ | OCPD 125% sizing |
@@ -246,7 +246,7 @@ The seed data (in the earlier conversation) was manually created as a hardcoded 
 | conduit_fill | 0 | 0 × 4 = 0 | **0** |
 | box_fill | 0 | 0 × 4 = 0 | **0** |
 | transformer_sizing | 1 | 1 × 4 = 4 | **4** |
-| motor_branch_circuit | 4 | 4 × 4 = 16 | **16** |
+| motor_full_load | 4 | 4 × 4 = 16 | **16** |
 | motor_feeder | 1 | 1 × 4 = 4 | **4** |
 | ev_charging | 2 | 2 × 4 = 8 | **8** |
 | | | | **TOTAL: 104** |
@@ -293,7 +293,7 @@ Create a new `seedArticleVerificationsComplete.js` function that:
 ```javascript
 import { CALCULATORS } from '@/data/nec/audit.js';
 
-const TOP_10 = ['dwelling_standard', 'dwelling_optional', 'service_sizing', 'conductor_ampacity', 'conduit_fill', 'box_fill', 'transformer_sizing', 'motor_branch_circuit', 'motor_feeder', 'ev_charging'];
+const TOP_10 = ['dwelling_standard', 'dwelling_optional', 'service_sizing', 'conductor_ampacity', 'conduit_fill', 'box_fill', 'transformer_sizing', 'motor_full_load', 'motor_feeder', 'ev_charging'];
 
 const records = [];
 for (const calc of CALCULATORS) {

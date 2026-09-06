@@ -5,13 +5,14 @@ import FormulaBox from "../FormulaBox";
 import { getNecData } from "@/data/nec";
 import { calcMultifamilyStandard } from "./logic/multifamilyStandardCalc";
 
-const FORMULAS = [
-  { label: "NEC 220.40 Standard Method", formula: "Net Load = General demand + Range demand + Dryer demand + Heating", description: "General lighting, small appliance, and laundry loads are summed and demand-factored per Table 220.42. Ranges use the year-specific cooking demand table Column C. Dryers use Table 220.54. Heating at 100%." },
-  { label: "Table 220.42 Demand", formula: "First 3,000 @ 100% + next 117,000 @ 35% + remainder @ 25%", description: "Same demand tiers as single dwelling, applied to the total general load of all units combined." },
-];
-
 export default function MultifamilyStandard({ category, necYear = "2017" }) {
   const nec = getNecData(necYear);
+  const dwellingLightingArticle = nec.DWELLING_LIGHTING_ARTICLE || "Table 220.12";
+  const lightingDemandTable = nec.LIGHTING_DEMAND_TABLE || "Table 220.42";
+  const formulas = [
+    { label: "NEC 220.40 Standard Method", formula: "Net Load = General demand + Range demand + Dryer demand + Heating", description: `General lighting, small appliance, and laundry loads are summed and demand-factored per ${lightingDemandTable}. Ranges use the year-specific cooking demand table Column C. Dryers use Table 220.54. Heating at 100%.` },
+    { label: `${lightingDemandTable} Demand`, formula: "First 3,000 @ 100% + next 117,000 @ 35% + remainder @ 25%", description: "Same demand tiers as single dwelling, applied to the total general load of all units combined." },
+  ];
   const [v, setV] = useCalculatorInputs({
     numUnits: 20,
     sqftPerUnit: 840,
@@ -36,12 +37,12 @@ export default function MultifamilyStandard({ category, necYear = "2017" }) {
   return (
     <CalcLayout category={category} necYear={necYear} inputValues={v} outputValues={r} result={
       <div className="space-y-2">
-        <ResultSection title="General Load (Table 220.42)">
+        <ResultSection title={`General Load (${lightingDemandTable})`}>
           <ResultRow label="General Lighting" value={lightingVA.toLocaleString()} unit="VA" />
           <ResultRow label="Small Appliance" value={smallAppVA.toLocaleString()} unit="VA" />
           <ResultRow label="Laundry" value={laundryVA.toLocaleString()} unit="VA" />
           <ResultRow label="Total General Load" value={totalGeneralVA.toLocaleString()} unit="VA" />
-          <ResultRow label="General Demand (Table 220.42)" value={generalDemandVA.toLocaleString()} unit="VA" highlight />
+          <ResultRow label={`General Demand (${lightingDemandTable})`} value={generalDemandVA.toLocaleString()} unit="VA" highlight />
         </ResultSection>
         <ResultSection title="Appliance Demand">
           <ResultRow label={`Range Demand (${rangeDemandArticle})`} value={rangeDemandVA.toLocaleString()} unit="VA" />
@@ -53,9 +54,9 @@ export default function MultifamilyStandard({ category, necYear = "2017" }) {
           <ResultRow label="Service Current" value={totalA.toFixed(1)} unit="A" highlight />
           <ResultRow label="Minimum Service Size" value={minService} unit="A" highlight sub="Next standard size" />
         </ResultSection>
-        <FormulaBox steps={steps} />
+        <FormulaBox steps={steps} formulas={formulas} />
         <NoteBox>
-          NEC {necYear} 220.40: Standard method for multifamily dwellings. General lighting ({nec.DWELLING_LIGHTING_VA_PER_SQFT} VA/ft²), small appliance ({nec.SMALL_APPLIANCE_VA} VA/circuit), and laundry ({nec.LAUNDRY_VA} VA/circuit) are summed across all units and demand-factored per Table 220.42. Ranges per {rangeDemandArticle} Column C. Dryers per Table 220.54. Water/space heating at 100%.
+          NEC {necYear} 220.40: Standard method for multifamily dwellings. General lighting ({dwellingLightingArticle}, {nec.DWELLING_LIGHTING_VA_PER_SQFT} VA/ft²), small appliance ({nec.SMALL_APPLIANCE_VA} VA/circuit), and laundry ({nec.LAUNDRY_VA} VA/circuit) are summed across all units and demand-factored per {lightingDemandTable}. Ranges per {rangeDemandArticle} Column C. Dryers per Table 220.54. Water/space heating at 100%.
         </NoteBox>
       </div>
     }>

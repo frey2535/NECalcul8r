@@ -213,6 +213,13 @@ export function CalcLayout({ category, children, result, trace, necYear, inputVa
               <span>Community review in progress for this calculator. Submitted reports are being evaluated.</span>
             </div>
           )}
+          <div className="mb-3 px-3 py-2 rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 flex items-start gap-2 text-xs text-blue-800 dark:text-blue-300">
+            <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+            <span>
+              Verify results against the applicable NEC edition, local amendments, and AHJ requirements before installation.
+              If something appears incorrect, use Report to send the calculation and expected result for review.
+            </span>
+          </div>
           {result ? (
            <>
              {splitResult.main}

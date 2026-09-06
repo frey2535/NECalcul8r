@@ -62,13 +62,13 @@ const TESTS = Object.freeze([
   }),
   Object.freeze({
     id: "com_sign_min_1200",
-    description: "220.14(F) sign not less than 1200 VA",
+    description: "220.14(E) sign not less than 1200 VA",
     inputs: { occupancy: "store", sqft: 0, receptacles: 0, outsideSign: 500, showWindow: 0, hvac: 0, majorAppliances: 0 },
     expected: { signVA: 1200 },
   }),
   Object.freeze({
     id: "com_show_window",
-    description: "220.14(G) 200 VA per linear foot",
+    description: "220.14(F) show window 200 VA per linear foot",
     inputs: { occupancy: "store", sqft: 0, receptacles: 0, showWindow: 10, showWindowVA: 200, outsideSign: 0, hvac: 0, majorAppliances: 0 },
     expected: { showWindowVA: 2000 },
   }),
