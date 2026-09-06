@@ -71,9 +71,46 @@ function reloadFreshOnce() {
   reloadFresh();
 }
 
+const UPDATE_ATTEMPT_KEY = "necalcul8r_update_attempted_sha";
+const UPDATE_ATTEMPT_RETRY_MS = 15 * 60 * 1000;
+
+function readUpdateAttempt() {
+  try {
+    const raw = sessionStorage.getItem(UPDATE_ATTEMPT_KEY);
+    if (!raw) return null;
+    if (!raw.startsWith("{")) return { sha: raw, attemptedAt: 0 };
+    const parsed = JSON.parse(raw);
+    if (!parsed?.sha) return null;
+    return { sha: parsed.sha, attemptedAt: Number(parsed.attemptedAt) || 0 };
+  } catch {
+    return null;
+  }
+}
+
+function rememberUpdateAttempt(targetSha) {
+  if (!targetSha) return;
+  try {
+    sessionStorage.setItem(UPDATE_ATTEMPT_KEY, JSON.stringify({
+      sha: targetSha,
+      attemptedAt: Date.now(),
+    }));
+  } catch {
+    /* sessionStorage can be unavailable in private mode */
+  }
+}
+
 function watchForBuildUpdates() {
   const currentSha = import.meta.env.VITE_APP_BUILD_SHA || "";
   if (!currentSha || currentSha === "local") return;
+
+  const attemptedAtBoot = readUpdateAttempt();
+  if (attemptedAtBoot?.sha === currentSha) {
+    try {
+      sessionStorage.removeItem(UPDATE_ATTEMPT_KEY);
+    } catch {
+      /* sessionStorage can be unavailable in private mode */
+    }
+  }
 
   let promptedSha = "";
   const check = async () => {
@@ -83,7 +120,13 @@ function watchForBuildUpdates() {
       if (!response.ok) return;
       const next = await response.json();
       if (!next?.sha || next.sha === currentSha || next.sha === promptedSha) return;
-      if (next.sha === sessionStorage.getItem("necalcul8r_update_attempted_sha")) return;
+      const attempted = readUpdateAttempt();
+      if (
+        attempted?.sha === next.sha &&
+        Date.now() - attempted.attemptedAt < UPDATE_ATTEMPT_RETRY_MS
+      ) {
+        return;
+      }
       promptedSha = next.sha;
       window.dispatchEvent(new CustomEvent("necalcul8r-update-available", {
         detail: {
@@ -106,7 +149,11 @@ function watchForBuildUpdates() {
 }
 
 async function applyServiceWorkerUpdate(registration) {
-  sessionStorage.setItem("necalcul8r_update_in_progress", "1");
+  try {
+    sessionStorage.setItem("necalcul8r_update_in_progress", "1");
+  } catch {
+    /* sessionStorage can be unavailable in private mode */
+  }
   try {
     registration.waiting?.postMessage({ type: "NECALCUL8R_SKIP_WAITING" });
     await new Promise((resolve) => window.setTimeout(resolve, 250));
@@ -121,8 +168,12 @@ export async function refreshApp(targetSha) {
 }
 
 async function reloadFresh(targetSha) {
-  sessionStorage.setItem("necalcul8r_update_in_progress", "1");
-  if (targetSha) sessionStorage.setItem("necalcul8r_update_attempted_sha", targetSha);
+  try {
+    sessionStorage.setItem("necalcul8r_update_in_progress", "1");
+  } catch {
+    /* sessionStorage can be unavailable in private mode */
+  }
+  rememberUpdateAttempt(targetSha);
   try {
     navigator.serviceWorker?.controller?.postMessage({ type: "NECALCUL8R_CLEAR_CACHES" });
   } catch {

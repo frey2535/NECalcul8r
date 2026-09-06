@@ -66,6 +66,8 @@
 | **Dark Mode** | ✅ Yes | CSS vars + `.dark` class auto-applied per system preference. |
 | **PWA Manifest** | ✅ Present | `public/manifest.json` is linked from `index.html` and includes 192×192, 512×512, maskable, and shortcut metadata. |
 | **Service Worker** | ✅ Present | `public/sw.js` provides install/update support; `build-version.json` is generated during build for PR-deployed update detection. |
+| **Install Prompt** | ✅ Mounted | `InstallAppPrompt` is mounted in `App.jsx`; it auto-opens on mobile web and responds to Profile → Install. |
+| **Update Cache Policy** | ✅ Present | `public/_headers` revalidates `index.html`, `sw.js`, and `build-version.json`; hashed assets remain immutable. |
 
 ---
 
@@ -100,6 +102,7 @@ To complete iOS/Android app publishing, confirm these inputs in the store or nat
 - [x] **Form validation**: Required fields, inline errors, debounce.
 - [x] **Year selection**: Context, localStorage, blocking UI for invalid years.
 - [x] **All 44 calculators**: Routed, tested, consuming correct NEC data.
+- [x] **Expanded release regressions**: Full Neutral Load and Pull Box regression scripts are part of `npm run verify:release`.
 - [x] **Error boundaries**: Graceful failures, no silent fallbacks.
 - [x] **Responsive design**: Mobile-first, dark mode, touch-optimized.
 - [x] **No critical/high issues remaining**.

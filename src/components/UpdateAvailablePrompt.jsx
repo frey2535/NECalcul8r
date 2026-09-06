@@ -19,9 +19,20 @@ export default function UpdateAvailablePrompt() {
     if (applying) return;
     setApplying(true);
     if (update?.targetSha) {
-      sessionStorage.setItem("necalcul8r_update_attempted_sha", update.targetSha);
+      try {
+        sessionStorage.setItem("necalcul8r_update_attempted_sha", JSON.stringify({
+          sha: update.targetSha,
+          attemptedAt: Date.now(),
+        }));
+      } catch {
+        /* sessionStorage can be unavailable in private mode */
+      }
     }
-    sessionStorage.setItem("necalcul8r_update_in_progress", "1");
+    try {
+      sessionStorage.setItem("necalcul8r_update_in_progress", "1");
+    } catch {
+      /* sessionStorage can be unavailable in private mode */
+    }
     try {
       navigator.serviceWorker?.controller?.postMessage({ type: "NECALCUL8R_CLEAR_CACHES" });
       if ("caches" in window) {
