@@ -538,9 +538,20 @@ export default function Landing() {
                 <p className="text-[9px] text-muted-foreground font-semibold tracking-widest uppercase">Electrical Tools</p>
               </div>
             </div>
-            <p className="text-[11px] text-muted-foreground">
-              NEC 2017 · 2020 · 2023 · 2026 · {NEC_CATEGORIES.length} calculators
-            </p>
+            <div className="text-center sm:text-right space-y-1">
+              <p className="text-[11px] text-muted-foreground">
+                NEC 2017 · 2020 · 2023 · 2026 · {NEC_CATEGORIES.length} calculators
+              </p>
+              <div className="flex items-center justify-center sm:justify-end gap-3 text-[11px] text-muted-foreground">
+                <Link to="/privacy" className="underline underline-offset-2 hover:text-foreground">
+                  Privacy Policy
+                </Link>
+                <span aria-hidden="true">·</span>
+                <Link to="/terms" className="underline underline-offset-2 hover:text-foreground">
+                  Terms of Service
+                </Link>
+              </div>
+            </div>
           </div>
         </div>
       </footer>

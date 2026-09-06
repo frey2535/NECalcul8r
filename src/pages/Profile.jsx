@@ -157,9 +157,18 @@ export default function Profile() {
       </div>
 
       {/* App info */}
-      <div className="text-center text-[11px] text-muted-foreground space-y-0.5 pb-4">
+      <div className="text-center text-[11px] text-muted-foreground space-y-2 pb-4">
         <p className="font-bold">NEC Suite · Electrical Tools</p>
-        <p>NEC 2017 / 2020 / 2023 compliant calculations</p>
+        <p>NEC 2017 / 2020 / 2023 calculator tools</p>
+        <div className="flex items-center justify-center gap-3">
+          <Link to="/privacy" className="underline underline-offset-2 hover:text-foreground">
+            Privacy Policy
+          </Link>
+          <span aria-hidden="true">·</span>
+          <Link to="/terms" className="underline underline-offset-2 hover:text-foreground">
+            Terms of Service
+          </Link>
+        </div>
       </div>
 
       {/* Delete confirmation */}
