@@ -1,10 +1,11 @@
 import React, { useState, useRef, useCallback, useEffect } from "react";
 import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
-import { Zap, Calculator, BookOpen, UserCircle, Users, Calendar, ShieldCheck, FileCheck, Sun, Moon, FolderOpen, Flag } from "lucide-react";
+import { Calculator, BookOpen, UserCircle, Users, Calendar, ShieldCheck, FileCheck, Sun, Moon, FolderOpen, Flag } from "lucide-react";
 import TrialBanner from "@/components/TrialBanner";
 import { useAuth } from "@/lib/AuthContext";
 import { base44 } from "@/api/base44Client";
 import { cn } from "@/lib/utils";
+import AppLogo from "@/components/branding/AppLogo";
 import {
   Drawer,
   DrawerContent,
@@ -103,9 +104,7 @@ export default function AppLayout({ trialStatus }) {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-14">
             <Link to="/" className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-500 to-violet-600 flex items-center justify-center shadow-md shadow-blue-200">
-                <Zap className="w-4 h-4 text-white" />
-              </div>
+              <AppLogo className="w-8 h-8 rounded-xl" />
               <div>
                 <h1 className="text-sm font-bold tracking-tight leading-none text-foreground">NECalcul8r</h1>
                 <p className="text-[9px] font-semibold text-muted-foreground tracking-widest uppercase">Electrical Tools</p>
