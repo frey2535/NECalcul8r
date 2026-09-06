@@ -16,6 +16,17 @@ const USER_UPDATE_FIELDS = [
 
 const SELF_UPDATE_FIELDS = new Set(["full_name"]);
 
+const ACTIVE_ACCESS_TYPES = new Set([
+  "permanent",
+  "paid",
+  "external_company",
+  "company_seat",
+  "buildrpro_included",
+  "app_store",
+  "google_play",
+  "apple_app_store",
+]);
+
 const RECORD_METADATA_FIELDS = new Set([
   "id",
   "created_date",
@@ -97,6 +108,142 @@ function mapProfile(profile, org) {
   };
 }
 
+function activeEntitlement(entitlement) {
+  if (!entitlement || entitlement.status !== "active") return false;
+  if (!entitlement.expires_at) return true;
+  return new Date(entitlement.expires_at).getTime() >= Date.now();
+}
+
+function applyEntitlement(profile, entitlements = []) {
+  if (profile.access_status === "disabled") return profile;
+  const entitlement = [...entitlements]
+    .sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime())
+    .find(activeEntitlement);
+  if (!entitlement) return profile;
+  return {
+    ...profile,
+    access_type: entitlement.access_type || profile.access_type,
+    access_status: "active",
+    subscription_status: entitlement.subscription_status || profile.subscription_status || "active",
+    purchase_source: entitlement.source || profile.purchase_source,
+    trial_end_date: entitlement.expires_at ? entitlement.expires_at.slice(0, 10) : profile.trial_end_date,
+  };
+}
+
+async function entitlementsForProfiles(client, profiles = []) {
+  if (!profiles.length) return new Map();
+
+  const profileIds = profiles.map((profile) => profile.id).filter(Boolean);
+  const orgIds = [...new Set(profiles.map((profile) => profile.org_id).filter(Boolean))];
+  const byProfileId = new Map(profileIds.map((id) => [id, []]));
+  const seenEntitlementIds = new Set();
+
+  async function addEntitlements(request) {
+    const { data = [], error } = await request.order("created_at", { ascending: false });
+    if (error) throw error;
+    for (const entitlement of data) {
+      if (seenEntitlementIds.has(entitlement.id)) continue;
+      seenEntitlementIds.add(entitlement.id);
+
+      if (entitlement.profile_id && byProfileId.has(entitlement.profile_id)) {
+        byProfileId.get(entitlement.profile_id).push(entitlement);
+      }
+      if (entitlement.org_id) {
+        for (const profile of profiles) {
+          if (profile.org_id === entitlement.org_id) {
+            byProfileId.get(profile.id)?.push(entitlement);
+          }
+        }
+      }
+    }
+  }
+
+  if (profileIds.length) {
+    await addEntitlements(client.from("entitlements").select("*").in("profile_id", profileIds));
+  }
+  if (orgIds.length) {
+    await addEntitlements(client.from("entitlements").select("*").in("org_id", orgIds));
+  }
+
+  return byProfileId;
+}
+
+async function orgsForProfiles(client, profiles = []) {
+  const orgIds = [...new Set(profiles.map((profile) => profile.org_id).filter(Boolean))];
+  const orgsById = new Map();
+  if (!orgIds.length) return orgsById;
+
+  const { data: orgs = [], error } = await client.from("organizations").select("*").in("id", orgIds);
+  if (error) throw error;
+  for (const org of orgs) orgsById.set(org.id, org);
+  return orgsById;
+}
+
+async function profileWithAccess(client, id) {
+  const { data: profile, error } = await client.from("profiles").select("*").eq("id", id).single();
+  if (error) throw error;
+
+  const orgsById = await orgsForProfiles(client, [profile]);
+  const entitlementsByProfile = await entitlementsForProfiles(client, [profile]);
+  return mapProfile(applyEntitlement(profile, entitlementsByProfile.get(profile.id)), orgsById.get(profile.org_id));
+}
+
+function normalizeAccessUpdates(target, patch) {
+  const updates = { ...patch };
+  const nextStatus = updates.access_status ?? target.access_status;
+  const nextType = updates.access_type ?? target.access_type ?? "trial";
+
+  if (nextStatus === "active" && nextType === "trial") {
+    updates.access_type = "permanent";
+    if (!updates.purchase_source || updates.purchase_source === "manual") {
+      updates.purchase_source = "admin";
+    }
+  }
+
+  const activeType = updates.access_type ?? target.access_type;
+  if (ACTIVE_ACCESS_TYPES.has(activeType) && !updates.access_status) {
+    updates.access_status = "active";
+  }
+
+  return updates;
+}
+
+function isMissingRpc(error) {
+  const message = String(error?.message || error?.details || "");
+  return error?.code === "PGRST202"
+    || message.includes("grant_profile_access")
+    || message.includes("schema cache")
+    || message.includes("does not exist");
+}
+
+async function grantAccess(client, profileId, updates, source) {
+  const rpcPayload = {
+    target_profile_id: profileId,
+    access_updates: updates,
+    grant_source: source,
+  };
+
+  const { error: rpcError } = await client.rpc("grant_profile_access", rpcPayload);
+  if (!rpcError) return;
+  if (!isMissingRpc(rpcError)) throw rpcError;
+
+  const { error: functionError } = await client.functions.invoke("grant-access", {
+    body: {
+      profileId,
+      updates,
+      source,
+    },
+  });
+  if (!functionError) return;
+
+  const message = [
+    "Access grant failed.",
+    "Install the Supabase helper in supabase/fixes/fix-admin-access-grants.sql or deploy a grant-access Edge Function.",
+    functionError.message || rpcError.message,
+  ].filter(Boolean).join(" ");
+  throw new Error(message);
+}
+
 async function listUsers(sort, limit, query) {
   const client = requireSupabase();
   const currentUser = await supabaseAuth.me();
@@ -113,15 +260,12 @@ async function listUsers(sort, limit, query) {
   const { data: profiles = [], error } = await request;
   if (error) throw error;
 
-  const orgIds = [...new Set(profiles.map((profile) => profile.org_id).filter(Boolean))];
-  const orgsById = new Map();
-  if (orgIds.length) {
-    const { data: orgs = [], error: orgError } = await client.from("organizations").select("*").in("id", orgIds);
-    if (orgError) throw orgError;
-    for (const org of orgs) orgsById.set(org.id, org);
-  }
+  const orgsById = await orgsForProfiles(client, profiles);
+  const entitlementsByProfile = await entitlementsForProfiles(client, profiles);
 
-  let records = profiles.map((profile) => mapProfile(profile, orgsById.get(profile.org_id)));
+  let records = profiles.map((profile) => (
+    mapProfile(applyEntitlement(profile, entitlementsByProfile.get(profile.id)), orgsById.get(profile.org_id))
+  ));
   records = records.filter((record) => matchesQuery(record, query));
   records = sortRecords(records, sort || "-created_date");
   if (typeof limit === "number") records = records.slice(0, limit);
@@ -142,35 +286,23 @@ async function updateUser(id, patch) {
   const updates = Object.fromEntries(
     Object.entries(patch || {}).filter(([key]) => USER_UPDATE_FIELDS.includes(key))
   );
-  updates.updated_date = new Date().toISOString();
+  const normalizedUpdates = normalizeAccessUpdates(target, updates);
+  normalizedUpdates.updated_date = new Date().toISOString();
 
-  const requestedFields = Object.keys(updates).filter((key) => key !== "updated_date");
+  const requestedFields = Object.keys(normalizedUpdates).filter((key) => key !== "updated_date");
   const accessUpdateRequested = requestedFields.some((key) => !SELF_UPDATE_FIELDS.has(key));
   if (currentUser.id === id && accessUpdateRequested && !currentUser.is_platform_admin) {
     throw httpError("Access changes must be granted by an administrator.", 403);
   }
 
   if (accessUpdateRequested) {
-    const { error: grantError } = await client.functions.invoke("grant-access", {
-      body: {
-        profileId: id,
-        updates,
-        source: currentUser.is_platform_admin ? "admin" : "company_external",
-      },
-    });
-    if (grantError) throw grantError;
-    const { data: refreshed, error: refreshError } = await client
-      .from("profiles")
-      .select("*")
-      .eq("id", id)
-      .single();
-    if (refreshError) throw refreshError;
-    return mapProfile(refreshed, null);
+    await grantAccess(client, id, normalizedUpdates, currentUser.is_platform_admin ? "admin" : "company_external");
+    return profileWithAccess(client, id);
   }
 
   const { data: updated, error } = await client
     .from("profiles")
-    .update(updates)
+    .update(normalizedUpdates)
     .eq("id", id)
     .select("*")
     .single();

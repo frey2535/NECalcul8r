@@ -21,7 +21,10 @@ function activeEntitlement(entitlement) {
 }
 
 function applyEntitlement(profile, entitlements = []) {
-  const entitlement = entitlements.find(activeEntitlement);
+  if (profile.access_status === "disabled") return profile;
+  const entitlement = [...entitlements]
+    .sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime())
+    .find(activeEntitlement);
   if (!entitlement) return profile;
   return {
     ...profile,
