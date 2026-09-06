@@ -27,6 +27,12 @@ export const NEC_TABLES = [
     article: "NEC Table 220.12",
     title: "General Lighting Loads by Occupancy (VA/sq ft)",
     headers: ["Occupancy Type", "Unit Load (VA/sq ft)"],
+    yearRefs: {
+      "2017": "Table 220.12",
+      "2020": "Table 220.12",
+      "2023": "Table 220.42(A)",
+      "2026": "Table 220.42(A) (pending)",
+    },
     // This static row set is the 2017 baseline (unmodified, matches shared.js
     // OCCUPANCY_UNIT_LOADS). For 2020+, NECTables.jsx resolves this table's
     // rows dynamically from getNecData(year).OCCUPANCY_UNIT_LOADS using the
@@ -61,6 +67,12 @@ export const NEC_TABLES = [
       ["Stores", "3"],
       ["Warehouses (storage)", "¼"],
     ],
+    yearNotes: {
+      "2017": "NEC Table 220.12: General lighting unit loads by occupancy. For occupancies not listed, use 2 VA/sq ft.",
+      "2020": "NEC Table 220.12: Reconstructed non-dwelling unit loads. Rows marked \"pending verification\" are shown at their 2017 value because no confirmed 2020 source value exists yet.",
+      "2023": "NEC 2023 reorganized Article 220: dwelling general lighting is 220.41; non-dwelling unit loads are Table 220.42(A). Rows marked \"pending verification\" remain placeholders until source-reviewed.",
+      "2026": "NEC 2026 placeholder: assumed same organization as 2023 until the final edition is verified.",
+    },
     note: "NEC 220.12 (2017 baseline shown by default). For occupancies not listed, use 2 VA/sq ft. Select NEC 2020+ above to see the reconstructed non-dwelling values — rows marked \"pending verification\" are shown at their 2017 value because no confirmed 2020 source value exists yet.",
   },
   {
@@ -68,6 +80,12 @@ export const NEC_TABLES = [
     article: "NEC Table 220.42",
     title: "Lighting Load Demand Factors",
     headers: ["Type of Occupancy", "Portion of Lighting Load to Which Demand Factor Applies (Volt-Amperes)", "Demand Factor (%)"],
+    yearRefs: {
+      "2017": "Table 220.42",
+      "2020": "Table 220.42",
+      "2023": "Table 220.45",
+      "2026": "Table 220.45 (pending)",
+    },
     rows: [
       ["Dwelling Units", "First 3,000 or less", "100%"],
       ["", "From 3,001 to 120,000", "35%"],
@@ -81,6 +99,12 @@ export const NEC_TABLES = [
       ["", "Remainder over 12,500", "50%"],
       ["All Others", "Total volt-amperes", "100%"],
     ],
+    yearNotes: {
+      "2017": "NEC Table 220.42: Apply demand factors to general lighting load for service/feeder sizing.",
+      "2020": "NEC Table 220.42: Apply demand factors to general lighting load for service/feeder sizing.",
+      "2023": "NEC Table 220.45: 2023 Article 220 reorganization moved the former Table 220.42 lighting demand factors to Table 220.45.",
+      "2026": "NEC Table 220.45 placeholder pending final 2026 verification.",
+    },
     note: "NEC 220.42: Apply demand factors to general lighting load for service/feeder sizing.",
   },
   {
@@ -1368,16 +1392,23 @@ function resolveDynamicRows(t, necYear) {
   if (!t.dynamicSource || !necYear) return t;
   const nec = getNecData(necYear);
   const source = nec[t.dynamicSource] || {};
+  const rowArticleMap = nec[`${t.dynamicSource}_ARTICLES`] ||
+    (t.dynamicSource === "OCCUPANCY_UNIT_LOADS" ? nec.OCCUPANCY_UNIT_LOAD_ARTICLES : null);
   const pending = new Set(t.dynamicPendingKeys || []);
   const rows = Object.keys(source).map(key => {
     const label = t.dynamicLabels?.[key] || key;
     const isPending = pending.has(key) && necYear !== "2017";
-    return [
+    const row = [
       isPending ? `${label} (pending verification)` : label,
       `${source[key]}`,
     ];
+    if (rowArticleMap?.[key]) row.push(rowArticleMap[key]);
+    return row;
   });
-  return { ...t, rows };
+  const headers = rowArticleMap
+    ? [...t.headers, "NEC Reference"]
+    : t.headers;
+  return { ...t, headers, rows };
 }
 
 export function resolveNecTable(t, necYear = null) {

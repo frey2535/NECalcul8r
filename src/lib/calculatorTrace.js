@@ -6,8 +6,8 @@
  *   return withTrace(result, {
  *     nec_year: "2023",
  *     data_files_used: ["data/nec/shared.js", "data/nec/2023.js"],
- *     articles_used: ["220.12", "220.42", "220.82", "240.6(A)"],
- *     tables_used: ["Table 220.42", "Table 220.82", "Table 240.6(A)"],
+ *     articles_used: ["220.41", "220.40", "Table 220.45", "240.6(A)"],
+ *     tables_used: ["Table 220.45", "Table 240.6(A)"],
  *     fields_used: ["DWELLING_LIGHTING_VA_PER_SQFT", "SMALL_APPLIANCE_VA", "DWELLING_DEMAND_TABLE", "STD_OCPD_SIZES"],
  *   });
  */
@@ -25,10 +25,11 @@ export function withTrace(resultObject, trace) {
  */
 export const FIELD_META = {
   // ── Dwelling ──────────────────────────────────────────────────────
-  DWELLING_LIGHTING_VA_PER_SQFT:        { value: "3 VA/sq ft",      source: "Table 220.12",      description: "General lighting unit load for dwelling units.", usedBy: ["Dwelling Standard", "Dwelling Optional", "Multifamily Load"] },
+  DWELLING_LIGHTING_VA_PER_SQFT:        { value: "3 VA/sq ft",      source: "2017/2020: 220.12; 2023: 220.41", description: "General lighting unit load for dwelling units.", usedBy: ["Dwelling Standard", "Dwelling Optional", "Multifamily Load"] },
+  DWELLING_LIGHTING_ARTICLE:            { value: "See year",         source: "Article 220 reorganization", description: "Edition-specific dwelling lighting reference: 2017/2020 use the former 220.12 path; 2023 uses 220.41.", usedBy: ["Dwelling Standard", "Dwelling Optional", "Lighting Load"] },
   SMALL_APPLIANCE_VA:                   { value: "1500 VA",          source: "220.52(A)",          description: "Minimum VA per small appliance branch circuit.", usedBy: ["Dwelling Standard", "Dwelling Optional"] },
   LAUNDRY_VA:                           { value: "1500 VA",          source: "220.52(B)",          description: "Minimum VA for laundry branch circuit.", usedBy: ["Dwelling Standard", "Dwelling Optional"] },
-  DWELLING_DEMAND_TABLE:                { value: "Tiered demand",    source: "Table 220.42",       description: "100% first 3 kVA, 35% next 117 kVA, 25% remainder.", usedBy: ["Dwelling Standard"] },
+  DWELLING_DEMAND_TABLE:                { value: "Tiered demand",    source: "2017/2020: Table 220.42; 2023: Table 220.45", description: "100% first 3 kVA, 35% next 117 kVA, 25% remainder.", usedBy: ["Dwelling Standard"] },
   DWELLING_MIN_SERVICE_AMPS:            { value: "100 A",            source: "230.79(C)",          description: "Minimum service disconnect rating for a 1-family dwelling.", usedBy: ["Dwelling Standard", "Dwelling Optional", "Service Sizing"] },
   DWELLING_SPD_REQUIRED:                { value: "See year",         source: "230.67",             description: "Surge-protective device requirement (varies by NEC year).", usedBy: ["Dwelling Standard", "Dwelling Optional"] },
   DWELLING_OUTDOOR_DISCONNECT_REQUIRED: { value: "See year",         source: "230.85",             description: "Outdoor emergency disconnect requirement.", usedBy: ["Dwelling Standard", "Dwelling Optional"] },
@@ -55,7 +56,10 @@ export const FIELD_META = {
   DWELLING_SERVICE_CONDUCTOR_TABLE:     { value: "100A-400A",        source: "Table 310.12",        description: "Single-phase dwelling service and feeder conductor sizes.", usedBy: ["Conductor Ampacity"] },
   RESISTIVITY:                          { value: "Cu=12.9, Al=21.2",  source: "Ch.9 Table 8",       description: "DC resistance constants (K) for voltage drop calculations by conductor material.", usedBy: ["Voltage Drop", "Marina Shore Power", "RV Park Load"] },
   CONDUCTOR_CM:                         { value: "4,110–1,000,000 CM", source: "Ch.9 Table 8",      description: "Circular mil areas for conductors used in voltage drop calculations.", usedBy: ["Voltage Drop", "Marina Shore Power", "RV Park Load"] },
-  OCCUPANCY_UNIT_LOADS:                 { value: "0.25–3.5 VA/ft²",  source: "Table 220.12",      description: "General lighting unit loads by occupancy type.", usedBy: ["Lighting Load", "Commercial Load", "Marina Shore Power"] },
+  OCCUPANCY_UNIT_LOADS:                 { value: "0.25–3.5 VA/ft²",  source: "2017/2020: Table 220.12; 2023: Table 220.42(A)", description: "General lighting unit loads by occupancy type.", usedBy: ["Lighting Load", "Commercial Load", "Marina Shore Power"] },
+  OCCUPANCY_UNIT_LOAD_TABLE:            { value: "See year",         source: "Article 220 reorganization", description: "Edition-specific non-dwelling unit-load table reference.", usedBy: ["Lighting Load", "Commercial Load", "Marina Shore Power"] },
+  OCCUPANCY_UNIT_LOAD_ARTICLES:         { value: "See year",         source: "Article 220 reorganization", description: "Row-specific article/table references for occupancy unit-load rows.", usedBy: ["Lighting Load", "Commercial Load"] },
+  LIGHTING_DEMAND_TABLE:                { value: "See year",         source: "Article 220 reorganization", description: "Edition-specific lighting demand table: Table 220.42 in 2017/2020, Table 220.45 in 2023.", usedBy: ["Dwelling Standard", "Commercial Load", "Lighting Load", "Demand Factor"] },
   TEMP_FACTORS:                         { value: "Correction factors", source: "310.15(B)(2)",     description: "Temperature correction factors applied when ambient >30°C.", usedBy: ["Conductor Ampacity"] },
   BUNDLE_FACTORS:                       { value: "0.80–0.35",        source: "310.15(C)(1)",       description: "Bundling derating for >3 current-carrying conductors.", usedBy: ["Conductor Ampacity"] },
 
@@ -98,7 +102,9 @@ export const FIELD_META = {
  */
 export const ARTICLE_META = {
   "220.12":        { title: "General Lighting Loads",              usedBy: ["Dwelling Standard", "Dwelling Optional", "Commercial Load", "Multifamily Load"] },
+  "220.41":        { title: "Dwelling Unit General Lighting Load",  usedBy: ["Dwelling Standard", "Dwelling Optional", "Lighting Load"] },
   "220.42":        { title: "General Lighting Demand Factors",     usedBy: ["Dwelling Standard"] },
+  "220.45":        { title: "Lighting Load Demand Factors",         usedBy: ["Dwelling Standard", "Commercial Load", "Lighting Load"] },
   "220.52(A)":     { title: "Small Appliance Branch Circuits",     usedBy: ["Dwelling Standard", "Dwelling Optional"] },
   "220.52(B)":     { title: "Laundry Branch Circuit",              usedBy: ["Dwelling Standard", "Dwelling Optional"] },
   "220.54":        { title: "Clothes Dryers — Demand Factors",     usedBy: ["Dwelling Standard"] },
@@ -137,7 +143,9 @@ export const ARTICLE_META = {
   "450.3":         { title: "Overcurrent Protection — Transformers", usedBy: ["Transformer Sizing"] },
   "690.8(B)(1)":   { title: "PV Output Circuit Conductor Rating",  usedBy: ["Solar PV"] },
   "705.12(B)(3)(a)": { title: "Busbar Rating — Interactive Systems", usedBy: ["Solar PV"] },
-  "Table 220.12":  { title: "Lighting Load Demand Factors by Occupancy", usedBy: ["Dwelling Standard", "Dwelling Optional", "Commercial Load"] },
+  "Table 220.12":  { title: "General Lighting Unit Loads by Occupancy", usedBy: ["Dwelling Standard", "Dwelling Optional", "Commercial Load", "Lighting Load"] },
+  "Table 220.42(A)": { title: "Non-Dwelling Lighting Unit Loads",    usedBy: ["Lighting Load", "Commercial Load"] },
+  "Table 220.45":  { title: "Lighting Load Demand Factors",         usedBy: ["Dwelling Standard", "Commercial Load", "Lighting Load"] },
   "Table 220.42":  { title: "Lighting Load Demand Factors — Dwelling", usedBy: ["Dwelling Standard"] },
   "Table 220.55":  { title: "Demand Factors for Household Ranges", usedBy: ["Dwelling Standard"] },
   "Table 240.6(A)": { title: "Standard Fuse and Breaker Ratings",  usedBy: ["Dwelling Standard", "Dwelling Optional", "Service Sizing"] },
@@ -168,8 +176,8 @@ export const ARTICLE_META = {
  */
 export const TRACE_REFS = {
   dwelling: {
-    articles: ["220.12", "220.42", "220.82", "220.84", "240.6(A)", "230.42", "230.79(C)"],
-    tables: ["Table 220.12", "Table 220.42", "Table 220.82", "Table 240.6(A)"],
+    articles: ["2017/2020: 220.12; 2023: 220.41", "2017/2020: Table 220.42; 2023: Table 220.45", "220.82", "220.84", "240.6(A)", "230.42", "230.79(C)"],
+    tables: ["2017/2020: Table 220.12; 2023: 220.41", "2017/2020: Table 220.42; 2023: Table 220.45", "Table 220.82", "Table 240.6(A)"],
   },
   ampacity: {
     articles: ["310.15(B)(16)", "310.15(B)(2)", "310.15(C)(1)", "110.14(C)"],

@@ -146,13 +146,15 @@ export const ISLAND_PENINSULA_RULE = "All islands/peninsulas require receptacle(
 export const EV_SERVICE_LOAD_MINIMUM_VA = 7200;  // 220.57 — service/load calculation, not 625.42(A)
 export const EV_MINIMUM_LOAD_VA = 0;             // Legacy EV calculator field; Article 625 sizing uses nameplate × 125%
 
-// ─── Table 220.12 — Occupancy Unit Loads (2023) ───────────────────────
-// 2023: Values below are COPIED FROM 2020. NOT independently verified for
-// 2023. The 2020 NEC reconstructed Table 220.12 using ASHRAE/IECC data;
-// dwellings were removed (now 220.14(J), still 3.0). Every NEC edition owns
-// its own data file — no hidden inheritance from 2020.
+// ─── Article 220 Lighting Loads (2023) ───────────────────────────────
+// 2023 reorganized Article 220:
+//   • Former 220.12 dwelling general lighting load is now 220.41.
+//   • Former Table 220.12 non-dwelling unit loads are now Table 220.42(A).
+//   • Former Table 220.42 lighting demand factors are now Table 220.45.
+// Numeric values below are copied from the 2020-owned data pending full
+// 2023 per-row verification unless noted otherwise.
 export const OCCUPANCY_UNIT_LOADS = {
-  dwelling: 3.0,        // unchanged — confirmed (now 220.14(J))
+  dwelling: 3.0,        // 220.41
   hotel_motel: 1.70,    // copied from 2020 (was 2.0 in 2017) — pending 2023 verification
   hospital: 1.6,        // copied from 2020 (was 2.0 in 2017) — pending 2023 verification
   office: 3.5,          // pending verification — kept at 2017 value
@@ -164,6 +166,25 @@ export const OCCUPANCY_UNIT_LOADS = {
   industrial: 2.0,      // pending verification — kept at 2017 value
   warehouse: 0.25,     // pending verification — kept at 2017 value
   armory: 1.7,          // copied from 2020 (was 1.0 in 2017) — pending 2023 verification
+};
+export const DWELLING_LIGHTING_ARTICLE = "220.41";
+export const HOTEL_LIGHTING_ARTICLE = "Table 220.42(A)";
+export const OCCUPANCY_UNIT_LOAD_TABLE = "Table 220.42(A)";
+export const LIGHTING_DEMAND_TABLE = "Table 220.45";
+export const OCCUPANCY_UNIT_LOAD_ARTICLES = {
+  dwelling: "220.41",
+  hotel_motel: "Table 220.42(A)",
+  hospital: "Table 220.42(A)",
+  office: "Table 220.42(A)",
+  bank: "Table 220.42(A)",
+  store: "Table 220.42(A)",
+  school: "Table 220.42(A)",
+  restaurant: "Table 220.42(A)",
+  church: "Table 220.42(A)",
+  garage: "Table 220.42(A)",
+  industrial: "Table 220.42(A)",
+  warehouse: "Table 220.42(A)",
+  armory: "Table 220.42(A)",
 };
 
 // ─── Service Minimums ────────────────────────────────────────────────

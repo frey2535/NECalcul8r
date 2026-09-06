@@ -20,19 +20,20 @@ function applyTier(tiers, total) {
  */
 export function calcDemandFactor(v, nec) {
   const total = parseFloat(v.totalVA) || 0;
+  const lightingDemandTable = nec.LIGHTING_DEMAND_TABLE || "Table 220.42";
   let demand = 0;
   let explanation = "";
 
   if (v.loadType === "lighting_dwelling") {
     demand = applyTier(nec.DWELLING_DEMAND_TABLE, total);
-    explanation = "NEC 220.42: 100% first 3 kVA, 35% next 117 kVA, 25% remainder";
+    explanation = `NEC ${lightingDemandTable}: 100% first 3 kVA, 35% next 117 kVA, 25% remainder`;
   } else if (v.loadType === "lighting_hotel") {
     const hotelTiers = nec.LIGHTING_DEMAND.hotel_motel?.tiers || nec.LIGHTING_DEMAND.hotel?.tiers;
     demand = applyTier(hotelTiers, total);
-    explanation = "NEC Table 220.42 hotels/motels: 50% first 20 kVA, 40% next 80 kVA, 30% remainder";
+    explanation = `NEC ${lightingDemandTable} hotels/motels: 50% first 20 kVA, 40% next 80 kVA, 30% remainder`;
   } else if (v.loadType === "lighting_warehouse") {
     demand = applyTier(nec.LIGHTING_DEMAND.warehouse.tiers, total);
-    explanation = "NEC 220.42: 100% first 12.5 kVA, 50% remainder";
+    explanation = `NEC ${lightingDemandTable}: 100% first 12.5 kVA, 50% remainder`;
   } else if (v.loadType === "receptacle_commercial") {
     demand = applyTier(nec.RECEPTACLE_DEMAND_TIERS, total);
     explanation = "NEC 220.44: 100% first 10 kVA, 50% remainder";
@@ -64,6 +65,7 @@ export function calcDemandFactor(v, nec) {
     savingsVA: Math.round(savingsVA),
     savingsPct: Math.round(savingsPct * 10) / 10,
     explanation,
+    lightingDemandTable,
     steps,
   };
 }

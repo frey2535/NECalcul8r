@@ -22,12 +22,11 @@ export const EGC_TABLE = _EGC_TABLE.map((row) =>
 
 export const RANGE_DEMAND_ARTICLE = "Table 220.55";
 
-// ─── Table 220.12 — Occupancy Unit Loads (2026) ───────────────────────
-// 2026: ⚠️ PENDING VERIFICATION. Values below are COPIED FROM 2020 as
-// placeholders. NOT verified against 2026 NEC. Every NEC edition owns its
-// own data file — no hidden inheritance from 2020.
+// ─── Article 220 Lighting Loads (2026 placeholder) ───────────────────
+// 2026 values are pending; retain the 2023 Article 220 organization until
+// the final edition is verified.
 export const OCCUPANCY_UNIT_LOADS = {
-  dwelling: 3.0,        // unchanged — confirmed (now 220.14(J))
+  dwelling: 3.0,        // placeholder under 220.41
   hotel_motel: 1.70,    // ⚠️ PENDING — copied from 2020, NOT verified for 2026
   hospital: 1.6,        // ⚠️ PENDING — copied from 2020, NOT verified for 2026
   office: 3.5,          // pending verification — kept at 2017 value
@@ -39,6 +38,25 @@ export const OCCUPANCY_UNIT_LOADS = {
   industrial: 2.0,      // pending verification — kept at 2017 value
   warehouse: 0.25,     // pending verification — kept at 2017 value
   armory: 1.7,          // ⚠️ PENDING — copied from 2020, NOT verified for 2026
+};
+export const DWELLING_LIGHTING_ARTICLE = "220.41";
+export const HOTEL_LIGHTING_ARTICLE = "Table 220.42(A)";
+export const OCCUPANCY_UNIT_LOAD_TABLE = "Table 220.42(A)";
+export const LIGHTING_DEMAND_TABLE = "Table 220.45";
+export const OCCUPANCY_UNIT_LOAD_ARTICLES = {
+  dwelling: "220.41",
+  hotel_motel: "Table 220.42(A)",
+  hospital: "Table 220.42(A)",
+  office: "Table 220.42(A)",
+  bank: "Table 220.42(A)",
+  store: "Table 220.42(A)",
+  school: "Table 220.42(A)",
+  restaurant: "Table 220.42(A)",
+  church: "Table 220.42(A)",
+  garage: "Table 220.42(A)",
+  industrial: "Table 220.42(A)",
+  warehouse: "Table 220.42(A)",
+  armory: "Table 220.42(A)",
 };
 
 // ─── GFCI Requirements (NEC 210.8) — same as 2023 ──────────────────

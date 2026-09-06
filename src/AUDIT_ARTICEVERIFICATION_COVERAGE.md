@@ -52,7 +52,7 @@ The seed data (in the earlier conversation) was manually created as a hardcoded 
 ### dwelling_standard (⚠️ CRITICAL — 7 MISSING)
 
 **In Audit:**
-1. 220.12 ✅ Seeded
+1. 220.12 / 220.41 (2023) ✅ Seeded by applicable edition
 2. 220.52 ❌ **MISSING** — Small appliance circuits
 3. 220.52(B) ❌ **MISSING** — Laundry circuit
 4. **Table 220.42** ❌ **MISSING** — Lighting demand table
@@ -76,7 +76,7 @@ The seed data (in the earlier conversation) was manually created as a hardcoded 
 ### dwelling_optional (⚠️ CRITICAL — 4 MISSING)
 
 **In Audit:**
-1. 220.12 ✅ Seeded
+1. 220.12 / 220.41 (2023) ✅ Seeded by applicable edition
 2. 220.52 ❌ **MISSING** — Small appliance / laundry VA
 3. 220.83(A) ✅ Seeded
 4. 240.6(A) ✅ Seeded
@@ -181,7 +181,7 @@ The seed data (in the earlier conversation) was manually created as a hardcoded 
 
 | Calculator | Article/Table | 2017 | 2020 | 2023 | 2026 | Status |
 |------------|---------------|------|------|------|------|--------|
-| **dwelling_standard** | 220.12 | ✅ | ✅ | ✅ | ✅ | Seeded |
+| **dwelling_standard** | 220.12 / 220.41 | ✅ | ✅ | ✅ | ✅ | Year-specific |
 | | 220.52 | ❌ | ❌ | ❌ | ❌ | **MISSING** |
 | | 220.52(B) | ❌ | ❌ | ❌ | ❌ | **MISSING** |
 | | Table 220.42 | ❌ | ❌ | ❌ | ❌ | **MISSING** |
@@ -193,7 +193,7 @@ The seed data (in the earlier conversation) was manually created as a hardcoded 
 | | 230.67 | ❌ | ❌ | ❌ | ❌ | **MISSING** |
 | | 210.8(A) | ❌ | ❌ | ❌ | ❌ | **MISSING** |
 | | 210.52(C) | ❌ | ❌ | ❌ | ❌ | **MISSING** |
-| **dwelling_optional** | 220.12 | ✅ | ✅ | ✅ | ✅ | Seeded |
+| **dwelling_optional** | 220.12 / 220.41 | ✅ | ✅ | ✅ | ✅ | Year-specific |
 | | 220.52 | ❌ | ❌ | ❌ | ❌ | **MISSING** |
 | | 220.83(A) | ✅ | ✅ | ✅ | ✅ | Seeded |
 | | 240.6(A) | ✅ | ✅ | ✅ | ✅ | Seeded |

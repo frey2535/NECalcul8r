@@ -26,7 +26,7 @@ export const RELEASE_SUMMARY = {
     verified: 11,
     pendingSameGated: 33,
     pending: 0,
-    notes: "All 44 calculators have 2020 gates. 11 have confirmed deltas or year-correct citations/flags. The rest are 2017-immutability + 2020 pending-same math (remaining-calcs-2020 plus commercial/lighting/marina/ampacity/RV/kitchen/MF/farm). Table 220.12 office/store/school/restaurant/church/industrial/warehouse still placeholders. Ampacity cells and many motor/box/conduit/grounding tables still live in shared.js. VERIFIED=false until codebook.",
+    notes: "All 44 calculators have 2020 gates. 11 have confirmed deltas or year-correct citations/flags. The rest are 2017-immutability + 2020 pending-same math (remaining-calcs-2020 plus commercial/lighting/marina/ampacity/RV/kitchen/MF/farm). Article 220 lighting references are edition-specific: 2017/2020 220.12/Table 220.42, 2023 220.41/Table 220.42(A)/Table 220.45. Office/store/school/restaurant/church/industrial/warehouse values still include placeholders. Ampacity cells and many motor/box/conduit/grounding tables still live in shared.js. VERIFIED=false until codebook.",
   },
 
   calculators: [
@@ -61,7 +61,7 @@ export const RELEASE_SUMMARY = {
       defectsFixed: 2,
       ready: "✅",
       lastReviewed: "2026-08-22",
-      notes: "2017 gated: Table 220.12 occupancies + unlisted 2 VA/ft², 220.42 hotel/hospital/warehouse + footnote, 220.14(I)(F)(G)(K), 220.44. FROZEN BASELINE v1.0.0 (11 tests). 2020 gated separately: hotel 1.70 / hospital 1.6 / garage 0.3 / armory 1.7; remaining occupancies pending placeholders.",
+      notes: "2017 gated: Table 220.12 occupancies + unlisted 2 VA/ft², Table 220.42 hotel/hospital/warehouse + footnote, 220.14(I)(F)(G)(K), 220.44. FROZEN BASELINE v1.0.0 (11 tests). 2020 gated separately: hotel 1.70 / hospital 1.6 / garage 0.3 / armory 1.7; remaining occupancies pending placeholders. 2023 references are reorganized to 220.41 for dwelling lighting, Table 220.42(A) for non-dwelling unit loads, and Table 220.45 for demand factors.",
       baselineGate: { frozen: true, version: "1.0.0", date: "2026-08-22", totalTests: 11 },
     },
     {
@@ -120,7 +120,7 @@ export const RELEASE_SUMMARY = {
       baselineGate: { frozen: true, version: "1.0.0", date: "2026-08-22", totalTests: 6 },
     },
     { calculator: "Receptacle Load", id: "receptacle_load", status: "✅ VERIFIED — FROZEN BASELINE GATE", defectsFound: 0, defectsFixed: 0, ready: "✅", lastReviewed: "2026-08-22", notes: "2017 gated: 220.14(I) 180 VA yoke, 220.44 first 10 kVA 100%/remainder 50%. Year yoke VA from RECEPTACLE_YOKE_VA. FROZEN in remaining-2017 v1.0.0.", baselineGate: { frozen: true, version: "1.0.0", date: "2026-08-22", totalTests: 5 } },
-    { calculator: "Lighting Load", id: "lighting_load", status: "✅ VERIFIED — FROZEN BASELINE GATE", defectsFound: 1, defectsFixed: 1, ready: "✅", lastReviewed: "2026-08-22", notes: "2017 gated: Table 220.12 occupancies + unlisted 2 VA/ft² (was wrongly 3.5), 220.42 dwelling/hotel/hospital/warehouse + All Others 100%. FROZEN in remaining-2017 v1.0.0. 2020 gated: hotel 1.70 / 220.14(M), hospital 1.6, garage 0.3, armory 1.7, dwelling 220.14(J); office/unlisted pending placeholders.", baselineGate: { frozen: true, version: "1.0.0", date: "2026-08-22", totalTests: 8 } },
+    { calculator: "Lighting Load", id: "lighting_load", status: "✅ VERIFIED — FROZEN BASELINE GATE", defectsFound: 2, defectsFixed: 2, ready: "✅", lastReviewed: "2026-09-06", notes: "2017 gated: Table 220.12 occupancies + unlisted 2 VA/ft² (was wrongly 3.5), Table 220.42 dwelling/hotel/hospital/warehouse + All Others 100%. FROZEN in remaining-2017 v1.0.0. 2020 gated: hotel 1.70 / 220.14(M), hospital 1.6, garage 0.3, armory 1.7, dwelling 220.14(J); office/unlisted pending placeholders. 2023 citation display corrected: dwelling 220.41, non-dwelling Table 220.42(A), demand Table 220.45.", baselineGate: { frozen: true, version: "1.0.0", date: "2026-08-22", totalTests: 8 } },
     { calculator: "Motor Branch Circuit", id: "motor_full_load", status: "✅ VERIFIED — FROZEN BASELINE GATE", defectsFound: 1, defectsFixed: 1, ready: "✅", lastReviewed: "2026-08-22", notes: "2017 gated: Tables 430.248/250, 430.22 125%, Table 430.52 next-size-up, 430.32 125%/115%. Single-phase was multiplying the voltage-row object (NaN); now looks up 115/230 V columns. 430.52 Exc. 1/2 are field decisions. FROZEN in remaining-2017 v1.0.0.", baselineGate: { frozen: true, version: "1.0.0", date: "2026-08-22", totalTests: 5 } },
     { calculator: "Motor Feeder", id: "motor_feeder", status: "✅ VERIFIED — FROZEN BASELINE GATE", defectsFound: 0, defectsFixed: 0, ready: "✅", lastReviewed: "2026-08-22", notes: "2017 gated: 430.24 125% largest + others; 430.62 largest OCPD + others. FROZEN in remaining-2017 v1.0.0.", baselineGate: { frozen: true, version: "1.0.0", date: "2026-08-22", totalTests: 2 } },
     { calculator: "HVAC Load", id: "hvac_load", status: "✅ VERIFIED — FROZEN BASELINE GATE", defectsFound: 0, defectsFixed: 0, ready: "✅", lastReviewed: "2026-08-22", notes: "2017 gated: 440 conductors 125%, 440.22 175% next size down, HVAC_OCPD_MULTIPLIER=1.75. GFCI_EQUIPMENT_SERVICING_RECEPTACLE is null (210.8(E) did not exist). FROZEN in remaining-2017 v1.0.0.", baselineGate: { frozen: true, version: "1.0.0", date: "2026-08-22", totalTests: 2 } },

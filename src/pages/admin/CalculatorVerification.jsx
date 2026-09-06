@@ -59,7 +59,10 @@ export default function CalculatorVerification() {
         c.calculatorName.toLowerCase().includes(q) ||
         c.calculatorId.toLowerCase().includes(q) ||
         c.category.toLowerCase().includes(q) ||
-        c.dependencies.some((d) => d.necArticle.toLowerCase().includes(q))
+        c.dependencies.some((d) =>
+          d.necArticle.toLowerCase().includes(q) ||
+          Object.values(d.yearRefs || {}).some((ref) => String(ref).toLowerCase().includes(q))
+        )
     );
   }, [calculators, search]);
 
@@ -182,7 +185,10 @@ export default function CalculatorVerification() {
           !search.trim() ||
           c.calculatorName.toLowerCase().includes(search.toLowerCase()) ||
           c.calculatorId.toLowerCase().includes(search.toLowerCase()) ||
-          c.dependencies.some((d) => d.necArticle.toLowerCase().includes(search.toLowerCase()))
+          c.dependencies.some((d) =>
+            d.necArticle.toLowerCase().includes(search.toLowerCase()) ||
+            Object.values(d.yearRefs || {}).some((ref) => String(ref).toLowerCase().includes(search.toLowerCase()))
+          )
         );
         if (catFiltered.length === 0) return null;
         return (

@@ -8,6 +8,8 @@ import { getNecData } from "@/data/nec";
 import { calcCommercialLoad } from "./logic/commercialLoadCalc";
 
 function buildFormulas(nec) {
+  const unitLoadTable = nec.OCCUPANCY_UNIT_LOAD_TABLE || "Table 220.12";
+  const demandTable = nec.LIGHTING_DEMAND_TABLE || "Table 220.42";
   const recDesc = nec.RECEPTACLE_DEMAND_TIERS.map(t =>
     `${(t.factor * 100).toFixed(0)}%${t.band < Infinity ? ` first ${t.band.toLocaleString()} VA` : " remainder"}`
   ).join(" + ");
@@ -15,8 +17,8 @@ function buildFormulas(nec) {
     `${(t.factor * 100).toFixed(0)}%${t.band < Infinity ? ` first ${t.band.toLocaleString()} VA` : " remainder"}`
   ).join(" + ");
   return [
-    { label: "Lighting Load", formula: "Lighting VA = Floor Area × Unit Load (VA/sq ft)", description: "Unit loads from NEC Table 220.12 by occupancy type" },
-    { label: "Lighting Demand (NEC 220.42)", formula: `Demand = ${ltDesc}`, description: "For all occupancies except dwellings and hotels" },
+    { label: "Lighting Load", formula: "Lighting VA = Floor Area × Unit Load (VA/sq ft)", description: `Unit loads from NEC ${unitLoadTable} by occupancy type` },
+    { label: `Lighting Demand (${demandTable})`, formula: `Demand = ${ltDesc}`, description: "For all occupancies except dwellings and hotels" },
     { label: "Receptacle Demand (NEC 220.44)", formula: `Demand = ${recDesc}`, description: "Applied to total receptacle VA (180 VA each per 220.14(I))" },
     { label: "Total Current", formula: "I = Total VA / (V × √3)  [3-phase]  or  I = Total VA / V  [1-phase]", description: "Use 1.732 factor for 3-phase systems" },
   ];
@@ -41,14 +43,14 @@ export default function CommercialLoad({ category, necYear = "2023" }) {
   const unitLoad = nec.OCCUPANCY_UNIT_LOADS[v.occupancy] || 3.5;
   const r = calcCommercialLoad(v, nec);
   const { lightingVA, lightingDemand, receptacleTotal, receptacleDemand,
-    showWindowVA, signVA, appliancesVA, hvacVA, totalVA, totalAmps, steps } = r;
+    showWindowVA, signVA, appliancesVA, hvacVA, totalVA, totalAmps, lightingArticle, lightingDemandTable, steps } = r;
 
   return (
     <CalcLayout category={category} necYear={necYear} inputValues={v} outputValues={r} result={
       <div className="space-y-2">
         <ResultSection title="Lighting Load">
-          <ResultRow label={`Unit Load (${unitLoad} VA/sq ft)`} value={lightingVA.toFixed(0)} unit="VA" />
-          <ResultRow label="After Demand Factor (220.42)" value={lightingDemand.toFixed(0)} unit="VA" />
+          <ResultRow label={`Unit Load (${unitLoad} VA/sq ft)`} value={lightingVA.toFixed(0)} unit="VA" sub={lightingArticle} />
+          <ResultRow label={`After Demand Factor (${lightingDemandTable})`} value={lightingDemand.toFixed(0)} unit="VA" />
         </ResultSection>
         <ResultSection title="Receptacle Load">
           <ResultRow label={`${v.receptacles} receptacles × ${v.receptacleVA} VA`} value={receptacleTotal.toFixed(0)} unit="VA" />
@@ -68,7 +70,7 @@ export default function CommercialLoad({ category, necYear = "2023" }) {
         {TABLES.map(t => <NECTableDisplay key={t.id} title={t.article} headers={t.headers} rows={t.rows} note={t.note} compact />)}
         <NoteBox>
           <ul className="list-disc pl-3.5 space-y-1">
-            <li>NEC {necYear} Table 220.12 unit loads by occupancy (unlisted occupancies 2 VA/ft²). Table 220.42 lighting demand — hospitals/hotels/motels: do not apply the demand factors to areas where the entire lighting is likely to be used at one time. All other occupancies: 100% unless a 220.42 row exists for that occupancy.</li>
+            <li>NEC {necYear} {lightingArticle} unit load for the selected occupancy. {lightingDemandTable} lighting demand — hospitals/hotels/motels: do not apply the demand factors to areas where the entire lighting is likely to be used at one time. All other occupancies: 100% unless a demand row exists for that occupancy.</li>
             <li>Receptacles: 180 VA per yoke (220.14(I)), then 220.44 (first 10 kVA at 100%, remainder 50%). Offices and banks: not less than 1 VA/ft² (220.14(K)). Show window: 200 VA per linear foot (220.14(G)). Sign outlet: not less than 1,200 VA if a sign load is entered (220.14(F)).</li>
             {nec.GFCI_SCOPE_OTHER_THAN_DWELLING && <li><strong>210.8(B) GFCI ({necYear}):</strong> {nec.GFCI_SCOPE_OTHER_THAN_DWELLING}</li>}
           </ul>

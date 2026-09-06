@@ -15,7 +15,7 @@
   1. Call via dashboard: `base44.functions.invoke('seedArticleVerifications', {})`
   2. Check database: `base44.entities.ArticleVerification.list()`
   3. Confirm **124 records exist** in ArticleVerification entity
-  4. Sample query: Records for "dwelling_standard" + "220.12" across 4 years (2017, 2020, 2023, 2026)
+  4. Sample query: Records for "dwelling_standard" + 2017/2020 "220.12" and 2023 "220.41"
 
 ### Expected Results:
 ```
@@ -46,8 +46,8 @@ Total ArticleVerification records: 124
 
 | Calculator | Route | Logic Function | Trace Status | Verify On-Screen |
 |------------|-------|-----------------|--------------|------------------|
-| Dwelling Standard | `/calculator/dwelling_standard` | `calcDwellingStandard()` | ✅ Returns trace | Articles: 220.12, 220.42, 220.82, 240.6(A), 230.42 |
-| Dwelling Optional | `/calculator/dwelling_optional` | `calcDwellingOptional()` | ✅ Returns trace | Articles: 220.12, 220.83(A), 240.6(A), 230.42 |
+| Dwelling Standard | `/calculator/dwelling_standard` | `calcDwellingStandard()` | ✅ Returns trace | Articles: 2017/2020 220.12, 2023 220.41; 2017/2020 Table 220.42, 2023 Table 220.45; 240.6(A), 230.42 |
+| Dwelling Optional | `/calculator/dwelling_optional` | `calcDwellingOptional()` | ✅ Returns trace | Articles: 2017/2020 220.12, 2023 220.41; 220.82(A)/(B)/(C); 240.6(A), 230.42 |
 | Service Sizing | `/calculator/service_sizing` | `calcServiceSizing()` | ✅ Returns trace | Articles: 230.42(A), 230.42(B) |
 | Conductor Ampacity | `/calculator/conductor_ampacity` | `calcConductorAmpacity()` | ✅ Returns trace | Articles: 310.15(B)(16), 310.15(B)(2)(c), 310.15(C)(1), 110.14(C) |
 | Conduit Fill | `/calculator/conduit_fill` | `calcConduitFill()` | ✅ Returns trace | Tables: Ch.9 Table 1, 4, 5 |
@@ -132,8 +132,8 @@ If ArticleVerification records are deleted:
 
 - [ ] `seedArticleVerifications` runs without error
 - [ ] Database contains 124 ArticleVerification records
-- [ ] Dwelling Standard shows trace with articles 220.12, 220.42, 220.82, 240.6(A), 230.42
-- [ ] Dwelling Optional shows trace with articles 220.12, 220.83(A), 240.6(A), 230.42
+- [ ] Dwelling Standard shows trace with 2017/2020 220.12 and 2023 220.41, plus the correct edition demand table
+- [ ] Dwelling Optional shows trace with 2017/2020 220.12 and 2023 220.41, plus 220.82(A)/(B)/(C)
 - [ ] Service Sizing shows trace with articles 230.42(A), 230.42(B)
 - [ ] Conductor Ampacity shows trace with articles 310.15(B)(16), 310.15(B)(2)(c), 310.15(C)(1), 110.14(C)
 - [ ] Conduit Fill shows trace with tables Ch.9 Table 1, 4, 5

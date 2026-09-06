@@ -18,13 +18,13 @@ export const ARTICLE_VERIFICATION_SEED = [
   // ══════════════════════════════════════════════════════════════════════════
   { calculator_id: "dwelling_standard", article_ref: "220.12", nec_year: "2017", status: "verified_2017" },
   { calculator_id: "dwelling_standard", article_ref: "220.12", nec_year: "2020", status: "verified_2020" },
-  { calculator_id: "dwelling_standard", article_ref: "220.12", nec_year: "2023", status: "verified_2023" },
-  { calculator_id: "dwelling_standard", article_ref: "220.12", nec_year: "2026", status: "pending_review", notes: "2026 code not yet published" },
+  { calculator_id: "dwelling_standard", article_ref: "220.41", nec_year: "2023", status: "verified_2023" },
+  { calculator_id: "dwelling_standard", article_ref: "220.41", nec_year: "2026", status: "pending_review", notes: "2026 code not yet published" },
 
-  { calculator_id: "dwelling_standard", article_ref: "220.42", nec_year: "2017", status: "verified_2017" },
-  { calculator_id: "dwelling_standard", article_ref: "220.42", nec_year: "2020", status: "verified_2020" },
-  { calculator_id: "dwelling_standard", article_ref: "220.42", nec_year: "2023", status: "verified_2023" },
-  { calculator_id: "dwelling_standard", article_ref: "220.42", nec_year: "2026", status: "pending_review", notes: "2026 code not yet published" },
+  { calculator_id: "dwelling_standard", article_ref: "Table 220.42", nec_year: "2017", status: "verified_2017" },
+  { calculator_id: "dwelling_standard", article_ref: "Table 220.42", nec_year: "2020", status: "verified_2020" },
+  { calculator_id: "dwelling_standard", article_ref: "Table 220.45", nec_year: "2023", status: "verified_2023" },
+  { calculator_id: "dwelling_standard", article_ref: "Table 220.45", nec_year: "2026", status: "pending_review", notes: "2026 code not yet published" },
 
   { calculator_id: "dwelling_standard", article_ref: "220.82", nec_year: "2017", status: "verified_2017" },
   { calculator_id: "dwelling_standard", article_ref: "220.82", nec_year: "2020", status: "verified_2020" },
@@ -46,8 +46,8 @@ export const ARTICLE_VERIFICATION_SEED = [
   // ══════════════════════════════════════════════════════════════════════════
   { calculator_id: "dwelling_optional", article_ref: "220.12", nec_year: "2017", status: "verified_2017" },
   { calculator_id: "dwelling_optional", article_ref: "220.12", nec_year: "2020", status: "verified_2020" },
-  { calculator_id: "dwelling_optional", article_ref: "220.12", nec_year: "2023", status: "verified_2023" },
-  { calculator_id: "dwelling_optional", article_ref: "220.12", nec_year: "2026", status: "pending_review", notes: "2026 code not yet published" },
+  { calculator_id: "dwelling_optional", article_ref: "220.41", nec_year: "2023", status: "verified_2023" },
+  { calculator_id: "dwelling_optional", article_ref: "220.41", nec_year: "2026", status: "pending_review", notes: "2026 code not yet published" },
 
   { calculator_id: "dwelling_optional", article_ref: "220.82(B)", nec_year: "2017", status: "verified_2017" },
   { calculator_id: "dwelling_optional", article_ref: "220.82(B)", nec_year: "2020", status: "verified_2020" },

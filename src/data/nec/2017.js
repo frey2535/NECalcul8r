@@ -179,6 +179,10 @@ export const RECEPTACLE_YOKE_VA = 180; // 220.14(I)
 export const DWELLING_LIGHTING_ARTICLE = "Table 220.12";
 export const HOTEL_LIGHTING_ARTICLE = "Table 220.12";
 export const OCCUPANCY_UNIT_LOAD_TABLE = "Table 220.12";
+export const LIGHTING_DEMAND_TABLE = "Table 220.42";
+export const OCCUPANCY_UNIT_LOAD_ARTICLES = Object.fromEntries(
+  Object.keys(OCCUPANCY_UNIT_LOADS).map((key) => [key, "Table 220.12"])
+);
 
 // ─── Commercial Kitchen Demand: NEC Table 220.56 (2017) ─────────
 // 2017 NEC Table 220.56 — "6 and over" is a flat 65% (later editions
