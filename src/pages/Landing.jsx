@@ -172,7 +172,7 @@ export default function Landing() {
 
               <div className="hidden sm:flex items-center gap-1.5 ml-2 mr-1">
                 <Calendar className="w-3.5 h-3.5 text-muted-foreground" />
-                <span className="text-xs font-semibold text-muted-foreground">NEC 2023</span>
+                <span className="text-xs font-semibold text-muted-foreground">2017/2020 verified</span>
               </div>
 
               <Button size="sm" onClick={handleSignIn} className="ml-1 h-8 bg-blue-600 hover:bg-blue-700">
@@ -535,7 +535,7 @@ export default function Landing() {
             </div>
             <div className="text-center sm:text-right space-y-1">
               <p className="text-[11px] text-muted-foreground">
-                NEC 2017 · 2020 · 2023 · 2026 · {NEC_CATEGORIES.length} calculators
+                NEC 2017 / 2020 verified · 2023 / 2026 pending · {NEC_CATEGORIES.length} calculators
               </p>
               <div className="flex items-center justify-center sm:justify-end gap-3 text-[11px] text-muted-foreground">
                 <Link to="/privacy" className="underline underline-offset-2 hover:text-foreground">

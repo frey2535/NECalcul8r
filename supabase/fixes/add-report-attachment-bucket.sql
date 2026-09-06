@@ -1,11 +1,12 @@
 -- Run this in Supabase SQL Editor to enable screenshot/photo uploads for
--- discrepancy reports without rerunning the full schema.sql file.
+-- discrepancy reports without rerunning the full schema.sql file. Attachments
+-- are private; platform admins view them through short-lived signed URLs.
 
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 values (
   'discrepancy-report-attachments',
   'discrepancy-report-attachments',
-  true,
+  false,
   10485760,
   array['image/png', 'image/jpeg', 'image/webp', 'image/gif']
 )
@@ -25,7 +26,11 @@ create policy "report attachments authenticated upload"
   );
 
 drop policy if exists "report attachments public read" on storage.objects;
-create policy "report attachments public read"
+drop policy if exists "report attachments admin read" on storage.objects;
+create policy "report attachments admin read"
   on storage.objects for select
-  to public
-  using (bucket_id = 'discrepancy-report-attachments');
+  to authenticated
+  using (
+    bucket_id = 'discrepancy-report-attachments'
+    and public.current_is_platform_admin()
+  );

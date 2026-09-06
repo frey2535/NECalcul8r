@@ -465,13 +465,13 @@ create policy "app records delete own"
 
 -- Discrepancy report attachments. Object paths are scoped by user id:
 --   <auth.uid()>/<timestamp>-<random>-<filename>
--- Public reads allow admins to view report screenshots directly from the
--- Discrepancy Reports page; randomized paths avoid guessable URLs.
+-- Reads are private. Admins resolve attachments through short-lived signed
+-- URLs from the Discrepancy Reports page.
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 values (
   'discrepancy-report-attachments',
   'discrepancy-report-attachments',
-  true,
+  false,
   10485760,
   array['image/png', 'image/jpeg', 'image/webp', 'image/gif']
 )
@@ -491,10 +491,14 @@ create policy "report attachments authenticated upload"
   );
 
 drop policy if exists "report attachments public read" on storage.objects;
-create policy "report attachments public read"
+drop policy if exists "report attachments admin read" on storage.objects;
+create policy "report attachments admin read"
   on storage.objects for select
-  to public
-  using (bucket_id = 'discrepancy-report-attachments');
+  to authenticated
+  using (
+    bucket_id = 'discrepancy-report-attachments'
+    and public.current_is_platform_admin()
+  );
 
 -- Writes to subscriptions, entitlements, and purchase_events should be performed
 -- by Supabase Edge Functions using the service role key after verifying Stripe,
