@@ -49,12 +49,12 @@ Total ArticleVerification records: 124
 | Dwelling Standard | `/calculator/dwelling_standard` | `calcDwellingStandard()` | ✅ Returns trace | Articles: 2017/2020 220.12, 2023 220.41; 2017/2020 Table 220.42, 2023 Table 220.45; 240.6(A), 230.42 |
 | Dwelling Optional | `/calculator/dwelling_optional` | `calcDwellingOptional()` | ✅ Returns trace | Articles: 2017/2020 220.12, 2023 220.41; 220.82(A)/(B)/(C); 240.6(A), 230.42 |
 | Service Sizing | `/calculator/service_sizing` | `calcServiceSizing()` | ✅ Returns trace | Articles: 230.42(A), 230.42(B) |
-| Conductor Ampacity | `/calculator/conductor_ampacity` | `calcConductorAmpacity()` | ✅ Returns trace | Articles: 310.15(B)(16), 310.15(B)(2)(c), 310.15(C)(1), 110.14(C) |
+| Conductor Ampacity | `/calculator/conductor_ampacity` | `calcConductorAmpacity()` | ✅ Returns trace | Articles: Table 310.15(B)(16) / Table 310.16, Table 310.15(B)(2)(a) / Table 310.15(B)(1), Table 310.15(C)(1), 110.14(C) |
 | Conduit Fill | `/calculator/conduit_fill` | `calcConduitFill()` | ✅ Returns trace | Tables: Ch.9 Table 1, 4, 5 |
 | Box Fill | `/calculator/box_fill` | `calcBoxFill()` | ✅ Returns trace | Articles: 314.16(A), 314.16(B) |
 | Transformer Sizing | `/calculator/transformer_sizing` | `calcTransformerSizing()` | ✅ Returns trace | Articles: 450.3(B) |
 | Motor Branch Circuit | `/calculator/motor_full_load` | `calcMotorBranchCircuit()` | ✅ Returns trace | Articles: 430.22, 430.52(C), 430.32, 430.6 |
-| Motor Feeder | `/calculator/motor_feeder` | `calcMotorFeeder()` | ✅ Returns trace | Articles: 430.24, 430.62(A) |
+| Motor Feeder | `/calculator/motor_feeder` | `calcMotorFeeder()` | ✅ Returns trace | Articles: 430.24, 430.62 |
 | EV Charging | `/calculator/ev_charging` | `calcEVCharging()` | ✅ Returns trace | Articles: 625.40, 625.41, 625.42, 625.43, 625.54, 220.57 note, 230.67, 230.85 |
 
 ### Test Steps for Each Calculator:
@@ -135,12 +135,12 @@ If ArticleVerification records are deleted:
 - [ ] Dwelling Standard shows trace with 2017/2020 220.12 and 2023 220.41, plus the correct edition demand table
 - [ ] Dwelling Optional shows trace with 2017/2020 220.12 and 2023 220.41, plus 220.82(A)/(B)/(C)
 - [ ] Service Sizing shows trace with articles 230.42(A), 230.42(B)
-- [ ] Conductor Ampacity shows trace with articles 310.15(B)(16), 310.15(B)(2)(c), 310.15(C)(1), 110.14(C)
+- [ ] Conductor Ampacity shows trace with year-specific ampacity/temperature references and articles 310.15(C)(1), 110.14(C)
 - [ ] Conduit Fill shows trace with tables Ch.9 Table 1, 4, 5
 - [ ] Box Fill shows trace with articles 314.16(A), 314.16(B)
 - [ ] Transformer Sizing shows trace with article 450.3(B)
 - [ ] Motor Branch Circuit shows trace with articles 430.22, 430.52(C), 430.32, 430.6
-- [ ] Motor Feeder shows trace with articles 430.24, 430.62(A)
+- [ ] Motor Feeder shows trace with articles 430.24, 430.62
 - [ ] EV Charging shows trace with articles 625.40/625.41/625.42, conditional 625.43/625.54, 220.57 note, 230.67, 230.85
 - [ ] Trace badges show "Verified 2017", "Verified 2020", "Verified 2023" on their respective years
 - [ ] Trace badges show "Pending Review" for 2026

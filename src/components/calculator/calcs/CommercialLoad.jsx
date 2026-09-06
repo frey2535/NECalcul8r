@@ -71,7 +71,7 @@ export default function CommercialLoad({ category, necYear = "2023" }) {
         <NoteBox>
           <ul className="list-disc pl-3.5 space-y-1">
             <li>NEC {necYear} {lightingArticle} unit load for the selected occupancy. {lightingDemandTable} lighting demand — hospitals/hotels/motels: do not apply the demand factors to areas where the entire lighting is likely to be used at one time. All other occupancies: 100% unless a demand row exists for that occupancy.</li>
-            <li>Receptacles: 180 VA per yoke (220.14(I)), then 220.44 (first 10 kVA at 100%, remainder 50%). Offices and banks: not less than 1 VA/ft² (220.14(K)). Show window: 200 VA per linear foot (220.14(G)). Sign outlet: not less than 1,200 VA if a sign load is entered (220.14(F)).</li>
+            <li>Receptacles: 180 VA per yoke (220.14(I)), then 220.44 (first 10 kVA at 100%, remainder 50%). Offices and banks: not less than 1 VA/ft² (220.14(K)). Show window: 200 VA per linear foot (220.14(F)). Sign outlet: not less than 1,200 VA if a sign load is entered (220.14(E)).</li>
             {nec.GFCI_SCOPE_OTHER_THAN_DWELLING && <li><strong>210.8(B) GFCI ({necYear}):</strong> {nec.GFCI_SCOPE_OTHER_THAN_DWELLING}</li>}
           </ul>
         </NoteBox>
@@ -86,7 +86,7 @@ export default function CommercialLoad({ category, necYear = "2023" }) {
       <Field label="Number of Receptacles"><NumInput value={v.receptacles} onChange={set("receptacles")} placeholder="30" /></Field>
       <Field label="VA per Receptacle" unit="VA" hint="NEC: 180 VA each"><NumInput value={v.receptacleVA} onChange={set("receptacleVA")} placeholder="180" /></Field>
       <Field label="Show Window" unit="linear ft"><NumInput value={v.showWindow} onChange={set("showWindow")} placeholder="0" /></Field>
-      <Field label="Outside Sign Circuit" unit="VA" hint="If used, not less than 1200 VA per 220.14(F)"><NumInput value={v.outsideSign} onChange={set("outsideSign")} placeholder="0" /></Field>
+      <Field label="Outside Sign Circuit" unit="VA" hint="If used, not less than 1200 VA per 220.14(E)"><NumInput value={v.outsideSign} onChange={set("outsideSign")} placeholder="0" /></Field>
       <Field label="Hospital/Hotel lighting used at one time?" hint="Table 220.42 footnote — demand factors do not apply to those areas">
         <Select value={v.lightingUsedAtOneTime} onChange={set("lightingUsedAtOneTime")} options={[
           { value: false, label: "No — apply Table 220.42" },

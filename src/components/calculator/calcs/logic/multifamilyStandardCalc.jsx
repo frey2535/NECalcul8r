@@ -5,7 +5,7 @@
  *   1. General lighting = total sqft × 3 VA/ft²
  *   2. Small appliance = units × circuits × 1500 VA
  *   3. Laundry = units × circuits × 1500 VA
- *   4. Total general load → Table 220.42 demand (3000 @ 100% + 117k @ 35% + rest @ 25%)
+ *   4. Total general load → year-specific dwelling lighting demand table
  *   5. Range demand → year-specific cooking demand table Column C (with Note 1 adjustment for >12 kW)
  *   6. Dryer demand → Table 220.54
  *   7. Water/space heating at 100%
@@ -25,6 +25,8 @@ export function calcMultifamilyStandard(v, nec) {
   const heatingVA = parseFloat(v.heatingVA) || 0;
   const voltage = parseFloat(v.voltage) || 240;
   const phases = v.phases || "single";
+  const dwellingLightingArticle = nec.DWELLING_LIGHTING_ARTICLE || "220.12";
+  const lightingDemandTable = nec.LIGHTING_DEMAND_TABLE || "Table 220.42";
 
   // 1. General lighting
   const totalSqft = units * sqft;
@@ -39,7 +41,7 @@ export function calcMultifamilyStandard(v, nec) {
   // 4. Total general load
   const totalGeneralVA = lightingVA + smallAppVA + laundryVA;
 
-  // 5. Apply Table 220.42 demand
+  // 5. Apply year-specific dwelling lighting demand table.
   let generalDemand = 0;
   let remaining = totalGeneralVA;
   for (const tier of nec.DWELLING_DEMAND_TABLE) {
@@ -99,11 +101,11 @@ export function calcMultifamilyStandard(v, nec) {
   const minService = nec.STD_OCPD_SIZES.find(s => s >= totalA) || 2000;
 
   const steps = [
-    { label: "General Lighting (Table 220.12)", formula: "VA = total sqft × 3 VA/ft²", expression: `${totalSqft} ft² × ${nec.DWELLING_LIGHTING_VA_PER_SQFT}`, result: Math.round(lightingVA), unit: "VA" },
+    { label: `General Lighting (${dwellingLightingArticle})`, formula: "VA = total sqft × 3 VA/ft²", expression: `${totalSqft} ft² × ${nec.DWELLING_LIGHTING_VA_PER_SQFT}`, result: Math.round(lightingVA), unit: "VA" },
     { label: "Small Appliance (220.52(A))", formula: "VA = units × circuits × 1500", expression: `${units} × ${smallAppCircuits} × ${nec.SMALL_APPLIANCE_VA}`, result: Math.round(smallAppVA), unit: "VA" },
     { label: "Laundry (220.52(B))", formula: "VA = units × circuits × 1500", expression: `${units} × ${laundryCircuits} × ${nec.LAUNDRY_VA}`, result: Math.round(laundryVA), unit: "VA" },
     { label: "Total General Load", formula: "VA = lighting + small app + laundry", expression: `${Math.round(lightingVA)} + ${Math.round(smallAppVA)} + ${Math.round(laundryVA)}`, result: Math.round(totalGeneralVA), unit: "VA" },
-    { label: "General Demand (Table 220.42)", formula: "3000 @ 100% + 117,000 @ 35% + remainder @ 25%", expression: `Demand of ${Math.round(totalGeneralVA)}`, result: Math.round(generalDemand), unit: "VA" },
+    { label: `General Demand (${lightingDemandTable})`, formula: "3000 @ 100% + 117,000 @ 35% + remainder @ 25%", expression: `Demand of ${Math.round(totalGeneralVA)}`, result: Math.round(generalDemand), unit: "VA" },
     { label: `Range Demand (${rangeDemandArticle})`, formula: `Column C for ${numRanges} ranges${rangeKW > 12 ? ` + 5% × ${Math.ceil(rangeKW - 12)} kW over 12` : ""}`, expression: `${numRanges} × ${rangeKW} kW`, result: Math.round(rangeDemandVA), unit: "VA" },
     { label: "Dryer Demand (Table 220.54)", formula: `Demand factor × total dryer VA`, expression: `${numDryers} × ${dryerKW} kW`, result: Math.round(dryerDemandVA), unit: "VA" },
     { label: "Water/Space Heating (100%)", formula: "VA at nameplate (no demand)", expression: `${heatingVA}`, result: Math.round(heatingVA), unit: "VA" },
@@ -128,8 +130,14 @@ export function calcMultifamilyStandard(v, nec) {
   };
 
   return withTrace(result, {
-    articles_used: ["220.12", "220.40", "220.42", "220.52(A)", "220.52(B)", "220.54", rangeDemandArticle.replace(/^Table /, ""), "240.6(A)"],
-    tables_used: ["Table 220.12", "Table 220.42", "Table 220.54", rangeDemandArticle, "Table 240.6(A)"],
-    fields_used: ["DWELLING_LIGHTING_VA_PER_SQFT", "SMALL_APPLIANCE_VA", "LAUNDRY_VA", "DWELLING_DEMAND_TABLE", "RANGE_DEMAND", "RANGE_DEMAND_ARTICLE", "DRYER_DEMAND", "STD_OCPD_SIZES"],
+    articles_used: [dwellingLightingArticle, "220.40", lightingDemandTable, "220.52(A)", "220.52(B)", "220.54", rangeDemandArticle.replace(/^Table /, ""), "240.6(A)"],
+    tables_used: [
+      dwellingLightingArticle.startsWith("Table ") ? dwellingLightingArticle : null,
+      lightingDemandTable,
+      "Table 220.54",
+      rangeDemandArticle,
+      "Table 240.6(A)",
+    ].filter(Boolean),
+    fields_used: ["DWELLING_LIGHTING_VA_PER_SQFT", "DWELLING_LIGHTING_ARTICLE", "LIGHTING_DEMAND_TABLE", "SMALL_APPLIANCE_VA", "LAUNDRY_VA", "DWELLING_DEMAND_TABLE", "RANGE_DEMAND", "RANGE_DEMAND_ARTICLE", "DRYER_DEMAND", "STD_OCPD_SIZES"],
   });
 }

@@ -66,6 +66,20 @@ const LIGHTING_DEMAND_TABLE_YEAR_REFS = {
   "2026": "Table 220.45 (pending)",
 };
 
+const AMPACITY_TABLE_YEAR_REFS = {
+  "2017": "Table 310.15(B)(16)",
+  "2020": "Table 310.16",
+  "2023": "Table 310.16",
+  "2026": "Table 310.16 (pending)",
+};
+
+const TEMP_CORRECTION_TABLE_YEAR_REFS = {
+  "2017": "Table 310.15(B)(2)(a)",
+  "2020": "Table 310.15(B)(1)",
+  "2023": "Table 310.15(B)(1)",
+  "2026": "Table 310.15(B)(1) (pending)",
+};
+
 const ISLAND_PENINSULA_YEAR_REFS = {
   "2017": "210.52(C)(2)/(C)(3)",
   "2020": "210.52(C)(2)",
@@ -241,11 +255,16 @@ export const CALCULATORS = [
   },
   {
     id: "commercial_load", name: "Commercial Load (220 lighting / 220.44)",
-    category: "Load Calculations", usesGetNecData: true, yearSensitive: false,
+    category: "Load Calculations", usesGetNecData: true, yearSensitive: true,
     articles: [
       { ref: "Table 220.12", desc: "Non-dwelling unit loads by occupancy (VA/sq ft)", changed: true, source: DEV, yearRefs: OCCUPANCY_UNIT_LOAD_TABLE_YEAR_REFS, note: "2023 Article 220 reorganization moved former Table 220.12 non-dwelling unit loads to Table 220.42(A)." },
       { ref: "Table 220.42", desc: "Lighting demand factors", changed: true, source: DEV, yearRefs: LIGHTING_DEMAND_TABLE_YEAR_REFS, note: "2023 Article 220 reorganization moved former Table 220.42 demand factors to Table 220.45." },
-      { ref: "220.14(I) / 220.44", desc: "Receptacle demand — 180 VA, 100%/50% tiers", changed: false, source: DEV },
+      { ref: "220.14(E)", desc: "Sign and outline lighting outlet minimum load", changed: false, source: DEV },
+      { ref: "220.14(F)", desc: "Show-window load — 200 VA per linear foot", changed: false, source: DEV },
+      { ref: "220.14(I)", desc: "Receptacle outlets — 180 VA per yoke", changed: false, source: DEV },
+      { ref: "220.14(K)", desc: "Office and bank receptacle load not less than 1 VA per square foot", changed: false, source: DEV },
+      { ref: "220.40", desc: "Standard-method calculated load basis", changed: false, source: DEV },
+      { ref: "220.44", desc: "Receptacle demand — first 10 kVA at 100%, remainder at 50%", changed: false, source: DEV },
       { ref: "210.8(B)", desc: "Other-than-dwelling GFCI scope", changed: true, source: PEND, note: "2020: expanded 125V-250V coverage; kitchens/food-prep, damp/wet, accessory buildings, laundry, bathtub/shower. Displayed in NoteBox." },
     ],
     sourceNotes: "Three interconnected tables. Industry consensus: no numeric changes 2017–2026. Each occupancy type's unit load and demand factor needs independent verification. 210.8(B) GFCI scope changed in 2020 per Eaton PDF — displayed in NoteBox.",
@@ -263,7 +282,7 @@ export const CALCULATORS = [
   },
   {
     id: "multifamily_standard", name: "Multifamily (220.40 Standard)",
-    category: "Load Calculations", usesGetNecData: true, yearSensitive: false,
+    category: "Load Calculations", usesGetNecData: true, yearSensitive: true,
     articles: [
       { ref: "Table 220.12", desc: "Dwelling lighting — 3 VA/sq ft per unit", changed: true, source: DEV, yearRefs: DWELLING_LIGHTING_TABLE_YEAR_REFS, note: "2023 Article 220 reorganization moved the former Table 220.12 dwelling lighting value to 220.41." },
       { ref: "Table 220.42", desc: "Lighting demand — 100%/35%/25% tiers", changed: true, source: DEV, yearRefs: LIGHTING_DEMAND_TABLE_YEAR_REFS, note: "2023 Article 220 reorganization moved former Table 220.42 demand factors to Table 220.45." },
@@ -382,13 +401,13 @@ export const CALCULATORS = [
   // ═══ MOTOR / HVAC ════════════════════════════════════════════════════════
   {
     id: "motor_full_load", name: "Motor Branch Circuit (430)",
-    category: "Motor / HVAC", usesGetNecData: true, yearSensitive: false,
+    category: "Motor / HVAC", usesGetNecData: true, yearSensitive: true,
     articles: [
       { ref: "Table 430.248", desc: "Single-phase motor FLC", changed: false, source: DEV, note: "NEMA MG 1 based. Each HP/voltage entry needs verification." },
       { ref: "Table 430.250", desc: "Three-phase motor FLC", changed: false, source: DEV },
       { ref: "430.22", desc: "Conductor — 125% × FLC", changed: false, source: DEV },
       { ref: "Table 430.52", desc: "OCPD max multipliers", changed: false, source: DEV, note: "IT=250%, NTDF=300%, DE=175%, INST=800%. Needs per-type verification." },
-      { ref: "Table 310.15(B)(16)", desc: "Copper/aluminum ampacities", changed: false, source: DEV },
+      { ref: "Table 310.15(B)(16)", desc: "Copper/aluminum ampacities", changed: true, source: DEV, yearRefs: AMPACITY_TABLE_YEAR_REFS, note: "2020 reorganized this ampacity table to Table 310.16." },
     ],
     sourceNotes: "Motor FLC tables are physics/NEMA-based and reportedly stable. Each HP/voltage entry in both tables needs independent verification. OCPD multipliers (Table 430.52) need per-type check.",
     testInputs: { hp: "10", voltage: "460", phases: "three", ocpdType: "itcb", termRating: 75, sfAbove115: "yes" },
@@ -414,7 +433,7 @@ export const CALCULATORS = [
   },
   {
     id: "hvac_load", name: "HVAC Load (440)",
-    category: "Motor / HVAC", usesGetNecData: true, yearSensitive: false,
+    category: "Motor / HVAC", usesGetNecData: true, yearSensitive: true,
     articles: [
       { ref: "440.32", desc: "Single compressor — conductor 125% × RLA", changed: false, source: DEV },
       { ref: "440.33", desc: "Multiple motors — largest × 125% + sum", changed: false, source: DEV },
@@ -498,7 +517,7 @@ export const CALCULATORS = [
   },
   {
     id: "solar_pv", name: "Solar PV (690 / 705)",
-    category: "Power / Misc", usesGetNecData: true, yearSensitive: false,
+    category: "Power / Misc", usesGetNecData: true, yearSensitive: true,
     articles: [
       { ref: "690.8(B)(1)", desc: "Backfeed breaker — 125% of inverter output", changed: false, source: DEV, note: "Renumbered from 690.8(A)(3) in 2020. 125% value needs verification in both numbering schemes." },
       { ref: "705.12(B)(2)", desc: "120% busbar rule", changed: false, source: DEV, note: "Renumbered from 705.12(D)(2) in 2017. 120% value needs verification." },
@@ -514,7 +533,7 @@ export const CALCULATORS = [
   },
   {
     id: "pool_spa", name: "Pool / Spa (680)",
-    category: "Power / Misc", usesGetNecData: true, yearSensitive: false,
+    category: "Power / Misc", usesGetNecData: true, yearSensitive: true,
     articles: [
       { ref: "Table 430.248", desc: "Single-phase motor FLC", changed: false, source: DEV },
       { ref: "210.19(A)(1)", desc: "Continuous load — 125% conductor", changed: false, source: DEV },
@@ -571,7 +590,7 @@ export const CALCULATORS = [
   },
   {
     id: "service_sizing", name: "Service Sizing (230.42)",
-    category: "Power / Misc", usesGetNecData: true, yearSensitive: false,
+    category: "Power / Misc", usesGetNecData: true, yearSensitive: true,
     articles: [
       { ref: "230.42(A)", desc: "Service conductor — 125% continuous + 100% noncontinuous", changed: false, source: DEV },
       { ref: "230.79(C)", desc: "Minimum one-family dwelling service — 100A", changed: false, source: DEV, note: "100A minimum dwelling service." },
@@ -589,9 +608,9 @@ export const CALCULATORS = [
   },
   {
     id: "demand_factor", name: "Demand Factor",
-    category: "Power / Misc", usesGetNecData: true, yearSensitive: false,
+    category: "Power / Misc", usesGetNecData: true, yearSensitive: true,
     articles: [
-      { ref: "220.42", desc: "Lighting demand factors", changed: false, source: DEV },
+      { ref: "Table 220.42", desc: "Lighting demand factors", changed: true, source: DEV, yearRefs: LIGHTING_DEMAND_TABLE_YEAR_REFS, note: "2023 Article 220 reorganization moved former Table 220.42 demand factors to Table 220.45." },
       { ref: "220.44", desc: "Receptacle demand factors", changed: false, source: DEV },
       { ref: "220.53", desc: "Fixed appliance demand — 75% for 4+", changed: false, source: DEV },
       { ref: "220.61", desc: "Neutral demand — 70% beyond 200kVA", changed: false, source: DEV },
@@ -622,10 +641,10 @@ export const CALCULATORS = [
   },
   {
     id: "conductor_ampacity", name: "Conductor Ampacity (310.15)",
-    category: "Wire / Conduit / Sizing", usesGetNecData: true, yearSensitive: false,
+    category: "Wire / Conduit / Sizing", usesGetNecData: true, yearSensitive: true,
     articles: [
-      { ref: "Table 310.15(B)(16)", desc: "Ampacities at 60°/75°/90°C", changed: false, source: DEV, note: "Each AWG/insulation value needs per-year verification. 2020 reorganized to Table 310.16 — values reportedly same." },
-      { ref: "Table 310.15(B)(2)(a)", desc: "Temperature correction factors", changed: false, source: DEV },
+      { ref: "Table 310.15(B)(16)", desc: "Ampacities at 60°/75°/90°C", changed: true, source: DEV, yearRefs: AMPACITY_TABLE_YEAR_REFS, note: "Each AWG/insulation value needs per-year verification. 2020 reorganized to Table 310.16 — values reportedly same." },
+      { ref: "Table 310.15(B)(2)(a)", desc: "Temperature correction factors", changed: true, source: DEV, yearRefs: TEMP_CORRECTION_TABLE_YEAR_REFS, note: "2020 reorganized ambient temperature correction factors under 310.15(B)(1)." },
       { ref: "Table 310.15(C)(1)", desc: "Bundling adjustment factors", changed: false, source: DEV },
     ],
     sourceNotes: "Ampacity tables are thermal-physics based (Neher-McGrath). 2020 reorganization renumbered but reportedly preserved values. Each AWG size at each insulation rating needs independent verification in both numbering schemes.",
@@ -800,7 +819,7 @@ export const CALCULATORS = [
       { ref: "551.71", desc: "RV park site receptacle ratings (20A/30A/50A)", changed: false, source: DEV },
       { ref: "240.6(A)", desc: "Standard OCPD sizes", changed: false, source: DEV },
       { ref: "250.122", desc: "EGC sizing by OCPD", changed: false, source: DEV },
-      { ref: "Table 310.15(B)(16)", desc: "Conductor ampacities", changed: false, source: DEV },
+      { ref: "Table 310.15(B)(16)", desc: "Conductor ampacities", changed: true, source: DEV, yearRefs: AMPACITY_TABLE_YEAR_REFS, note: "2020 reorganized this ampacity table to Table 310.16." },
     ],
     sourceNotes: "2017 Table 551.73(A) gated in year data. Amenities added after demand. Conductor/EGC/VD reuse other engines.",
     testInputs: { sites20A: 10, sites30A: 20, sites50A: 5, voltage: "240", phases: "single", additionalLoads: [{ name: "Office", va: 5000 }, { name: "Bathhouse", va: 2000 }, { name: "Laundry", va: 3000 }], material: "copper", tempRating: "75", length: 0, maxVD: "3" },
@@ -817,7 +836,7 @@ export const CALCULATORS = [
       { ref: "555.19(A)", desc: "Marina shore power receptacle ratings — 30A minimum, locking/grounding for 30A/50A, pin-and-sleeve for 60A+ (2017); 2020+ moved to 555.33(A)", changed: true, source: PENDING_CODEBOOK, yearRefs: { "2017": "555.19(A)", "2020": "555.33(A)", "2023": "555.33(A)", "2026": "555.33(A) (pending)" }, note: "Shore-power receptacles are 30A minimum. The app no longer offers 20A as a shore-power preset; custom remains for reviewed nonstandard cases. Needs per-year codebook verification." },
       { ref: "240.6(A)", desc: "Standard OCPD sizes", changed: false, source: INHERITED_VERIFIED, note: "Inherited from centralized necTables.js — same data used by all production calculators." },
       { ref: "250.122", desc: "EGC sizing by OCPD", changed: false, source: INHERITED_VERIFIED, note: "Inherited from centralized necTables.js — same data used by EGC Sizing calculator." },
-      { ref: "Table 310.15(B)(16)", desc: "Conductor ampacities", changed: false, source: INHERITED_VERIFIED, note: "Inherited from centralized necTables.js — same data used by Conductor Ampacity calculator." },
+      { ref: "Table 310.15(B)(16)", desc: "Conductor ampacities", changed: true, source: INHERITED_VERIFIED, yearRefs: AMPACITY_TABLE_YEAR_REFS, note: "Inherited from centralized necTables.js — same data used by Conductor Ampacity calculator. 2020 reorganized this table to Table 310.16." },
       { ref: "450.3(B)", desc: "Transformer OCPD sizing (optional transformer mode)", changed: false, source: INHERITED_VERIFIED, note: "Inherited from centralized necTables.js — same data used by Transformer Sizing calculator." },
       { ref: "430.22(A)", desc: "Motor branch circuit conductor sizing (motor loads)", changed: false, source: INHERITED_VERIFIED, note: "Inherited from shared.js — same data used by Motor Branch Circuit calculator." },
       { ref: "Table 430.250", desc: "3-phase motor FLC (motor loads)", changed: false, source: INHERITED_VERIFIED, note: "Inherited from centralized necTables.js — same data used by Motor calculators." },

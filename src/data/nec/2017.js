@@ -175,8 +175,8 @@ export const OCCUPANCY_UNIT_LOADS = {
 };
 export const OCCUPANCY_UNIT_LOAD_DEFAULT = 2.0; // Table 220.12 note — occupancies not listed
 export const OFFICE_RECEPTACLE_MIN_VA_PER_SQFT = 1; // 220.14(K) office buildings (and banks)
-export const SHOW_WINDOW_VA_PER_FOOT = 200; // 220.14(G) 2017 numbering often 220.14(F)/(G)
-export const SIGN_OUTLET_MIN_VA = 1200; // 220.14(F) / 600.5 — commercial calc uses 220.14(E) in UI; 2017 220.14 signs
+export const SHOW_WINDOW_VA_PER_FOOT = 200; // 220.14(F)
+export const SIGN_OUTLET_MIN_VA = 1200; // 220.14(E)
 export const RECEPTACLE_YOKE_VA = 180; // 220.14(I)
 export const DWELLING_LIGHTING_ARTICLE = "Table 220.12";
 export const HOTEL_LIGHTING_ARTICLE = "Table 220.12";

@@ -43,7 +43,7 @@ export function calcMotorFeeder(v, nec) {
     steps,
   };
   return withTrace(result, {
-    articles_used: ["430.24", "430.62(A)"],
+    articles_used: ["430.24", "430.62"],
     tables_used: [],
     fields_used: ["CONTINUOUS_LOAD_MULTIPLIER", "MOTOR_OCPD_MULTIPLIERS", "STD_OCPD_SIZES"],
   });

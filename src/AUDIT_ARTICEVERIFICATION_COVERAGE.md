@@ -149,7 +149,7 @@ The seed data (in the earlier conversation) was manually created as a hardcoded 
 
 **In Audit:**
 1. 430.24 ✅ Seeded
-2. 430.62 ✅ Seeded (as "430.62(A)")
+2. 430.62 ✅ Seeded
 3. Table 430.250 ❌ **MISSING** — Three-phase motor FLC
 
 **Expected Records:** 3 articles × 4 years = 12  
@@ -205,7 +205,7 @@ The seed data (in the earlier conversation) was manually created as a hardcoded 
 | | 230.42(B) | ❌ | ❌ | ❌ | ❌ | **MISSING** |
 | | 240.6(A) | ❌ | ❌ | ❌ | ❌ | **MISSING** |
 | **conductor_ampacity** | 310.15(B)(16) | ✅ | ✅ | ✅ | ✅ | Seeded |
-| | 310.15(B)(2)(c) | ✅ | ✅ | ✅ | ✅ | Seeded |
+| | Table 310.15(B)(2)(a) / Table 310.15(B)(1) | ✅ | ✅ | ✅ | ✅ | Seeded |
 | | 310.15(C)(1) | ✅ | ✅ | ✅ | ✅ | Seeded |
 | | 110.14(C) | ✅ | ✅ | ✅ | ✅ | Seeded |
 | **conduit_fill** | Ch.9 Table 1 | ✅ | ✅ | ✅ | ✅ | Seeded |
@@ -221,7 +221,7 @@ The seed data (in the earlier conversation) was manually created as a hardcoded 
 | | Table 430.52 | ❌ | ❌ | ❌ | ❌ | **MISSING** |
 | | Table 310.15(B)(16) | ❌ | ❌ | ❌ | ❌ | **MISSING** |
 | **motor_feeder** | 430.24 | ✅ | ✅ | ✅ | ✅ | Seeded |
-| | 430.62(A) | ✅ | ✅ | ✅ | ✅ | Seeded |
+| | 430.62 | ✅ | ✅ | ✅ | ✅ | Seeded |
 | | Table 430.250 | ❌ | ❌ | ❌ | ❌ | **MISSING** |
 | **ev_charging** | 625.40 | ⚠️ | ⚠️ | ⚠️ | ⚠️ | Branch-circuit assumption |
 | | 625.41 | ⚠️ | ⚠️ | ⚠️ | ⚠️ | OCPD 125% sizing |

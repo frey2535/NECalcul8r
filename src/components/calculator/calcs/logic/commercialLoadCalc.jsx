@@ -85,8 +85,8 @@ export function calcCommercialLoad(v, nec) {
     { label: `Lighting Demand (${lightingDemandTable})`, formula: skipLightingDemand ? `${lightingDemandTable} footnote — demand not applied (lighting likely used at one time)` : "Demand = tiered factors by occupancy; All Others 100%", expression: skipLightingDemand ? `${Math.round(lightingVA)} @ 100%` : "Tiered demand factors", result: Math.round(lightingDemand), unit: "VA" },
     { label: "Receptacle Load (220.14(I))", formula: "VA = yokes × 180 VA", expression: `${Math.max(0, parseFloat(v.receptacles) || 0)} × ${yokeVA} VA`, result: Math.round(receptacleTotal), unit: "VA" },
     { label: "Receptacle Demand (220.44)", formula: "First 10,000 @ 100% + remainder @ 50%" + (officeMinApplies ? "; not less than 1 VA/ft² (220.14(K))" : ""), expression: officeMinApplies && recMinVA > receptacleDemand ? `max(220.44, ${sqft} × 1)` : "First 10,000 @ 100% + remainder @ 50%", result: Math.round(receptacleDemand), unit: "VA" },
-    { label: "Show Window (220.14(G))", formula: "VA = linear feet × 200 VA/ft", expression: `${showFt} ft × ${showPerFt}`, result: Math.round(showWindowVA), unit: "VA" },
-    { label: "Signs (220.14(F))", formula: `Not less than ${signMin} VA per installation if a sign load is entered`, expression: signInput > 0 ? `max(${signInput}, ${signMin})` : "0", result: Math.round(signVA), unit: "VA" },
+    { label: "Show Window (220.14(F))", formula: "VA = linear feet × 200 VA/ft", expression: `${showFt} ft × ${showPerFt}`, result: Math.round(showWindowVA), unit: "VA" },
+    { label: "Signs (220.14(E))", formula: `Not less than ${signMin} VA per installation if a sign load is entered`, expression: signInput > 0 ? `max(${signInput}, ${signMin})` : "0", result: Math.round(signVA), unit: "VA" },
     { label: "Total Calculated Load", formula: "Total = lighting demand + receptacle demand + window + sign + appliances + HVAC", expression: `${Math.round(lightingDemand)} + ${Math.round(receptacleDemand)} + ${Math.round(showWindowVA)} + ${Math.round(signVA)} + ${Math.round(appliancesVA)} + ${Math.round(hvacVA)}`, result: Math.round(totalVA), unit: "VA" },
     { label: "Service Size", formula: "Amps = Total VA ÷ (V × √3) [3φ] or VA ÷ V [1φ]", expression: `${Math.round(totalVA)} ÷ (${voltage}${v.phases === "three" ? " × 1.732" : ""})`, result: Math.round(totalAmps * 10) / 10, unit: "A" },
   ];
@@ -109,7 +109,7 @@ export function calcCommercialLoad(v, nec) {
     steps,
   };
   return withTrace(result, {
-    articles_used: [lightingArticle, "220.14(F)", "220.14(G)", "220.14(I)", "220.14(K)", "220.40", lightingDemandTable, "220.44", "210.8(B)"],
+    articles_used: [lightingArticle, "220.14(E)", "220.14(F)", "220.14(I)", "220.14(K)", "220.40", lightingDemandTable, "220.44", "210.8(B)"],
     tables_used: [lightingArticle.startsWith("Table ") ? lightingArticle : null, lightingDemandTable, "Table 220.44"].filter(Boolean),
     fields_used: ["OCCUPANCY_UNIT_LOADS", "OCCUPANCY_UNIT_LOAD_ARTICLES", "OCCUPANCY_UNIT_LOAD_DEFAULT", "OCCUPANCY_UNIT_LOAD_TABLE", "LIGHTING_DEMAND", "LIGHTING_DEMAND_TABLE", "RECEPTACLE_DEMAND_TIERS", "OFFICE_RECEPTACLE_MIN_VA_PER_SQFT", "SHOW_WINDOW_VA_PER_FOOT", "SIGN_OUTLET_MIN_VA", "RECEPTACLE_YOKE_VA"],
   });

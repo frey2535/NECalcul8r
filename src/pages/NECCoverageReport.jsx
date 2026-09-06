@@ -449,7 +449,7 @@ const COVERAGE = [
     name: "Conductor Ampacity (310.15)",
     category: "Wire / Conduit / Sizing",
     sourceFile: "components/calculator/calcs/ConductorAmpacity.jsx",
-    uiArticles: ["Table 310.15(B)(16)", "310.12", "310.15(B)(2)", "310.15(C)(1)", "110.14(C)"],
+    uiArticles: ["Table 310.15(B)(16) / Table 310.16 (2020+)", "310.12", "310.15(B)(2) / 310.15(B)(1) (2020+)", "310.15(C)(1)", "110.14(C)"],
     uiTables: ["310_12_dwelling_service_conductors", "310_15_b_16_copper", "310_15_b_16_aluminum", "310_15_b_2_temp_correction", "310_15_c_1_bundling"],
     calcSharedFields: ["COPPER_AMPACITY", "ALUMINUM_AMPACITY", "DWELLING_SERVICE_CONDUCTOR_TABLE", "TEMP_FACTORS", "BUNDLE_FACTORS"],
     calcYearFields: [],

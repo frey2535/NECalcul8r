@@ -80,20 +80,20 @@ export const ARTICLE_VERIFICATION_SEED = [
   // ══════════════════════════════════════════════════════════════════════════
   // CONDUCTOR AMPACITY (calcConductorAmpacity)
   // ══════════════════════════════════════════════════════════════════════════
-  { calculator_id: "conductor_ampacity", article_ref: "310.15(B)(16)", nec_year: "2017", status: "verified_2017" },
-  { calculator_id: "conductor_ampacity", article_ref: "310.15(B)(16)", nec_year: "2020", status: "verified_2020" },
-  { calculator_id: "conductor_ampacity", article_ref: "310.15(B)(16)", nec_year: "2023", status: "verified_2023" },
-  { calculator_id: "conductor_ampacity", article_ref: "310.15(B)(16)", nec_year: "2026", status: "pending_review", notes: "2026 code not yet published" },
+  { calculator_id: "conductor_ampacity", article_ref: "Table 310.15(B)(16)", nec_year: "2017", status: "verified_2017" },
+  { calculator_id: "conductor_ampacity", article_ref: "Table 310.16", nec_year: "2020", status: "verified_2020" },
+  { calculator_id: "conductor_ampacity", article_ref: "Table 310.16", nec_year: "2023", status: "verified_2023" },
+  { calculator_id: "conductor_ampacity", article_ref: "Table 310.16", nec_year: "2026", status: "pending_review", notes: "2026 code not yet published" },
 
-  { calculator_id: "conductor_ampacity", article_ref: "310.15(B)(2)(c)", nec_year: "2017", status: "verified_2017" },
-  { calculator_id: "conductor_ampacity", article_ref: "310.15(B)(2)(c)", nec_year: "2020", status: "verified_2020" },
-  { calculator_id: "conductor_ampacity", article_ref: "310.15(B)(2)(c)", nec_year: "2023", status: "verified_2023" },
-  { calculator_id: "conductor_ampacity", article_ref: "310.15(B)(2)(c)", nec_year: "2026", status: "pending_review", notes: "2026 code not yet published" },
+  { calculator_id: "conductor_ampacity", article_ref: "Table 310.15(B)(2)(a)", nec_year: "2017", status: "verified_2017" },
+  { calculator_id: "conductor_ampacity", article_ref: "Table 310.15(B)(1)", nec_year: "2020", status: "verified_2020" },
+  { calculator_id: "conductor_ampacity", article_ref: "Table 310.15(B)(1)", nec_year: "2023", status: "verified_2023" },
+  { calculator_id: "conductor_ampacity", article_ref: "Table 310.15(B)(1)", nec_year: "2026", status: "pending_review", notes: "2026 code not yet published" },
 
-  { calculator_id: "conductor_ampacity", article_ref: "310.15(C)(1)", nec_year: "2017", status: "verified_2017" },
-  { calculator_id: "conductor_ampacity", article_ref: "310.15(C)(1)", nec_year: "2020", status: "verified_2020" },
-  { calculator_id: "conductor_ampacity", article_ref: "310.15(C)(1)", nec_year: "2023", status: "verified_2023" },
-  { calculator_id: "conductor_ampacity", article_ref: "310.15(C)(1)", nec_year: "2026", status: "pending_review", notes: "2026 code not yet published" },
+  { calculator_id: "conductor_ampacity", article_ref: "Table 310.15(C)(1)", nec_year: "2017", status: "verified_2017" },
+  { calculator_id: "conductor_ampacity", article_ref: "Table 310.15(C)(1)", nec_year: "2020", status: "verified_2020" },
+  { calculator_id: "conductor_ampacity", article_ref: "Table 310.15(C)(1)", nec_year: "2023", status: "verified_2023" },
+  { calculator_id: "conductor_ampacity", article_ref: "Table 310.15(C)(1)", nec_year: "2026", status: "pending_review", notes: "2026 code not yet published" },
 
   { calculator_id: "conductor_ampacity", article_ref: "110.14(C)", nec_year: "2017", status: "verified_2017" },
   { calculator_id: "conductor_ampacity", article_ref: "110.14(C)", nec_year: "2020", status: "verified_2020" },
@@ -142,25 +142,30 @@ export const ARTICLE_VERIFICATION_SEED = [
   // ══════════════════════════════════════════════════════════════════════════
   // MOTOR BRANCH CIRCUIT (calcMotorBranchCircuit)
   // ══════════════════════════════════════════════════════════════════════════
+  { calculator_id: "motor_full_load", article_ref: "Table 430.248", nec_year: "2017", status: "verified_2017" },
+  { calculator_id: "motor_full_load", article_ref: "Table 430.248", nec_year: "2020", status: "verified_2020" },
+  { calculator_id: "motor_full_load", article_ref: "Table 430.248", nec_year: "2023", status: "verified_2023" },
+  { calculator_id: "motor_full_load", article_ref: "Table 430.248", nec_year: "2026", status: "pending_review", notes: "2026 code not yet published" },
+
+  { calculator_id: "motor_full_load", article_ref: "Table 430.250", nec_year: "2017", status: "verified_2017" },
+  { calculator_id: "motor_full_load", article_ref: "Table 430.250", nec_year: "2020", status: "verified_2020" },
+  { calculator_id: "motor_full_load", article_ref: "Table 430.250", nec_year: "2023", status: "verified_2023" },
+  { calculator_id: "motor_full_load", article_ref: "Table 430.250", nec_year: "2026", status: "pending_review", notes: "2026 code not yet published" },
+
   { calculator_id: "motor_full_load", article_ref: "430.22", nec_year: "2017", status: "verified_2017" },
   { calculator_id: "motor_full_load", article_ref: "430.22", nec_year: "2020", status: "verified_2020" },
   { calculator_id: "motor_full_load", article_ref: "430.22", nec_year: "2023", status: "verified_2023" },
   { calculator_id: "motor_full_load", article_ref: "430.22", nec_year: "2026", status: "pending_review", notes: "2026 code not yet published" },
 
-  { calculator_id: "motor_full_load", article_ref: "430.52(C)", nec_year: "2017", status: "verified_2017" },
-  { calculator_id: "motor_full_load", article_ref: "430.52(C)", nec_year: "2020", status: "verified_2020" },
-  { calculator_id: "motor_full_load", article_ref: "430.52(C)", nec_year: "2023", status: "verified_2023" },
-  { calculator_id: "motor_full_load", article_ref: "430.52(C)", nec_year: "2026", status: "pending_review", notes: "2026 code not yet published" },
+  { calculator_id: "motor_full_load", article_ref: "Table 430.52", nec_year: "2017", status: "verified_2017" },
+  { calculator_id: "motor_full_load", article_ref: "Table 430.52", nec_year: "2020", status: "verified_2020" },
+  { calculator_id: "motor_full_load", article_ref: "Table 430.52", nec_year: "2023", status: "verified_2023" },
+  { calculator_id: "motor_full_load", article_ref: "Table 430.52", nec_year: "2026", status: "pending_review", notes: "2026 code not yet published" },
 
-  { calculator_id: "motor_full_load", article_ref: "430.32", nec_year: "2017", status: "verified_2017" },
-  { calculator_id: "motor_full_load", article_ref: "430.32", nec_year: "2020", status: "verified_2020" },
-  { calculator_id: "motor_full_load", article_ref: "430.32", nec_year: "2023", status: "verified_2023" },
-  { calculator_id: "motor_full_load", article_ref: "430.32", nec_year: "2026", status: "pending_review", notes: "2026 code not yet published" },
-
-  { calculator_id: "motor_full_load", article_ref: "430.6", nec_year: "2017", status: "verified_2017" },
-  { calculator_id: "motor_full_load", article_ref: "430.6", nec_year: "2020", status: "verified_2020" },
-  { calculator_id: "motor_full_load", article_ref: "430.6", nec_year: "2023", status: "verified_2023" },
-  { calculator_id: "motor_full_load", article_ref: "430.6", nec_year: "2026", status: "pending_review", notes: "2026 code not yet published" },
+  { calculator_id: "motor_full_load", article_ref: "Table 310.15(B)(16)", nec_year: "2017", status: "verified_2017" },
+  { calculator_id: "motor_full_load", article_ref: "Table 310.16", nec_year: "2020", status: "verified_2020" },
+  { calculator_id: "motor_full_load", article_ref: "Table 310.16", nec_year: "2023", status: "verified_2023" },
+  { calculator_id: "motor_full_load", article_ref: "Table 310.16", nec_year: "2026", status: "pending_review", notes: "2026 code not yet published" },
 
   // ══════════════════════════════════════════════════════════════════════════
   // MOTOR FEEDER (calcMotorFeeder)
@@ -170,10 +175,10 @@ export const ARTICLE_VERIFICATION_SEED = [
   { calculator_id: "motor_feeder", article_ref: "430.24", nec_year: "2023", status: "verified_2023" },
   { calculator_id: "motor_feeder", article_ref: "430.24", nec_year: "2026", status: "pending_review", notes: "2026 code not yet published" },
 
-  { calculator_id: "motor_feeder", article_ref: "430.62(A)", nec_year: "2017", status: "verified_2017" },
-  { calculator_id: "motor_feeder", article_ref: "430.62(A)", nec_year: "2020", status: "verified_2020" },
-  { calculator_id: "motor_feeder", article_ref: "430.62(A)", nec_year: "2023", status: "verified_2023" },
-  { calculator_id: "motor_feeder", article_ref: "430.62(A)", nec_year: "2026", status: "pending_review", notes: "2026 code not yet published" },
+  { calculator_id: "motor_feeder", article_ref: "430.62", nec_year: "2017", status: "verified_2017" },
+  { calculator_id: "motor_feeder", article_ref: "430.62", nec_year: "2020", status: "verified_2020" },
+  { calculator_id: "motor_feeder", article_ref: "430.62", nec_year: "2023", status: "verified_2023" },
+  { calculator_id: "motor_feeder", article_ref: "430.62", nec_year: "2026", status: "pending_review", notes: "2026 code not yet published" },
 
   // ══════════════════════════════════════════════════════════════════════════
   // EV CHARGING (calcEVCharging)
