@@ -21,6 +21,7 @@
 import { CALCULATORS, computeVerifiedPerYear } from "./audit";
 import { BASELINE_RESULT as _dwellingOptionalBaseline } from "./dwellingOptionalBaselineResult";
 import { BASELINE_RESULT as _dwellingStandardBaseline } from "./dwellingStandardBaselineResult";
+import { normalizeArticleVerificationStatus } from "@/lib/articleVerificationStatus";
 
 // ─── Stored Baseline Result (Dwelling Optional) ───────────────────────────
 // The verification status of dwelling_optional is derived from the STORED
@@ -34,6 +35,8 @@ import { BASELINE_RESULT as _dwellingStandardBaseline } from "./dwellingStandard
 // review approval).
 const _dwellingOptionalDerivedStatus = _dwellingOptionalBaseline.status;
 const _dwellingStandardDerivedStatus = _dwellingStandardBaseline.status;
+const YEARS = ["2017", "2020", "2023", "2026"];
+const GLOBAL_REF_PREFIX = "global";
 
 // ─── Source file paths (from NECCoverageReport COVERAGE array) ──────────────
 const SOURCE_FILES = {
@@ -171,6 +174,100 @@ function buildDependencies(calc) {
       yearRefs: article.yearRefs || null,
     };
   });
+}
+
+function dependencyRefForYear(dependency, necYear) {
+  return dependency?.yearRefs?.[necYear] || dependency?.necArticle;
+}
+
+function verificationKey(calcId, articleRef, necYear) {
+  return `${calcId}|${articleRef}|${necYear}`;
+}
+
+function globalReferenceKey(articleRef, necYear) {
+  return verificationKey(GLOBAL_REF_PREFIX, articleRef, necYear);
+}
+
+function mergeReferenceStatus(current = "pending_review", next = "pending_review") {
+  const currentStatus = normalizeArticleVerificationStatus(current);
+  const nextStatus = normalizeArticleVerificationStatus(next);
+
+  if (currentStatus === "needs_correction" || nextStatus === "needs_correction") return "needs_correction";
+  if (currentStatus === "verified" || nextStatus === "verified") return "verified";
+  if (
+    currentStatus === "ai_reviewed_pending_human_approval" ||
+    nextStatus === "ai_reviewed_pending_human_approval"
+  ) {
+    return "ai_reviewed_pending_human_approval";
+  }
+  return "pending_review";
+}
+
+function buildArticleVerificationStatusMap(records = []) {
+  const statusMap = {};
+
+  for (const record of records || []) {
+    if (!record?.calculator_id || !record?.article_ref || !record?.nec_year) continue;
+
+    const status = normalizeArticleVerificationStatus(record.status);
+    const specificKey = verificationKey(record.calculator_id, record.article_ref, record.nec_year);
+    statusMap[specificKey] = mergeReferenceStatus(statusMap[specificKey], status);
+
+    const refKey = globalReferenceKey(record.article_ref, record.nec_year);
+    statusMap[refKey] = mergeReferenceStatus(statusMap[refKey], status);
+  }
+
+  return statusMap;
+}
+
+function statusForDependency(statusMap, calculatorId, dependency, necYear) {
+  const articleRef = dependencyRefForYear(dependency, necYear);
+  const specificStatus = normalizeArticleVerificationStatus(
+    statusMap[verificationKey(calculatorId, articleRef, necYear)]
+  );
+  if (specificStatus !== "pending_review") return specificStatus;
+  return normalizeArticleVerificationStatus(statusMap[globalReferenceKey(articleRef, necYear)]);
+}
+
+function buildRecordBackedRegressionResults(calc, dependencies, statusMap) {
+  if (!dependencies.length) {
+    return Object.fromEntries(
+      YEARS.map((year) => [
+        year,
+        { verified: true, reason: "No NEC articles consumed — pure math/engineering." },
+      ])
+    );
+  }
+
+  return Object.fromEntries(
+    YEARS.map((year) => {
+      const statuses = dependencies.map((dependency) => (
+        statusForDependency(statusMap, calc.calculatorId, dependency, year)
+      ));
+      const unverifiedCount = statuses.filter((status) => status !== "verified").length;
+      const anyNeedsCorrection = statuses.some((status) => status === "needs_correction");
+
+      if (unverifiedCount === 0) {
+        return [
+          year,
+          {
+            verified: true,
+            reason: `All ${dependencies.length} dependency record(s) verified in Codebook Matrix for NEC ${year}.`,
+          },
+        ];
+      }
+
+      return [
+        year,
+        {
+          verified: false,
+          reason: anyNeedsCorrection
+            ? `${unverifiedCount} article(s) still need correction or verification in Codebook Matrix for NEC ${year}.`
+            : `${unverifiedCount} article(s) not yet verified in Codebook Matrix for NEC ${year}.`,
+        },
+      ];
+    })
+  );
 }
 
 // ─── 2020 NEC comparison status ─────────────────────────────────────────────
@@ -960,39 +1057,84 @@ export const CALCULATOR_VERIFICATION_INDEX = CALCULATORS.map((calc, i) => {
   };
 });
 
+export function applyArticleVerificationRecords(calculators, records = []) {
+  const statusMap = buildArticleVerificationStatusMap(records);
+
+  return calculators.map((calc) => {
+    const dependencies = calc.dependencies.map((dependency) => {
+      const verificationStatusByYear = Object.fromEntries(
+        YEARS.map((year) => [
+          year,
+          statusForDependency(statusMap, calc.calculatorId, dependency, year),
+        ])
+      );
+
+      return {
+        ...dependency,
+        verified: verificationStatusByYear["2020"] === "verified",
+        verificationStatusByYear,
+      };
+    });
+
+    const all2020Verified = dependencies.length === 0
+      || dependencies.every((dependency) => dependency.verificationStatusByYear?.["2020"] === "verified");
+    const any2020NeedsCorrection = dependencies.some(
+      (dependency) => dependency.verificationStatusByYear?.["2020"] === "needs_correction"
+    );
+    const status2020 = dependencies.length === 0
+      ? "correct"
+      : all2020Verified
+        ? "verified"
+        : any2020NeedsCorrection
+          ? "needs_verification"
+          : "needs_verification";
+
+    return {
+      ...calc,
+      dependencies,
+      status2020,
+      regressionResults: buildRecordBackedRegressionResults(calc, dependencies, statusMap),
+    };
+  });
+}
+
 // ─── Calculator Verification Summary ────────────────────────────────────────
-export const CALCULATOR_VERIFICATION_SUMMARY = {
-  totalCalculators: CALCULATOR_VERIFICATION_INDEX.length,
-  verified: CALCULATOR_VERIFICATION_INDEX.filter((c) => c.verificationStatus === "verified").length,
-  inProgress: CALCULATOR_VERIFICATION_INDEX.filter((c) => c.verificationStatus === "in_progress").length,
-  pending: CALCULATOR_VERIFICATION_INDEX.filter((c) => c.verificationStatus === "pending").length,
-  // 2020 status breakdown
-  status2020: {
-    correct: CALCULATOR_VERIFICATION_INDEX.filter((c) => c.status2020 === "correct").length,
-    verified: CALCULATOR_VERIFICATION_INDEX.filter((c) => c.status2020 === "verified").length,
-    needs_verification: CALCULATOR_VERIFICATION_INDEX.filter((c) => c.status2020 === "needs_verification").length,
-    assumed: CALCULATOR_VERIFICATION_INDEX.filter((c) => c.status2020 === "assumed").length,
-    missing: CALCULATOR_VERIFICATION_INDEX.filter((c) => c.status2020 === "missing").length,
-    placeholder: CALCULATOR_VERIFICATION_INDEX.filter((c) => c.status2020 === "placeholder").length,
-    copied_from_another_edition: CALCULATOR_VERIFICATION_INDEX.filter((c) => c.status2020 === "copied_from_another_edition").length,
-  },
-  // Dependency matrix stats
-  totalDependencies: CALCULATOR_VERIFICATION_INDEX.reduce((sum, c) => sum + c.dependencies.length, 0),
-  verifiedDependencies: CALCULATOR_VERIFICATION_INDEX.reduce(
-    (sum, c) => sum + c.dependencies.filter((d) => d.verified).length, 0
-  ),
-  displayOnlyDependencies: CALCULATOR_VERIFICATION_INDEX.reduce(
-    (sum, c) => sum + c.dependencies.filter((d) => d.displayOnly).length, 0
-  ),
-  runtimeDependencies: CALCULATOR_VERIFICATION_INDEX.reduce(
-    (sum, c) => sum + c.dependencies.filter((d) => d.runtimeCalculation).length, 0
-  ),
-  missingDependencies: CALCULATOR_VERIFICATION_INDEX.reduce(
-    (sum, c) => sum + c.dependencies.filter((d) => d.missing).length, 0
-  ),
-  // Category breakdown
-  categories: [...new Set(CALCULATOR_VERIFICATION_INDEX.map((c) => c.category))],
-};
+export function summarizeCalculatorVerification(calculators = CALCULATOR_VERIFICATION_INDEX) {
+  return {
+    totalCalculators: calculators.length,
+    verified: calculators.filter((c) => c.verificationStatus === "verified").length,
+    inProgress: calculators.filter((c) => c.verificationStatus === "in_progress").length,
+    pending: calculators.filter((c) => c.verificationStatus === "pending").length,
+    // 2020 status breakdown
+    status2020: {
+      correct: calculators.filter((c) => c.status2020 === "correct").length,
+      verified: calculators.filter((c) => c.status2020 === "verified").length,
+      needs_verification: calculators.filter((c) => c.status2020 === "needs_verification").length,
+      assumed: calculators.filter((c) => c.status2020 === "assumed").length,
+      missing: calculators.filter((c) => c.status2020 === "missing").length,
+      placeholder: calculators.filter((c) => c.status2020 === "placeholder").length,
+      copied_from_another_edition: calculators.filter((c) => c.status2020 === "copied_from_another_edition").length,
+    },
+    // Dependency matrix stats
+    totalDependencies: calculators.reduce((sum, c) => sum + c.dependencies.length, 0),
+    verifiedDependencies: calculators.reduce(
+      (sum, c) => sum + c.dependencies.filter((d) => d.verified).length, 0
+    ),
+    displayOnlyDependencies: calculators.reduce(
+      (sum, c) => sum + c.dependencies.filter((d) => d.displayOnly).length, 0
+    ),
+    runtimeDependencies: calculators.reduce(
+      (sum, c) => sum + c.dependencies.filter((d) => d.runtimeCalculation).length, 0
+    ),
+    missingDependencies: calculators.reduce(
+      (sum, c) => sum + c.dependencies.filter((d) => d.missing).length, 0
+    ),
+    // Category breakdown
+    categories: [...new Set(calculators.map((c) => c.category))],
+  };
+}
+
+export const CALCULATOR_VERIFICATION_SUMMARY = summarizeCalculatorVerification();
 
 // ─── Helper: get calculator by ID ────────────────────────────────────────────
 export function getCalculatorVerification(id) {
@@ -1000,9 +1142,9 @@ export function getCalculatorVerification(id) {
 }
 
 // ─── Helper: get calculators by category ────────────────────────────────────
-export function getCalculatorsByCategory() {
+export function getCalculatorsByCategory(calculators = CALCULATOR_VERIFICATION_INDEX) {
   const groups = {};
-  for (const c of CALCULATOR_VERIFICATION_INDEX) {
+  for (const c of calculators) {
     const cat = c.category || "Others";
     if (!groups[cat]) groups[cat] = [];
     groups[cat].push(c);
