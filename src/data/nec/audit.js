@@ -66,6 +66,18 @@ const LIGHTING_DEMAND_TABLE_YEAR_REFS = {
   "2026": "Table 220.45 (pending)",
 };
 
+const ISLAND_PENINSULA_YEAR_REFS = {
+  "2017": "210.52(C)(2)/(C)(3)",
+  "2020": "210.52(C)(2)",
+  "2023": "210.52(C)(2)",
+  "2026": "210.52(C)(2) (pending)",
+};
+
+const ISLAND_PENINSULA_NOTE =
+  "2017: at least one receptacle for island and peninsular countertop spaces with long dimension ≥24 in. and short dimension ≥12 in. (island C(2), peninsula C(3)). " +
+  "2020: at least one receptacle for first 9 sq ft or fraction, plus one for each additional 18 sq ft or fraction; peninsula requires one within 2 ft of outer end. " +
+  "2023: receptacles are optional for islands/peninsulas; if none is provided, provisions for future addition are required. Displayed in NoteBox.";
+
 // ─── Helpers used by the audit page ──────────────────────────────────────
 
 /** Compute verification status per year from article sources. */
@@ -159,7 +171,7 @@ export const CALCULATORS = [
       { ref: "230.85", desc: "Outdoor emergency disconnect (2020+)", changed: true, source: PEND, note: "2017: not required. 2020+: required for 1- and 2-family dwellings. Displayed in NoteBox." },
       { ref: "230.67", desc: "SPD required for dwelling services (2020+)", changed: true, source: PEND, note: "2017: not required. 2020+: Type 1 or Type 2 SPD required. Displayed in NoteBox." },
       { ref: "210.8(A)", desc: "GFCI scope — dwelling receptacles", changed: true, source: PEND, note: "2017: narrower 125V/15-20A scope. 2020: expanded to 250V, more areas, laundry, all kitchen. Displayed in NoteBox." },
-      { ref: "210.52(C)(2)", desc: "Island/peninsula sq-ft receptacle rule", changed: true, source: PEND, note: "2017: required if ≥12 sq ft. 2020: sq-ft tiered rule (first 9 sq ft, +1 per 18 sq ft). Displayed in NoteBox." },
+      { ref: "210.52(C)(2)", desc: "Island/peninsula countertop receptacle rule", changed: true, source: PEND, yearRefs: ISLAND_PENINSULA_YEAR_REFS, note: ISLAND_PENINSULA_NOTE },
       { ref: "210.52(G)", desc: "Garage/basement/accessory receptacle — multifamily expansion", changed: true, source: PEND, note: "2020: expanded to include multifamily dwellings. Displayed in NoteBox." },
       { ref: "210.8(D)", desc: "Specific appliance GFCI (dishwasher/sump pump)", changed: true, source: PEND, note: "2020: dishwasher GFCI expanded beyond dwelling-only; sump pumps added to 422.5 list. Displayed in NoteBox." },
       { ref: "210.8(F)", desc: "GFCI for outdoor dwelling outlets ≤50A", changed: true, source: PEND, note: "2020: new section — GFCI required for outdoor dwelling outlets ≤150V/≤50A. Displayed in NoteBox." },
@@ -185,7 +197,7 @@ export const CALCULATORS = [
       { ref: "230.85", desc: "Outdoor emergency disconnect (2020+)", changed: true, source: PEND, note: "2017: not required. 2020+: required for 1- and 2-family dwellings. Displayed in NoteBox." },
       { ref: "230.67", desc: "SPD required for dwelling services (2020+)", changed: true, source: PEND, note: "2017: not required. 2020+: required. Displayed in NoteBox." },
       { ref: "210.8(A)", desc: "GFCI scope — dwelling receptacles", changed: true, source: PEND, note: "2017: narrower scope. 2020: expanded. Displayed in NoteBox." },
-      { ref: "210.52(C)(2)", desc: "Island/peninsula sq-ft receptacle rule", changed: true, source: PEND, note: "2017: ≥12 sq ft threshold. 2020: sq-ft tiered rule. Displayed in NoteBox." },
+      { ref: "210.52(C)(2)", desc: "Island/peninsula countertop receptacle rule", changed: true, source: PEND, yearRefs: ISLAND_PENINSULA_YEAR_REFS, note: ISLAND_PENINSULA_NOTE },
       { ref: "210.52(G)", desc: "Garage/basement/accessory receptacle — multifamily expansion", changed: true, source: PEND, note: "2020: expanded to multifamily dwellings. Displayed in NoteBox." },
       { ref: "210.8(D)", desc: "Specific appliance GFCI (dishwasher/sump pump)", changed: true, source: PEND, note: "2020: expanded dishwasher scope; sump pumps added. Displayed in NoteBox." },
       { ref: "210.8(F)", desc: "GFCI for outdoor dwelling outlets ≤50A", changed: true, source: PEND, note: "2020: new section. Displayed in NoteBox." },
@@ -310,7 +322,7 @@ export const CALCULATORS = [
     articles: [
       { ref: "220.14(I)", desc: "Receptacle load — 180 VA each", changed: false, source: DEV, note: "180 VA per yoke. Needs verification across editions." },
       { ref: "220.44", desc: "Receptacle demand — 100%/50% tiers", changed: false, source: DEV },
-      { ref: "210.52(C)(2)", desc: "Island/peninsula sq-ft receptacle rule", changed: true, source: PEND, note: "2017: required if ≥12 sq ft. 2020: sq-ft tiered rule. Displayed in NoteBox." },
+      { ref: "210.52(C)(2)", desc: "Island/peninsula countertop receptacle rule", changed: true, source: PEND, yearRefs: ISLAND_PENINSULA_YEAR_REFS, note: ISLAND_PENINSULA_NOTE },
       { ref: "210.52(G)", desc: "Garage/basement/accessory receptacle — multifamily expansion", changed: true, source: PEND, note: "2020: expanded to multifamily dwellings. Displayed in NoteBox." },
       { ref: "210.8(A)", desc: "GFCI scope — dwelling receptacles", changed: true, source: PEND, note: "2017: narrower scope. 2020: expanded to 250V and more areas. Displayed in NoteBox." },
       { ref: "210.8(B)", desc: "GFCI scope — other-than-dwelling receptacles", changed: true, source: PEND, note: "2020: expanded coverage. Displayed in NoteBox." },
@@ -1005,10 +1017,11 @@ export const NEC_CHANGE_LOG = [
     id: "cl_210_52c",
     article: "210.52(C)",
     title: "Island and Peninsula Receptacle Requirement",
-    cycle: "2017→2020",
+    cycle: "2017→2020→2023",
     affectedCalcs: ["dwelling_standard", "dwelling_optional", "receptacle_load"],
-    value2017: "At least 1 receptacle required for islands/peninsulas ≥12 sq ft countertop area and ≥12 in. wide. May be supplied from countertop, wall, or base cabinet.",
-    value2020: "CHANGED: Required for ALL islands/peninsulas regardless of area. Below-counter and pop-up-style receptacles now permitted (previously disallowed). Removable supply cord exception added.",
+    value2017: "At least 1 receptacle required at each island countertop space and each peninsular countertop space with long dimension ≥24 in. and short dimension ≥12 in.; island and peninsula were separate subsections 210.52(C)(2)/(C)(3).",
+    value2020: "CHANGED: 210.52(C)(2) combines island/peninsular countertop and work surfaces; at least 1 receptacle for first 9 sq ft or fraction thereof, plus 1 for each additional 18 sq ft or fraction thereof; peninsula requires at least 1 within 2 ft of outer end.",
+    value2023: "CHANGED: 2020 square-footage receptacle count removed. Receptacles serving islands/peninsulas are optional; if none is provided, provisions for future addition are required.",
     verificationStatus: "pending_manual_review",
     sourceStatus: PEND,
     notes: "Description stored per year in ISLAND_PENINSULA_RULE. Displayed in NoteBox of dwelling and receptacle calculators.",

@@ -15,6 +15,7 @@ export default function ReceptacleLoad({ category, necYear = "2023" }) {
     totalAmps, demandAmps, circuits_required: circuitsNeeded, steps } = r;
   const count = parseFloat(v.count) || 0;
   const vaEach = parseFloat(v.vaPerReceptacle) || 180;
+  const islandPeninsulaArticle = nec.ISLAND_PENINSULA_ARTICLE || "210.52(C)(2)";
 
   return (
     <CalcLayout category={category} necYear={necYear} inputValues={v} outputValues={r} result={
@@ -41,7 +42,7 @@ export default function ReceptacleLoad({ category, necYear = "2023" }) {
             <li>NEC {necYear} 220.14(I): Each single or duplex receptacle = 180 VA.</li>
             <li>NEC {necYear} 220.44: Commercial demand — {nec.RECEPTACLE_DEMAND_TIERS.map((t) => `${(t.factor * 100).toFixed(0)}%${t.band < Infinity ? ` first ${t.band.toLocaleString()} VA` : " remainder"}`).join(", ")}.</li>
             <li>NEC 210.52(A): Dwelling wall receptacles must be spaced so no point is more than 6 ft from an outlet.</li>
-            {nec.ISLAND_PENINSULA_RULE && <li><strong>210.52(C)(2) Island/Peninsula ({necYear}):</strong> {nec.ISLAND_PENINSULA_RULE}</li>}
+            {nec.ISLAND_PENINSULA_RULE && <li><strong>{islandPeninsulaArticle} Island/Peninsula ({necYear}):</strong> {nec.ISLAND_PENINSULA_RULE}</li>}
             {nec.GARAGE_BASEMENT_RECEPTACLE_SCOPE && <li><strong>210.52(G) Garage/Basement ({necYear}):</strong> {nec.GARAGE_BASEMENT_RECEPTACLE_SCOPE}</li>}
             {nec.GFCI_SCOPE_DWELLING && <li><strong>210.8(A) Dwelling GFCI ({necYear}):</strong> {nec.GFCI_SCOPE_DWELLING}</li>}
             {nec.GFCI_SCOPE_OTHER_THAN_DWELLING && <li><strong>210.8(B) Other-Than-Dwelling GFCI ({necYear}):</strong> {nec.GFCI_SCOPE_OTHER_THAN_DWELLING}</li>}

@@ -66,9 +66,11 @@ export const EV_GFCI_REQUIREMENT_TEXT = "Required by 625.54 for receptacles inst
 export const DWELLING_OUTDOOR_DISCONNECT_REQUIRED = true;  // 230.85
 export const DWELLING_SPD_REQUIRED = true;                  // 230.67
 
-// ─── Island / Peninsula Receptacles (NEC 210.52(C)) ─────────────────
+// ─── Island / Peninsula Receptacles (NEC 210.52(C)(2)) ──────────────
 // 2026: ⚠️ PENDING — assumed same as 2023 until verified
-export const ISLAND_PENINSULA_RULE = "⚠️ PENDING 2026 VERIFICATION — assumed same as 2023. All islands/peninsulas require receptacle(s). NEC 210.52(C).";
+export const ISLAND_PENINSULA_RULE =
+  "⚠️ PENDING 2026 VERIFICATION — assumed same as 2023. Island/peninsular receptacles, if provided, must follow the placement rules; if none is provided, electrical provisions are required for future addition. NEC 210.52(C)(2).";
+export const ISLAND_PENINSULA_ARTICLE = "210.52(C)(2)";
 
 // ─── GFCI Requirements (NEC 210.8) ──────────────────────────────────
 // 2026: ⚠️ PENDING — assumed same as 2023 until verified

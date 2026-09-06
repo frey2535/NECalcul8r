@@ -36,7 +36,7 @@ export const YEAR_SENSITIVE_FIELDS = {
   DWELLING_OUTDOOR_DISCONNECT_REQUIRED:{ nec2017: false,   changedIn: "2020", article: "230.85",     note: "Outdoor emergency disconnect not required in 2017" },
   DWELLING_SPD_REQUIRED:               { nec2017: false,   changedIn: "2023", article: "230.67",     note: "SPD not required in 2017" },
   EV_SERVICE_LOAD_MINIMUM_VA:          { nec2017: 0,       changedIn: "2023", article: "220.57",     note: "No Article 220.57 EVSE service-load minimum in 2017" },
-  ISLAND_PENINSULA_RULE:               { nec2017: "≥12 sq ft with ≥12 in. width", changedIn: "2020", article: "210.52(C)", note: "2017 island rule differs from 2020+" },
+  ISLAND_PENINSULA_RULE:               { nec2017: "island/peninsula long dimension ≥24 in. and short dimension ≥12 in.", changedIn: "2020", article: "210.52(C)", note: "2017 island/peninsula dimensions differ from 2020+ square-footage rule and 2023 optional-receptacle rule" },
   GFCI_SCOPE_DWELLING:                 { nec2017: "6 ft of sink only (kitchen)", changedIn: "2020", article: "210.8(A)", note: "2017 kitchen GFCI scope is narrower than 2020+" },
 };
 

@@ -14,6 +14,7 @@ function formulasFor(nec) {
   const supp = Math.round((hvac.supplementalHeatFactor ?? 0.65) * 100);
   const remainder = Math.round((nec.OPTIONAL_DEMAND_FACTOR ?? 0.4) * 100);
   const lightingArticle = nec.DWELLING_LIGHTING_ARTICLE || "Table 220.12";
+  const islandPeninsulaArticle = nec.ISLAND_PENINSULA_ARTICLE || "210.52(C)(2)";
   const genArt = nec.OPTIONAL_GENERAL_LOAD_ARTICLE || "220.82(B)";
   return [
     { label: `General Demand (NEC ${genArt})`, formula: `Demand = 100%(first 10kVA) + ${remainder}%(remainder)`, description: `Applied to general loads at nameplate: lighting (${lightingArticle}) + small appliance + laundry + appliances (range, dryer, water heater, etc.)` },
@@ -102,7 +103,7 @@ export default function DwellingOptional({ category, necYear = "2023" }) {
             {nec.DWELLING_SPD_REQUIRED && <li><strong>230.67 ({necYear}):</strong> SPD Type 1 or 2 required for this dwelling unit service.</li>}
             {nec.DWELLING_OUTDOOR_DISCONNECT_REQUIRED && <li><strong>230.85 ({necYear}):</strong> Outdoor emergency disconnect required for one- and two-family dwellings.</li>}
             {nec.GFCI_SCOPE_DWELLING && <li><strong>210.8(A) GFCI scope ({necYear}):</strong> {nec.GFCI_SCOPE_DWELLING}</li>}
-            {nec.ISLAND_PENINSULA_RULE && <li><strong>210.52(C)(2) Island/Peninsula ({necYear}):</strong> {nec.ISLAND_PENINSULA_RULE}</li>}
+            {nec.ISLAND_PENINSULA_RULE && <li><strong>{islandPeninsulaArticle} Island/Peninsula ({necYear}):</strong> {nec.ISLAND_PENINSULA_RULE}</li>}
             {nec.GARAGE_BASEMENT_RECEPTACLE_SCOPE && <li><strong>210.52(G) Garage/Basement ({necYear}):</strong> {nec.GARAGE_BASEMENT_RECEPTACLE_SCOPE}</li>}
             {(nec.DISHWASHER_GFCI_REQUIRED || nec.SUMP_PUMP_GFCI_REQUIRED) && <li><strong>210.8(D)/422.5 Appliance GFCI ({necYear}):</strong> {nec.GFCI_SPECIFIC_APPLIANCES}</li>}
             {nec.GFCI_OUTDOOR_DWELLING_50A && <li><strong>210.8(F) Outdoor Outlets ({necYear}):</strong> {nec.GFCI_OUTDOOR_DWELLING_50A}</li>}

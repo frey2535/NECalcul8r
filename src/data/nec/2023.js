@@ -138,9 +138,13 @@ export const GFCI_210_8F_METADATA = {
 export const DWELLING_OUTDOOR_DISCONNECT_REQUIRED = true;  // 230.85
 export const DWELLING_SPD_REQUIRED = true;                  // 230.67 — required 2020+
 
-// ─── Island / Peninsula Receptacles (NEC 210.52(C)) ─────────────────
-// 2023: Retained 2020 rules. Below-counter/pop-up outlets continue to be permitted.
-export const ISLAND_PENINSULA_RULE = "All islands/peninsulas require receptacle(s). Below-counter and pop-up-style outlets permitted. Same as 2020 rules. NEC 210.52(C).";
+// ─── Island / Peninsula Receptacles (NEC 210.52(C)(2)) ──────────────
+// 2023: The 2020 square-footage receptacle count was removed. A receptacle
+// serving an island or peninsula is not mandatory, but if one is not provided,
+// provisions must be made for future addition.
+export const ISLAND_PENINSULA_RULE =
+  "Island/peninsular countertop or work surface: receptacle outlets, if installed, must comply with 210.52(C)(3). If no receptacle is provided to serve the island or peninsula, provisions are required for future addition. NEC 210.52(C)(2) — 2023.";
+export const ISLAND_PENINSULA_ARTICLE = "210.52(C)(2)";
 
 // ─── EV Service Load (NEC 220.57) ───────────────────────────────────
 export const EV_SERVICE_LOAD_MINIMUM_VA = 7200;  // 220.57 — service/load calculation, not 625.42(A)

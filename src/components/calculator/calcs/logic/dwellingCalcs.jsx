@@ -127,6 +127,7 @@ export function calcDwellingStandard(v, nec) {
   const rangeDemandArticle = nec.RANGE_DEMAND_ARTICLE || "Table 220.55";
   const dwellingLightingArticle = nec.DWELLING_LIGHTING_ARTICLE || "Table 220.12";
   const lightingDemandArticle = nec.LIGHTING_DEMAND_TABLE || "Table 220.42";
+  const islandPeninsulaArticle = nec.ISLAND_PENINSULA_ARTICLE || "210.52(C)(2)";
 
   const steps = [
     { label: `General Lighting Load (${dwellingLightingArticle})`, formula: "VA = sqft × 3 VA/ft² (exclude unused cellar, unfinished attic, open porches)", expression: `${sqft} ft² × ${nec.DWELLING_LIGHTING_VA_PER_SQFT} VA/ft²`, result: Math.round(genLighting), unit: "VA" },
@@ -170,11 +171,11 @@ export function calcDwellingStandard(v, nec) {
     articles_used: dwellingYearArticles(nec, [
       dwellingLightingArticle, "220.14(J)", "220.40", lightingDemandArticle, "220.52(A)", "220.52(B)",
       "220.54", rangeDemandArticle.replace(/^Table /, ""), "220.60", "210.11(C)(1)", "210.11(C)(2)", "210.11(C)(3)",
-      "240.6(A)", "230.42", "230.79(C)", "210.8(A)", "210.52(C)(2)",
+      "240.6(A)", "230.42", "230.79(C)", "210.8(A)", islandPeninsulaArticle,
       ...(apply220_53 ? ["220.53"] : []),
     ]),
     tables_used: [tableRefOrNull(dwellingLightingArticle), lightingDemandArticle, "Table 220.54", rangeDemandArticle, "Table 240.6(A)"].filter(Boolean),
-    fields_used: ["DWELLING_LIGHTING_VA_PER_SQFT", "DWELLING_LIGHTING_ARTICLE", "LIGHTING_DEMAND_TABLE", "SMALL_APPLIANCE_VA", "LAUNDRY_VA", "SMALL_APPLIANCE_MIN_CIRCUITS", "LAUNDRY_MIN_CIRCUITS", "LIGHTING_DEMAND", "RANGE_DEMAND", "RANGE_DEMAND_ARTICLE", "FIXED_APPLIANCE_DEMAND_FACTOR", "STD_OCPD_SIZES", "DWELLING_MIN_SERVICE_AMPS", "DWELLING_SPD_REQUIRED", "DWELLING_OUTDOOR_DISCONNECT_REQUIRED", "GFCI_SCOPE_DWELLING", "ISLAND_PENINSULA_RULE", "DISHWASHER_GFCI_REQUIRED", "SUMP_PUMP_GFCI_REQUIRED", "GFCI_OUTDOOR_DWELLING_50A", "GARAGE_BASEMENT_RECEPTACLE_SCOPE"],
+    fields_used: ["DWELLING_LIGHTING_VA_PER_SQFT", "DWELLING_LIGHTING_ARTICLE", "LIGHTING_DEMAND_TABLE", "SMALL_APPLIANCE_VA", "LAUNDRY_VA", "SMALL_APPLIANCE_MIN_CIRCUITS", "LAUNDRY_MIN_CIRCUITS", "LIGHTING_DEMAND", "RANGE_DEMAND", "RANGE_DEMAND_ARTICLE", "FIXED_APPLIANCE_DEMAND_FACTOR", "STD_OCPD_SIZES", "DWELLING_MIN_SERVICE_AMPS", "DWELLING_SPD_REQUIRED", "DWELLING_OUTDOOR_DISCONNECT_REQUIRED", "GFCI_SCOPE_DWELLING", "ISLAND_PENINSULA_ARTICLE", "ISLAND_PENINSULA_RULE", "DISHWASHER_GFCI_REQUIRED", "SUMP_PUMP_GFCI_REQUIRED", "GFCI_OUTDOOR_DWELLING_50A", "GARAGE_BASEMENT_RECEPTACLE_SCOPE"],
   });
 }
 
@@ -212,6 +213,7 @@ export function calcDwellingOptional(v, nec) {
   const optHvac = getOptionalHvac(nec);
   const generalArticle = nec.OPTIONAL_GENERAL_LOAD_ARTICLE || "220.82(B)";
   const dwellingLightingArticle = nec.DWELLING_LIGHTING_ARTICLE || "Table 220.12";
+  const islandPeninsulaArticle = nec.ISLAND_PENINSULA_ARTICLE || "210.52(C)(2)";
   const remainderFactor = nec.OPTIONAL_DEMAND_FACTOR;
   const remainderPct = Math.round(remainderFactor * 100);
 
@@ -345,9 +347,9 @@ export function calcDwellingOptional(v, nec) {
       "230.42",
       "230.79(C)",
       "210.8(A)",
-      "210.52(C)(2)",
+      islandPeninsulaArticle,
     ]),
     tables_used: [tableRefOrNull(dwellingLightingArticle), "Table 240.6(A)"].filter(Boolean),
-    fields_used: ["DWELLING_LIGHTING_VA_PER_SQFT", "DWELLING_LIGHTING_ARTICLE", "SMALL_APPLIANCE_VA", "LAUNDRY_VA", "OPTIONAL_DEMAND_FACTOR", "OPTIONAL_HVAC", "STD_OCPD_SIZES", "DWELLING_MIN_SERVICE_AMPS", "DWELLING_SPD_REQUIRED", "DWELLING_OUTDOOR_DISCONNECT_REQUIRED", "GFCI_SCOPE_DWELLING", "ISLAND_PENINSULA_RULE", "DISHWASHER_GFCI_REQUIRED", "SUMP_PUMP_GFCI_REQUIRED", "GFCI_OUTDOOR_DWELLING_50A", "GARAGE_BASEMENT_RECEPTACLE_SCOPE"],
+    fields_used: ["DWELLING_LIGHTING_VA_PER_SQFT", "DWELLING_LIGHTING_ARTICLE", "SMALL_APPLIANCE_VA", "LAUNDRY_VA", "OPTIONAL_DEMAND_FACTOR", "OPTIONAL_HVAC", "STD_OCPD_SIZES", "DWELLING_MIN_SERVICE_AMPS", "DWELLING_SPD_REQUIRED", "DWELLING_OUTDOOR_DISCONNECT_REQUIRED", "GFCI_SCOPE_DWELLING", "ISLAND_PENINSULA_ARTICLE", "ISLAND_PENINSULA_RULE", "DISHWASHER_GFCI_REQUIRED", "SUMP_PUMP_GFCI_REQUIRED", "GFCI_OUTDOOR_DWELLING_50A", "GARAGE_BASEMENT_RECEPTACLE_SCOPE"],
   });
 }
