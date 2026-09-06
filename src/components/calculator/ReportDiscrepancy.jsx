@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/dialog";
 import { AlertTriangle, Upload, X, Loader2 } from "lucide-react";
 
-const APP_VERSION = "1.0.0";
+const APP_VERSION = import.meta.env.VITE_APP_VERSION || import.meta.env.VITE_APP_BUILD_SHA || "1.0.0";
 
 export default function ReportDiscrepancy({ calculatorId, calculatorName, necYear, inputs, outputs, open, onOpenChange }) {
   const [form, setForm] = useState({
@@ -20,6 +20,7 @@ export default function ReportDiscrepancy({ calculatorId, calculatorName, necYea
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
   const [timestamp, setTimestamp] = useState("");
+  const [submitError, setSubmitError] = useState("");
 
   useEffect(() => {
     if (open) setTimestamp(new Date().toLocaleString());
@@ -58,6 +59,8 @@ export default function ReportDiscrepancy({ calculatorId, calculatorName, necYea
     setErrors(newErrors);
     if (Object.keys(newErrors).length > 0) return;
     setSubmitting(true);
+    setUploading(files.length > 0);
+    setSubmitError("");
     try {
       // Upload files first
       const fileUrls = [];
@@ -80,13 +83,17 @@ export default function ReportDiscrepancy({ calculatorId, calculatorName, necYea
         contact_email: form.contact_email.trim() || null,
       });
       setDone(true);
-    } catch (e) { /* fail silently — form stays open */ }
+    } catch (e) {
+      setSubmitError(e?.message || "Report submission failed. Please try again.");
+    }
+    setUploading(false);
     setSubmitting(false);
   };
 
   const reset = () => {
     setForm({ article_ref: "", current_result: "", expected_result: "", explanation: "", contact_email: "" });
     setFiles([]);
+    setSubmitError("");
     setDone(false);
     onOpenChange(false);
   };
@@ -195,12 +202,17 @@ export default function ReportDiscrepancy({ calculatorId, calculatorName, necYea
                 <label className="text-xs font-semibold">Contact Email (optional)</label>
                 <Input type="email" value={form.contact_email} onChange={set("contact_email")} placeholder="For follow-up" className="h-9 text-sm mt-1" />
               </div>
+              {submitError && (
+                <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+                  {submitError}
+                </div>
+              )}
             </div>
 
             <DialogFooter className="gap-2">
               <Button variant="outline" size="sm" onClick={reset}>Cancel</Button>
-              <Button size="sm" onClick={handleSubmit} disabled={submitting}>
-                {submitting ? <><Loader2 className="w-4 h-4 animate-spin mr-1" /> Submitting…</> : "Submit Report"}
+              <Button size="sm" onClick={handleSubmit} disabled={submitting || uploading}>
+                {submitting || uploading ? <><Loader2 className="w-4 h-4 animate-spin mr-1" /> {uploading ? "Uploading…" : "Submitting…"}</> : "Submit Report"}
               </Button>
             </DialogFooter>
           </>
