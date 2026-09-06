@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { motion } from "framer-motion";
-import { Users, Shield, Clock, CheckCircle, XCircle, Ban, RefreshCw, CreditCard, Building2, Smartphone, ChevronDown, ChevronUp, Save } from "lucide-react";
+import { Users, Shield, Clock, CheckCircle, XCircle, Ban, RefreshCw, CreditCard, Building2, Smartphone, ChevronDown, ChevronUp, Save, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -30,7 +30,7 @@ const TYPE_CFG = {
 
 const ACCESS_STATUS_OPTIONS = ["active", "trial", "expired", "disabled"];
 const ACCESS_TYPE_OPTIONS    = ["permanent", "trial", "paid", "buildrpro_included", "app_store"];
-const PURCHASE_SOURCE_OPTIONS = ["admin", "manual", "stripe", "base44_payments", "app_store", "buildrpro"];
+const PURCHASE_SOURCE_OPTIONS = ["admin", "manual", "stripe", "app_store", "buildrpro"];
 const SUB_STATUS_OPTIONS     = ["active", "trialing", "cancelled", "past_due", "unpaid"];
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -67,6 +67,21 @@ function daysFromNow(n) {
   return d.toISOString().split('T')[0];
 }
 
+function normalizeManualEdits(user, edits) {
+  const updates = { ...edits };
+  const nextStatus = updates.access_status ?? user.access_status;
+  const nextType = updates.access_type ?? user.access_type;
+
+  if (nextStatus === "active" && (!nextType || nextType === "trial")) {
+    updates.access_type = "permanent";
+    if (!updates.purchase_source || updates.purchase_source === "manual") {
+      updates.purchase_source = "admin";
+    }
+  }
+
+  return updates;
+}
+
 // ── Sub-components ────────────────────────────────────────────────────────────
 
 function SelectField({ label, value, onChange, options }) {
@@ -100,10 +115,23 @@ function TextField({ label, value, onChange, placeholder, type = "text" }) {
   );
 }
 
-function UserCard({ user, onQuickAction, onSaveEdits, extendDays }) {
+function UserCard({ user, onQuickAction, onSaveEdits, extendDays, isSaving }) {
   const [expanded, setExpanded] = useState(false);
   const [edits, setEdits] = useState({});
   const set = k => v => setEdits(p => ({ ...p, [k]: v }));
+  const setAccessStatus = value => {
+    setEdits(p => {
+      const next = { ...p, access_status: value };
+      const nextType = p.access_type ?? user.access_type;
+      if (value === "active" && (!nextType || nextType === "trial")) {
+        next.access_type = "permanent";
+        if (!p.purchase_source || p.purchase_source === "manual") {
+          next.purchase_source = "admin";
+        }
+      }
+      return next;
+    });
+  };
 
   const effectiveStatus = getEffectiveStatus(user);
   const statusCfg = STATUS_CFG[effectiveStatus] || STATUS_CFG.trial;
@@ -113,7 +141,7 @@ function UserCard({ user, onQuickAction, onSaveEdits, extendDays }) {
   const isAdmin = user.role === 'admin';
   const isDirty = Object.keys(edits).length > 0;
 
-  const handleSave = () => { onSaveEdits(user.id, edits); setEdits({}); };
+  const handleSave = () => { onSaveEdits(user.id, normalizeManualEdits(user, edits)); setEdits({}); };
 
   return (
     <div className="rounded-xl bg-card border border-border/60 shadow-sm overflow-hidden">
@@ -219,7 +247,7 @@ function UserCard({ user, onQuickAction, onSaveEdits, extendDays }) {
       {expanded && !isAdmin && (
         <div className="border-t border-border/60 bg-muted/30 p-4 space-y-3">
           <div className="grid grid-cols-2 gap-3">
-            <SelectField label="Access Status" value={edits.access_status ?? user.access_status} onChange={set('access_status')} options={ACCESS_STATUS_OPTIONS} />
+            <SelectField label="Access Status" value={edits.access_status ?? user.access_status} onChange={setAccessStatus} options={ACCESS_STATUS_OPTIONS} />
             <SelectField label="Access Type" value={edits.access_type ?? user.access_type} onChange={set('access_type')} options={ACCESS_TYPE_OPTIONS} />
             <TextField label="Trial Start" value={edits.trial_start_date ?? user.trial_start_date} onChange={set('trial_start_date')} type="date" />
             <TextField label="Trial End" value={edits.trial_end_date ?? user.trial_end_date} onChange={set('trial_end_date')} type="date" />
@@ -238,7 +266,7 @@ function UserCard({ user, onQuickAction, onSaveEdits, extendDays }) {
             />
           </div>
           {isDirty && (
-            <Button size="sm" className="gap-1.5 h-8" onClick={handleSave}>
+            <Button size="sm" className="gap-1.5 h-8" onClick={handleSave} disabled={isSaving}>
               <Save className="w-3.5 h-3.5" /> Save Changes
             </Button>
           )}
@@ -254,6 +282,7 @@ export default function UserManagement() {
   const queryClient = useQueryClient();
   const [extendDays, setExtendDays] = useState(30);
   const [pendingAction, setPendingAction] = useState(null);
+  const [mutationError, setMutationError] = useState(null);
 
   const { data: currentUser } = useQuery({ queryKey: ["me"], queryFn: () => base44.auth.me() });
   const { data: users = [], isLoading } = useQuery({
@@ -263,7 +292,14 @@ export default function UserManagement() {
 
   const mutation = useMutation({
     mutationFn: ({ userId, updates }) => base44.entities.User.update(userId, updates),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["all-users"] }),
+    onMutate: () => setMutationError(null),
+    onSuccess: () => {
+      setMutationError(null);
+      return queryClient.invalidateQueries({ queryKey: ["all-users"] });
+    },
+    onError: (error) => {
+      setMutationError(error?.message || "Unable to save access changes.");
+    },
   });
 
   if (currentUser?.role !== 'admin') {
@@ -347,6 +383,13 @@ export default function UserManagement() {
         <span className="text-xs text-muted-foreground">days per click</span>
       </div>
 
+      {mutationError && (
+        <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-200 flex items-start gap-2">
+          <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+          <span>{mutationError}</span>
+        </div>
+      )}
+
       {/* User list */}
       {isLoading
         ? <div className="text-center py-12 text-muted-foreground text-sm">Loading users…</div>
@@ -358,6 +401,7 @@ export default function UserManagement() {
                 extendDays={extendDays}
                 onQuickAction={handleQuickAction}
                 onSaveEdits={handleSaveEdits}
+                isSaving={mutation.isPending}
               />
             ))}
           </div>

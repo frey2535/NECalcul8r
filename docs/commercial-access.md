@@ -155,7 +155,13 @@ Output:
 { "url": "https://billing.stripe.com/..." }
 ```
 
-### `grant-access`
+### `grant_profile_access` RPC / `grant-access`
+
+Manual admin grants use the `grant_profile_access` Supabase RPC when it is installed from
+`supabase/schema.sql` or `supabase/fixes/fix-admin-access-grants.sql`. The RPC verifies that the
+caller is a platform admin or an owner of the target user's organization, updates the profile access
+fields, and records the active entitlement. Existing deployments may also provide the equivalent
+`grant-access` Edge Function; the app falls back to that function only when the RPC is not installed.
 
 Input:
 
