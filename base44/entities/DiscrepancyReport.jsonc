@@ -14,7 +14,9 @@
       "type": "string",
       "enum": [
         "2017",
-        "2020"
+        "2020",
+        "2023",
+        "2026"
       ],
       "description": "NEC year selected when report was submitted"
     },

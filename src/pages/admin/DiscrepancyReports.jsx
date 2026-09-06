@@ -24,16 +24,19 @@ export default function DiscrepancyReports() {
   const [filter, setFilter] = useState("open");
   const [expandedId, setExpandedId] = useState(null);
   const [adminNotes, setAdminNotes] = useState({});
+  const [loadError, setLoadError] = useState("");
   const debounceTimers = useRef({});
 
   const load = useCallback(async () => {
     setLoading(true);
+    setLoadError("");
     try {
-      let query = {};
-      if (filter !== "all") query = { status: filter };
-      const recs = await base44.entities.DiscrepancyReport.list("-created_date", 200, query);
-      setReports(recs);
-    } catch (e) { /* ignore */ }
+      const recs = await base44.entities.DiscrepancyReport.list("-created_date", 200);
+      const normalized = recs.map((report) => ({ ...report, status: report.status || "open" }));
+      setReports(filter === "all" ? normalized : normalized.filter((report) => report.status === filter));
+    } catch (e) {
+      setLoadError(e?.message || "Unable to load discrepancy reports.");
+    }
     setLoading(false);
   }, [filter]);
 
@@ -78,6 +81,12 @@ export default function DiscrepancyReports() {
           </p>
         </div>
       </div>
+
+      {loadError && (
+        <div className="rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+          {loadError}
+        </div>
+      )}
 
       {/* Status filter tabs */}
       <div className="flex gap-2 flex-wrap">
