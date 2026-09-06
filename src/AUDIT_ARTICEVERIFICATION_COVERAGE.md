@@ -160,21 +160,20 @@ The seed data (in the earlier conversation) was manually created as a hardcoded 
 
 ---
 
-### ev_charging (⚠️ CRITICAL — 2 MISSING)
+### ev_charging (Article 625 reference cleanup)
 
 **In Audit:**
-1. 625.42 ✅ Seeded
-2. 625.42(A) ❌ **MISSING** — EVSE minimum load VA (added 2023)
-3. 625.54 ✅ Seeded
-4. 230.67 ✅ Seeded
-5. 230.85 ✅ Seeded
-6. 240.6(A) ❌ **MISSING** — Standard OCPD sizes
+1. 625.40 — EVSE branch-circuit arrangement / individual branch-circuit assumption
+2. 625.41 — EVSE OCPD 125% continuous-load sizing
+3. 625.42 — EVSE rating / continuous-load treatment; 625.42(A) is EMS/load management, not a minimum VA rule
+4. 625.43 — EVSE disconnecting means threshold
+5. 625.54 — GFCI protection for EV charging receptacles
+6. 220.57 — 2023 service/load calculation minimum, not Article 625 branch-circuit sizing
+7. 230.67 — Dwelling SPD display requirement
+8. 230.85 — Dwelling outdoor disconnect display requirement
+9. 240.6(A) — Standard OCPD sizes
 
-**Expected Records:** 6 articles × 4 years = 24  
-**Seeded Records:** 4 articles × 4 years = 16  
-**Missing:** 2 articles × 4 years = **8 records**
-
-**Impact:** 625.42(A) minimum load requirement not traceable (critical for 2023+ calculations).
+**Correction:** The previous audit incorrectly listed `625.42(A)` as an EVSE minimum-load VA rule. That minimum belongs to `220.57` for service/load calculations in 2023+, while the Article 625 calculator sizes EVSE branch-circuit/OCPD load from nameplate current at 125%.
 
 ---
 
@@ -224,8 +223,11 @@ The seed data (in the earlier conversation) was manually created as a hardcoded 
 | **motor_feeder** | 430.24 | ✅ | ✅ | ✅ | ✅ | Seeded |
 | | 430.62(A) | ✅ | ✅ | ✅ | ✅ | Seeded |
 | | Table 430.250 | ❌ | ❌ | ❌ | ❌ | **MISSING** |
-| **ev_charging** | 625.42 | ✅ | ✅ | ✅ | ✅ | Seeded |
-| | 625.42(A) | ❌ | ❌ | ❌ | ❌ | **MISSING** |
+| **ev_charging** | 625.40 | ⚠️ | ⚠️ | ⚠️ | ⚠️ | Branch-circuit assumption |
+| | 625.41 | ⚠️ | ⚠️ | ⚠️ | ⚠️ | OCPD 125% sizing |
+| | 625.42 | ✅ | ✅ | ✅ | ✅ | Rating / continuous load |
+| | 625.43 | ⚠️ | ⚠️ | ⚠️ | ⚠️ | Disconnecting means notice |
+| | 220.57 | N/A | N/A | ⚠️ | ⚠️ | Service/load note only |
 | | 625.54 | ✅ | ✅ | ✅ | ✅ | Seeded |
 | | 230.67 | ✅ | ✅ | ✅ | ✅ | Seeded |
 | | 230.85 | ✅ | ✅ | ✅ | ✅ | Seeded |

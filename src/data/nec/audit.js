@@ -408,20 +408,22 @@ export const CALCULATORS = [
     id: "ev_charging", name: "EV Charging (625)",
     category: "Power / Misc", usesGetNecData: true, yearSensitive: true,
     articles: [
-      { ref: "625.42", desc: "EVSE continuous load — 125% of rating", changed: false, source: DEV, note: "125% multiplier reportedly stable. 2023 added minimum 7,200VA." },
-      { ref: "625.42(A)", desc: "EVSE minimum load VA", changed: true, source: DEV, note: "2017:none, 2020:none, 2023:7,200VA. NEEDS VERIFICATION against NEC 2023 text." },
+      { ref: "625.40", desc: "EVSE branch-circuit arrangement / individual branch-circuit assumption", changed: false, source: DEV, note: "Displayed as an installation assumption note; per-unit OCPD results assume one EVSE per branch circuit unless a listed/load-managed arrangement applies." },
+      { ref: "625.41", desc: "OCPD for circuits supplying EVSE — 125% of maximum load", changed: false, source: DEV, note: "Continuous-load OCPD sizing; paired with 625.42 rating rules." },
+      { ref: "625.42", desc: "EVSE/power transfer equipment rating and continuous-load treatment", changed: false, source: DEV, note: "625.42(A) addresses automatic load management / EMS, not a minimum VA rule." },
+      { ref: "625.43", desc: "Disconnecting means threshold for EVSE", changed: false, source: DEV, note: "Displayed as a field-verification notice when ampere rating exceeds the modeled threshold." },
       { ref: "625.54", desc: "GFCI protection for EV charging receptacles", changed: false, source: DEV, note: "2017 and 2020 require GFCI for covered EV charging receptacles. Verify exact scope against adopted code text/amendments." },
+      { ref: "220.57", desc: "EVSE service/load calculation minimum — not Article 625 branch-circuit sizing", changed: true, source: PEND, note: "2023+: 7200VA or nameplate for service/load calculations; shown only as a note, not used to size Article 625 branch circuits." },
       { ref: "230.67", desc: "SPD required for dwellings", changed: true, source: DEV, note: "2017:no, 2020+:yes. NEEDS VERIFICATION against NEC 2020 text." },
       { ref: "230.85", desc: "Outdoor emergency disconnect", changed: true, source: DEV, note: "2017:no, 2020:yes. NEEDS VERIFICATION against NEC 2020 text." },
       { ref: "240.6(A)", desc: "Standard OCPD sizes", changed: false, source: DEV },
     ],
-    sourceNotes: "Year-sensitive calculator. Uses edition-gated requirements: EV charging receptacle GFCI (625.54, now required in 2017+), minimum load VA (2023+), and SPD/disconnect (2020+). Critical thresholds need verification against the actual codebook text. The 2026 values are speculative.",
+    sourceNotes: "Year-sensitive calculator. Article 625 branch-circuit/feeder sizing uses EVSE nameplate/current rating as continuous load. The 2023 7200VA value belongs to 220.57 service/load calculations, not 625.42(A). Edition-gated display requirements include EV charging receptacle GFCI (625.54, required in 2017+) and dwelling SPD/disconnect (2020+). The 2026 values are speculative.",
     testInputs: { evseA: 32, voltage: 240, numUnits: 1 },
     calculate: (i, nec) => {
       const ca = i.evseA * nec.EV_CONTINUOUS_MULTIPLIER;
       const oc = nec.STD_OCPD_SIZES.find(s => s >= ca) || 150;
-      const mlv = nec.EV_MINIMUM_LOAD_VA, alv = Math.max(i.evseA * i.voltage, mlv);
-      return { conductorA: +ca.toFixed(1), ocpd: oc, kW: +(i.voltage * i.evseA / 1000).toFixed(1), gfciRequired: nec.EV_GFCI_REQUIRED, minLoadVA: mlv, appliedLoadVA: Math.round(alv) };
+      return { conductorA: +ca.toFixed(1), ocpd: oc, kW: +(i.voltage * i.evseA / 1000).toFixed(1), gfciRequired: nec.EV_GFCI_REQUIRED, serviceLoadMinimumVA: nec.EV_SERVICE_LOAD_MINIMUM_VA || 0 };
     },
   },
   {

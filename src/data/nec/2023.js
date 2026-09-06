@@ -4,7 +4,7 @@
  *
  * Key changes from 2020:
  * - SPD required for dwellings (230.67) — new
- * - EV charging load refined: minimum 7200VA per EVSE (625.42)
+ * - EV service/load calculation added: 7200VA or nameplate, whichever is larger (220.57)
  * - GFCI expanded to 250V receptacles in more locations
  * - Emergency disconnect marking requirements refined (230.85)
  */
@@ -142,8 +142,9 @@ export const DWELLING_SPD_REQUIRED = true;                  // 230.67 — requir
 // 2023: Retained 2020 rules. Below-counter/pop-up outlets continue to be permitted.
 export const ISLAND_PENINSULA_RULE = "All islands/peninsulas require receptacle(s). Below-counter and pop-up-style outlets permitted. Same as 2020 rules. NEC 210.52(C).";
 
-// ─── EV Charging (NEC 625) ──────────────────────────────────────────
-export const EV_MINIMUM_LOAD_VA = 7200;  // 625.42 — 7200VA or nameplate, whichever larger
+// ─── EV Service Load (NEC 220.57) ───────────────────────────────────
+export const EV_SERVICE_LOAD_MINIMUM_VA = 7200;  // 220.57 — service/load calculation, not 625.42(A)
+export const EV_MINIMUM_LOAD_VA = 0;             // Legacy EV calculator field; Article 625 sizing uses nameplate × 125%
 
 // ─── Table 220.12 — Occupancy Unit Loads (2023) ───────────────────────
 // 2023: Values below are COPIED FROM 2020. NOT independently verified for

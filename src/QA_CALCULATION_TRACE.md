@@ -55,7 +55,7 @@ Total ArticleVerification records: 124
 | Transformer Sizing | `/calculator/transformer_sizing` | `calcTransformerSizing()` | ✅ Returns trace | Articles: 450.3(B) |
 | Motor Branch Circuit | `/calculator/motor_branch_circuit` | `calcMotorBranchCircuit()` | ✅ Returns trace | Articles: 430.22, 430.52(C), 430.32, 430.6 |
 | Motor Feeder | `/calculator/motor_feeder` | `calcMotorFeeder()` | ✅ Returns trace | Articles: 430.24, 430.62(A) |
-| EV Charging | `/calculator/ev_charging` | `calcEVCharging()` | ✅ Returns trace | Articles: 625.42, 625.54, 230.67, 230.85 |
+| EV Charging | `/calculator/ev_charging` | `calcEVCharging()` | ✅ Returns trace | Articles: 625.40, 625.41, 625.42, 625.43, 625.54, 220.57 note, 230.67, 230.85 |
 
 ### Test Steps for Each Calculator:
 1. **Login** to the app
@@ -141,7 +141,7 @@ If ArticleVerification records are deleted:
 - [ ] Transformer Sizing shows trace with article 450.3(B)
 - [ ] Motor Branch Circuit shows trace with articles 430.22, 430.52(C), 430.32, 430.6
 - [ ] Motor Feeder shows trace with articles 430.24, 430.62(A)
-- [ ] EV Charging shows trace with articles 625.42, 625.54, 230.67, 230.85
+- [ ] EV Charging shows trace with articles 625.40/625.41/625.42, conditional 625.43/625.54, 220.57 note, 230.67, 230.85
 - [ ] Trace badges show "Verified 2017", "Verified 2020", "Verified 2023" on their respective years
 - [ ] Trace badges show "Pending Review" for 2026
 - [ ] Red warning banner appears for 2026 calculations

@@ -35,7 +35,7 @@ export function runRemaining2020Baseline() {
   const suites = [
     suite("flags", "2020 year-owned flags", () => ({
       EV_GFCI_REQUIRED: !!NEC_2020.EV_GFCI_REQUIRED,
-      EV_MINIMUM_LOAD_VA: NEC_2020.EV_MINIMUM_LOAD_VA || 0,
+      EV_SERVICE_LOAD_MINIMUM_VA: NEC_2020.EV_SERVICE_LOAD_MINIMUM_VA || 0,
       SOLAR_120_RULE_ARTICLE: NEC_2020.SOLAR_120_RULE_ARTICLE,
       POOL_PUMP_GFCI_ALL_PHASES: !!NEC_2020.POOL_PUMP_GFCI_ALL_PHASES,
       POOL_PUMP_REPLACEMENT_GFCI_REQUIRED: !!NEC_2020.POOL_PUMP_REPLACEMENT_GFCI_REQUIRED,
@@ -49,7 +49,7 @@ export function runRemaining2020Baseline() {
         inputs: {},
         expected: {
           EV_GFCI_REQUIRED: true,
-          EV_MINIMUM_LOAD_VA: 0,
+          EV_SERVICE_LOAD_MINIMUM_VA: 0,
           SOLAR_120_RULE_ARTICLE: "705.12(B)(2)(3)(a)",
           POOL_PUMP_GFCI_ALL_PHASES: true,
           POOL_PUMP_REPLACEMENT_GFCI_REQUIRED: true,
@@ -65,15 +65,15 @@ export function runRemaining2020Baseline() {
         id: "ev_2017_gfci",
         description: "2017 32 A EVSE — 625.54 GFCI required; no 230.67 / 230.85",
         inputs: { voltage: 240, evseA: 32, numUnits: 1, demandManaged: "no" },
-        expected: { conductorA_each: 40, GFCI_required: true, SPD_required: false, outdoor_disconnect: false, min_load_VA: 0 },
+        expected: { conductorA_each: 40, GFCI_required: true, SPD_required: false, outdoor_disconnect: false, service_load_minimum_VA: 0 },
       },
     ]),
     suite("ev_2020", "EV Charging 2020 625.54", calcEVCharging, NEC_2020, [
       {
         id: "ev_2020_gfci",
-        description: "2020 same 125% math; GFCI + dwelling SPD/disconnect true; still no min load VA",
+        description: "2020 same 125% math; GFCI + dwelling SPD/disconnect true; still no Article 220.57 service-load minimum",
         inputs: { voltage: 240, evseA: 32, numUnits: 1, demandManaged: "no" },
-        expected: { conductorA_each: 40, ocpd_each_A: 40, GFCI_required: true, min_load_VA: 0, SPD_required: true, outdoor_disconnect: true },
+        expected: { conductorA_each: 40, ocpd_each_A: 40, GFCI_required: true, service_load_minimum_VA: 0, SPD_required: true, outdoor_disconnect: true },
       },
     ]),
 

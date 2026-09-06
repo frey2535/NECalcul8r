@@ -242,12 +242,12 @@ def("welding_receptacle", "Welder Load 630.11 / 630.12", calcWelderLoad, [
   },
 ]);
 
-def("ev_charging", "EV Charging 625.42", calcEVCharging, [
+def("ev_charging", "EV Charging 625.41 / 625.42", calcEVCharging, [
   {
     id: "ev_32a",
-    description: "625.42 125%; 2017 625.54 GFCI required for covered EV charging receptacles; no min load VA",
+    description: "625.41/625.42 125%; 2017 625.54 GFCI required for covered EV charging receptacles; no Article 220.57 service-load minimum",
     inputs: { voltage: 240, evseA: 32, numUnits: 1, demandManaged: "no" },
-    expected: { conductorA_each: 40, ocpd_each_A: 40, feederAmps: 40, GFCI_required: true, min_load_VA: 0, SPD_required: false, outdoor_disconnect: false },
+    expected: { conductorA_each: 40, ocpd_each_A: 40, feederAmps: 40, GFCI_required: true, service_load_minimum_VA: 0, SPD_required: false, outdoor_disconnect: false },
   },
   {
     id: "ev_managed",
@@ -621,7 +621,7 @@ export function runRemaining2017Baseline() {
   const suites = [
     suite("year_flags", "2017 year-owned flags", () => ({
       EV_GFCI_REQUIRED: !!NEC.EV_GFCI_REQUIRED,
-      EV_MINIMUM_LOAD_VA: NEC.EV_MINIMUM_LOAD_VA || 0,
+      EV_SERVICE_LOAD_MINIMUM_VA: NEC.EV_SERVICE_LOAD_MINIMUM_VA || 0,
       SOLAR_120_RULE_ARTICLE: NEC.SOLAR_120_RULE_ARTICLE,
       POOL_PUMP_GFCI_REQUIRED: !!NEC.POOL_PUMP_GFCI_REQUIRED,
       POOL_PUMP_GFCI_ALL_PHASES: !!NEC.POOL_PUMP_GFCI_ALL_PHASES,
@@ -639,7 +639,7 @@ export function runRemaining2017Baseline() {
         inputs: {},
         expected: {
           EV_GFCI_REQUIRED: true,
-          EV_MINIMUM_LOAD_VA: 0,
+          EV_SERVICE_LOAD_MINIMUM_VA: 0,
           SOLAR_120_RULE_ARTICLE: "705.12(D)(2)(3)(b)",
           POOL_PUMP_GFCI_REQUIRED: true,
           POOL_PUMP_GFCI_ALL_PHASES: false,
