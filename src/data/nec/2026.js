@@ -188,9 +188,24 @@ export const GFCI_210_8F_METADATA = {
   note: "Values copied from 2020.js as placeholders. NOT verified against NFPA 70-2026. Pending official source verification.",
 };
 
+// ─── 240.67 / 240.87 — Arc Energy Reduction ────────────────────────
+// 2026: ⚠️ PENDING — copied from 2020 until verified.
+export const ARC_ENERGY_REDUCTION_THRESHOLD_AMPS = 1200;
+export const ARC_ENERGY_REDUCTION_ARTICLE = "240.67 / 240.87";
+export const ARC_ENERGY_REDUCTION_NOTE =
+  "⚠️ PENDING 2026 VERIFICATION — values copied from 2020, NOT verified. Arc energy reduction required for fuses ≥1200A (240.67, effective Jan. 1, 2020) and circuit breakers ≥1200A (240.87). NEC 240.67 / 240.87.";
+
 // ─── EV Service Load (NEC 220.57) ───────────────────────────────────
 export const EV_SERVICE_LOAD_MINIMUM_VA = 7200;  // ⚠️ PENDING — service/load calculation, not 625.42(A)
 export const EV_MINIMUM_LOAD_VA = 0;             // Legacy EV calculator field; Article 625 sizing uses nameplate × 125%
+
+// ─── Pool pump GFCI (NEC 680.21(C)/(D)) ─────────────────────────────
+// 2026: ⚠️ PENDING — copied from 2020 until verified.
+export const POOL_PUMP_GFCI_REQUIRED = true;
+export const POOL_PUMP_GFCI_ALL_PHASES = true;
+export const POOL_PUMP_REPLACEMENT_GFCI_REQUIRED = true;
+export const POOL_PUMP_GFCI_NOTE =
+  "⚠️ PENDING 2026 VERIFICATION — values copied from 2020, NOT verified. GFCI (Class A) required for pool pump motors on branch circuits ≤150V to ground, ≤60A, single- OR 3-phase (680.21(C)). Replacement pool pump motors covered by 680.21(C) must also be GFCI-protected (680.21(D)).";
 
 // ─── Service Minimums ────────────────────────────────────────────────
 export const DWELLING_MIN_SERVICE_AMPS = 100;  // 230.79(C)

@@ -15,6 +15,7 @@ export default function PoolSpa({ category, necYear = "2023" }) {
 
   const r = calcPoolSpa(v, nec);
   const { flc, pumpConductorA, pumpOCPD, heaterA, lightingA, totalA, clearances, steps } = r;
+  const poolPumpGfciArticle = nec.POOL_PUMP_REPLACEMENT_GFCI_REQUIRED ? "680.21(C)/(D)" : "680.21(C)";
   const pumpV = parseFloat(v.pumpV) || 240;
   const totalKW = (pumpV * totalA) / 1000;
 
@@ -43,7 +44,7 @@ export default function PoolSpa({ category, necYear = "2023" }) {
         <NoteBox>
           <ul className="list-disc pl-3.5 space-y-1">
             <li>NEC {necYear} 680: All pool/spa equipment requires GFCI protection, equipotential bonding, and minimum clearance from water. Disconnect must be within sight of pool equipment per 680.12.</li>
-            {nec.POOL_PUMP_GFCI_NOTE && <li><strong>680.21(C)/(D) Pump GFCI ({necYear}):</strong> {nec.POOL_PUMP_GFCI_NOTE}</li>}
+            {nec.POOL_PUMP_GFCI_NOTE && <li><strong>{poolPumpGfciArticle} Pump GFCI ({necYear}):</strong> {nec.POOL_PUMP_GFCI_NOTE}</li>}
           </ul>
         </NoteBox>
       </div>

@@ -498,6 +498,7 @@ export default function CodebookMatrix() {
         for (const art of calc.articles) {
           for (const year of YEARS) {
             const ref = articleRefForYear(art, year);
+            if (!ref) continue;
             const refKey = `${year}|${ref}`;
             if (!refToCalcs[refKey]) refToCalcs[refKey] = [];
             if (!refToCalcs[refKey].includes(calc.id)) refToCalcs[refKey].push(calc.id);
@@ -595,6 +596,7 @@ export default function CodebookMatrix() {
       for (const art of calc.articles) {
         for (const year of YEARS) {
           const articleRef = articleRefForYear(art, year);
+          if (!articleRef) continue;
           const key = verificationKey(calc.id, articleRef, year);
           const globalKey = globalReferenceKey(articleRef, year);
           rows.push({

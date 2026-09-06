@@ -87,6 +87,17 @@ function ArticleRow({ article, calcId, verifications, onToggle }) {
       <div className="flex items-center gap-1 shrink-0">
         {YEARS.map(y => {
           const resolvedRef = articleRefForYear(article, y);
+          if (!resolvedRef) {
+            return (
+              <span
+                key={y}
+                className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] border bg-slate-50 text-slate-500 border-slate-200"
+                title={`Not applicable for NEC ${y}`}
+              >
+                {y} N/A
+              </span>
+            );
+          }
           const status = getVerificationStatus(verifications, calcId, resolvedRef, y);
           const meta = STATUS_META[status] || STATUS_META.pending_review;
           const Icon = meta.icon;
@@ -245,7 +256,8 @@ export default function DeveloperAudit() {
       }
       const perYear = {};
       for (const y of YEARS) {
-        perYear[y] = articles.every(a => {
+        const applicableArticles = articles.filter(a => articleRefForYear(a, y));
+        perYear[y] = applicableArticles.every(a => {
           const articleRef = articleRefForYear(a, y);
           return getVerificationStatus(verifications, calc.id, articleRef, y) === "verified";
         });

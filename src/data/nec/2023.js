@@ -134,6 +134,13 @@ export const GFCI_210_8F_METADATA = {
   note: "Values copied from 2020.js. NOT independently verified against NFPA 70-2023. Pending official source verification.",
 };
 
+// ─── 240.67 / 240.87 — Arc Energy Reduction ────────────────────────
+// 2023: copied from 2020 pending independent verification.
+export const ARC_ENERGY_REDUCTION_THRESHOLD_AMPS = 1200;
+export const ARC_ENERGY_REDUCTION_ARTICLE = "240.67 / 240.87";
+export const ARC_ENERGY_REDUCTION_NOTE =
+  "Arc energy reduction required for fuses ≥1200A (240.67, effective Jan. 1, 2020) and circuit breakers ≥1200A (240.87). NEC 240.67 / 240.87 — 2023 copied from 2020; pending official NFPA 70-2023 verification.";
+
 // ─── Dwelling Unit Requirements ─────────────────────────────────────
 export const DWELLING_OUTDOOR_DISCONNECT_REQUIRED = true;  // 230.85
 export const DWELLING_SPD_REQUIRED = true;                  // 230.67 — required 2020+
@@ -149,6 +156,14 @@ export const ISLAND_PENINSULA_ARTICLE = "210.52(C)(2)";
 // ─── EV Service Load (NEC 220.57) ───────────────────────────────────
 export const EV_SERVICE_LOAD_MINIMUM_VA = 7200;  // 220.57 — service/load calculation, not 625.42(A)
 export const EV_MINIMUM_LOAD_VA = 0;             // Legacy EV calculator field; Article 625 sizing uses nameplate × 125%
+
+// ─── Pool pump GFCI (NEC 680.21(C)/(D)) ─────────────────────────────
+// 2023: copied from 2020 pending independent verification.
+export const POOL_PUMP_GFCI_REQUIRED = true;
+export const POOL_PUMP_GFCI_ALL_PHASES = true;
+export const POOL_PUMP_REPLACEMENT_GFCI_REQUIRED = true;
+export const POOL_PUMP_GFCI_NOTE =
+  "GFCI (Class A) required for pool pump motors on branch circuits ≤150V to ground, ≤60A, single- OR 3-phase (680.21(C)). Replacement pool pump motors covered by 680.21(C) must also be GFCI-protected (680.21(D)). NEC 680.21(C)/(D) — 2023 copied from 2020; pending official NFPA 70-2023 verification.";
 
 // ─── Article 220 Lighting Loads (2023) ───────────────────────────────
 // 2023 reorganized Article 220:

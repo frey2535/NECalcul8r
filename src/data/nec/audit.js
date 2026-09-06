@@ -78,6 +78,27 @@ const ISLAND_PENINSULA_NOTE =
   "2020: at least one receptacle for first 9 sq ft or fraction, plus one for each additional 18 sq ft or fraction; peninsula requires one within 2 ft of outer end. " +
   "2023: receptacles are optional for islands/peninsulas; if none is provided, provisions for future addition are required. Displayed in NoteBox.";
 
+const ADDED_2020_YEAR_REFS = {
+  "2017": null,
+  "2020": null,
+  "2023": null,
+  "2026": null,
+};
+
+function added2020Ref(ref) {
+  return {
+    ...ADDED_2020_YEAR_REFS,
+    "2020": ref,
+    "2023": ref,
+    "2026": `${ref} (pending)`,
+  };
+}
+
+const GFCI_EQUIPMENT_SERVICING_YEAR_REFS = added2020Ref("210.8(E)");
+const GFCI_OUTDOOR_DWELLING_YEAR_REFS = added2020Ref("210.8(F)");
+const ARC_ENERGY_FUSE_YEAR_REFS = added2020Ref("240.67");
+const POOL_PUMP_REPLACEMENT_GFCI_YEAR_REFS = added2020Ref("680.21(D)");
+
 // ─── Helpers used by the audit page ──────────────────────────────────────
 
 /** Compute verification status per year from article sources. */
@@ -174,7 +195,7 @@ export const CALCULATORS = [
       { ref: "210.52(C)(2)", desc: "Island/peninsula countertop receptacle rule", changed: true, source: PEND, yearRefs: ISLAND_PENINSULA_YEAR_REFS, note: ISLAND_PENINSULA_NOTE },
       { ref: "210.52(G)", desc: "Garage/basement/accessory receptacle — multifamily expansion", changed: true, source: PEND, note: "2020: expanded to include multifamily dwellings. Displayed in NoteBox." },
       { ref: "210.8(D)", desc: "Specific appliance GFCI (dishwasher/sump pump)", changed: true, source: PEND, note: "2020: dishwasher GFCI expanded beyond dwelling-only; sump pumps added to 422.5 list. Displayed in NoteBox." },
-      { ref: "210.8(F)", desc: "GFCI for outdoor dwelling outlets ≤50A", changed: true, source: PEND, note: "2020: new section — GFCI required for outdoor dwelling outlets ≤150V/≤50A. Displayed in NoteBox." },
+      { ref: "210.8(F)", desc: "GFCI for outdoor dwelling outlets ≤50A", changed: true, source: PEND, yearRefs: GFCI_OUTDOOR_DWELLING_YEAR_REFS, note: "2017: not applicable; 210.8(F) did not exist. 2020/2023: outdoor dwelling outlets on single-phase circuits rated ≤150V to ground and ≤50A; lighting-outlet exception. Displayed in NoteBox." },
       { ref: "422.5", desc: "Appliance GFCI list (dishwashers, sump pumps)", changed: true, source: PEND, note: "2020: dishwashers and sump pumps added. Displayed in NoteBox." },
     ],
     sourceNotes: "2017/2020 standard method uses former 220.12 for dwelling lighting and Table 220.42 for demand. 2023 reorganizes those to 220.41 and Table 220.45. Other standard-method items: Table 220.54/220.55, 220.52 mins, 220.14(J), 220.53, 220.60. Neutral 220.61 and D1(b) 430.24 are other calculators. Installation notes year-gated.",
@@ -200,7 +221,7 @@ export const CALCULATORS = [
       { ref: "210.52(C)(2)", desc: "Island/peninsula countertop receptacle rule", changed: true, source: PEND, yearRefs: ISLAND_PENINSULA_YEAR_REFS, note: ISLAND_PENINSULA_NOTE },
       { ref: "210.52(G)", desc: "Garage/basement/accessory receptacle — multifamily expansion", changed: true, source: PEND, note: "2020: expanded to multifamily dwellings. Displayed in NoteBox." },
       { ref: "210.8(D)", desc: "Specific appliance GFCI (dishwasher/sump pump)", changed: true, source: PEND, note: "2020: expanded dishwasher scope; sump pumps added. Displayed in NoteBox." },
-      { ref: "210.8(F)", desc: "GFCI for outdoor dwelling outlets ≤50A", changed: true, source: PEND, note: "2020: new section. Displayed in NoteBox." },
+      { ref: "210.8(F)", desc: "GFCI for outdoor dwelling outlets ≤50A", changed: true, source: PEND, yearRefs: GFCI_OUTDOOR_DWELLING_YEAR_REFS, note: "2017: not applicable; 210.8(F) did not exist. 2020/2023: outdoor dwelling outlets on single-phase circuits rated ≤150V to ground and ≤50A; lighting-outlet exception. Displayed in NoteBox." },
       { ref: "422.5", desc: "Appliance GFCI list (dishwashers, sump pumps)", changed: true, source: PEND, note: "2020: dishwashers and sump pumps added. Displayed in NoteBox." },
     ],
     sourceNotes: "2017 220.82(B)/(C) factors owned in 2017.js (OPTIONAL_HVAC). Later years inherit shared.js numbers pending independent codebook check. Installation notes (230.85, 230.67, 210.8) are display-only and year-gated.",
@@ -391,7 +412,7 @@ export const CALCULATORS = [
       { ref: "440.33", desc: "Multiple motors — largest × 125% + sum", changed: false, source: DEV },
       { ref: "440.22", desc: "OCPD max — 175% of RLA", changed: false, source: DEV, note: "175% cap for hermetic compressors. Needs verification." },
       { ref: "240.6(A)", desc: "Standard OCPD sizes", changed: false, source: DEV },
-      { ref: "210.8(E)", desc: "GFCI for equipment-servicing receptacles", changed: true, source: PEND, note: "2020: new section — GFCI required for 210.63 equipment-servicing receptacles. Displayed in NoteBox." },
+      { ref: "210.8(E)", desc: "GFCI for equipment-servicing receptacles", changed: true, source: PEND, yearRefs: GFCI_EQUIPMENT_SERVICING_YEAR_REFS, note: "2017: not applicable; 210.8(E) did not exist. 2020/2023: GFCI required for receptacles installed to comply with 210.63 equipment-servicing requirements. Displayed in NoteBox." },
     ],
     sourceNotes: "Article 440 for hermetic motor-compressors. Methodology reportedly stable. Each percentage (125%, 175%) needs codebook verification. 210.8(E) added in 2020 per Eaton PDF — displayed in NoteBox.",
     testInputs: { nameplateA: 30, compFLA: 20, fanFLA: 5 },
@@ -491,7 +512,7 @@ export const CALCULATORS = [
       { ref: "210.19(A)(1)", desc: "Continuous load — 125% conductor", changed: false, source: DEV },
       { ref: "680.21", desc: "Pool motor branch circuits", changed: false, source: DEV },
       { ref: "680.21(C)", desc: "Pool pump motor GFCI", changed: true, source: PEND, note: "2020: GFCI required for pool pump motors. Displayed in NoteBox." },
-      { ref: "680.21(D)", desc: "Pool pump replacement GFCI", changed: true, source: PEND, note: "2020: replacement pool pump motors must comply with GFCI rules. Displayed in NoteBox." },
+      { ref: "680.21(D)", desc: "Pool pump replacement GFCI", changed: true, source: PEND, yearRefs: POOL_PUMP_REPLACEMENT_GFCI_YEAR_REFS, note: "2017: not applicable; 680.21(D) did not exist. 2020/2023: replacement pool pump motors covered by 680.21(C) must comply with GFCI rules. Displayed in NoteBox." },
     ],
     sourceNotes: "Pool pump sizing uses same motor FLC table (430.248) as general motors. Article 680 installation requirements displayed as notes, not computed outputs. 680.21(C)/(D) GFCI rules added in 2020 per Eaton PDF.",
     testInputs: { pumpHP: 1.5, heaterKW: 5.5, lightW: 500, voltage: 240 },
@@ -753,10 +774,10 @@ export const CALCULATORS = [
       { ref: "240.4(D)", desc: "Small conductor limits: 14=15A, 12=20A, 10=30A", changed: false, source: DEV, note: "Each size limit needs verification." },
       { ref: "210.20(A)", desc: "Continuous load OCPD — 125%", changed: false, source: DEV },
       { ref: "240.6(A)", desc: "Standard OCPD sizes", changed: false, source: DEV },
-      { ref: "240.67", desc: "Arc energy reduction — fuses ≥1200A", changed: true, source: PEND, note: "2020: new requirement for fuses rated 1200A+. Displayed in NoteBox / result section." },
-      { ref: "240.87", desc: "Arc energy reduction — circuit breakers ≥1200A", changed: true, source: PEND, note: "2020: new requirement for circuit breakers rated 1200A+. Displayed in NoteBox / result section." },
+      { ref: "240.67", desc: "Arc energy reduction — fuses ≥1200A", changed: true, source: PEND, yearRefs: ARC_ENERGY_FUSE_YEAR_REFS, note: "2017: 240.67 was not effective until January 1, 2020. 2020/2023: arc energy reduction for fuses rated 1200A+. Displayed in NoteBox / result section." },
+      { ref: "240.87", desc: "Arc energy reduction — circuit breakers ≥1200A", changed: true, source: PEND, note: "2017 and later: arc energy reduction for circuit breakers rated 1200A+. Displayed in NoteBox / result section." },
     ],
-    sourceNotes: "Core OCPD rules: next-size-up allowance, small conductor limits, 125% continuous rule. Each needs independent verification. 240.67/240.87 arc energy reduction added in 2020 per Eaton PDF.",
+    sourceNotes: "Core OCPD rules: next-size-up allowance, small conductor limits, 125% continuous rule. Each needs independent verification. 240.87 applies to 2017 circuit breakers; 240.67 fuse requirements are not effective for the 2017 model until Jan. 1, 2020.",
     testInputs: { conductorA: 65, continuousPct: 100 },
     calculate: (i, nec) => { return { ocpd: nec.STD_OCPD_SIZES.find(s => s >= i.conductorA) || 100 }; },
   },

@@ -177,7 +177,10 @@ function buildDependencies(calc) {
 }
 
 function dependencyRefForYear(dependency, necYear) {
-  return dependency?.yearRefs?.[necYear] || dependency?.necArticle;
+  if (dependency?.yearRefs && Object.prototype.hasOwnProperty.call(dependency.yearRefs, necYear)) {
+    return dependency.yearRefs[necYear];
+  }
+  return dependency?.necArticle;
 }
 
 function verificationKey(calcId, articleRef, necYear) {
@@ -222,6 +225,7 @@ function buildArticleVerificationStatusMap(records = []) {
 
 function statusForDependency(statusMap, calculatorId, dependency, necYear) {
   const articleRef = dependencyRefForYear(dependency, necYear);
+  if (!articleRef) return "verified";
   const specificStatus = normalizeArticleVerificationStatus(
     statusMap[verificationKey(calculatorId, articleRef, necYear)]
   );
@@ -241,7 +245,15 @@ function buildRecordBackedRegressionResults(calc, dependencies, statusMap) {
 
   return Object.fromEntries(
     YEARS.map((year) => {
-      const statuses = dependencies.map((dependency) => (
+      const applicableDependencies = dependencies.filter((dependency) => dependencyRefForYear(dependency, year));
+      if (!applicableDependencies.length) {
+        return [
+          year,
+          { verified: true, reason: "No NEC articles apply for this edition." },
+        ];
+      }
+
+      const statuses = applicableDependencies.map((dependency) => (
         statusForDependency(statusMap, calc.calculatorId, dependency, year)
       ));
       const unverifiedCount = statuses.filter((status) => status !== "verified").length;
@@ -252,7 +264,7 @@ function buildRecordBackedRegressionResults(calc, dependencies, statusMap) {
           year,
           {
             verified: true,
-            reason: `All ${dependencies.length} dependency record(s) verified in Codebook Matrix for NEC ${year}.`,
+            reason: `All ${applicableDependencies.length} dependency record(s) verified in Codebook Matrix for NEC ${year}.`,
           },
         ];
       }
@@ -376,7 +388,7 @@ export const VERIFICATION_RESULTS = {
       "240.6(A) (standard OCPD sizes)",
       "210.8(A) (GFCI scope — display only)",
       "210.8(D)/422.5 (appliance GFCI — display only)",
-      "210.8(F) (outdoor 50A GFCI — display only)",
+      "210.8(F) (outdoor 50A GFCI — display only, 2020+ only)",
       "2017 210.52(C)(2)/(C)(3); 2020+ 210.52(C)(2) (island/peninsula — display only)",
       "210.52(G) (garage/basement — display only)",
     ],
@@ -450,7 +462,7 @@ export const VERIFICATION_RESULTS = {
       "STD_OCPD_SIZES (NEC 240.6(A), unchanged)",
       "DWELLING_MIN_SERVICE_AMPS = 100 (NEC 230.79(C), now explicit in all year files)",
     ],
-    displayOnlyNotes: "SPD (230.67), outdoor disconnect (230.85), GFCI scope (210.8(A)), island/peninsula (2017 210.52(C)(2)/(C)(3); 2020+ 210.52(C)(2)), garage/basement (210.52(G)), appliance GFCI (210.8(D)/422.5), outdoor 50A GFCI (210.8(F)) — all display-only, based on secondary sources, pending official NEC verification. Do not block launch.",
+    displayOnlyNotes: "SPD (230.67), outdoor disconnect (230.85), GFCI scope (210.8(A)), island/peninsula (2017 210.52(C)(2)/(C)(3); 2020+ 210.52(C)(2)), garage/basement (210.52(G)), appliance GFCI (210.8(D)/422.5), outdoor 50A GFCI (210.8(F), 2020+ only) — all display-only, based on secondary sources, pending official NEC verification. Do not block launch.",
     buildResult: "pass",
     remainingBlockers: [],
     // ─── ANNEX D BENCHMARK ───
@@ -524,7 +536,7 @@ export const VERIFICATION_RESULTS = {
       "240.6(A) (standard OCPD sizes)",
       "210.8(A) (GFCI scope — display only)",
       "210.8(D)/422.5 (appliance GFCI — display only)",
-      "210.8(F) (outdoor 50A GFCI — display only)",
+      "210.8(F) (outdoor 50A GFCI — display only, 2020+ only)",
       "2017 210.52(C)(2)/(C)(3); 2020+ 210.52(C)(2) (island/peninsula — display only)",
       "210.52(G) (garage/basement — display only)",
     ],

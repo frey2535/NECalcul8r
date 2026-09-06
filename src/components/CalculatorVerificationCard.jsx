@@ -60,7 +60,7 @@ function DependencyMatrix({ dependencies }) {
                 {d.yearRefs && (
                   <div className="mt-1 space-y-0.5 text-[9px] font-normal text-muted-foreground">
                     {Object.entries(d.yearRefs).map(([year, ref]) => (
-                      <div key={year}>{year}: {ref}</div>
+                      <div key={year}>{year}: {ref || "Not applicable"}</div>
                     ))}
                   </div>
                 )}
