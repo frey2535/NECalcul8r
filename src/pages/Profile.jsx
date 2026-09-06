@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { User, Trash2, LogOut, ShieldAlert, Users, FolderOpen, Download, ShoppingCart, CreditCard } from "lucide-react";
+import { User, Trash2, LogOut, ShieldAlert, Users, FolderOpen, Download, ShoppingCart, CreditCard, Flag } from "lucide-react";
 import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { isStandaloneDisplay } from "@/lib/pwa";
@@ -126,16 +126,22 @@ export default function Profile() {
         )}
       </div>
 
-      {/* Admin link */}
+      {/* Admin links */}
       {user?.role === 'admin' && (
-        <Link to="/admin/users" className="block">
-          <div className="rounded-2xl bg-card border border-border/60 shadow-sm overflow-hidden">
-            <div className="w-full flex items-center gap-3 px-5 py-4 text-sm font-semibold text-foreground hover:bg-muted active:bg-muted/80 transition-colors">
-              <Users className="w-4 h-4 text-muted-foreground" />
-              User Management
+        <div className="rounded-2xl bg-card border border-border/60 shadow-sm overflow-hidden">
+          <Link to="/admin/users" className="block">
+            <div className="w-full flex items-center gap-3 px-5 py-4 text-sm font-semibold text-foreground hover:bg-muted active:bg-muted/80 transition-colors border-b border-border/40">
+                <Users className="w-4 h-4 text-muted-foreground" />
+                User Management
             </div>
-          </div>
-        </Link>
+          </Link>
+          <Link to="/admin/reports" className="block">
+            <div className="w-full flex items-center gap-3 px-5 py-4 text-sm font-semibold text-foreground hover:bg-muted active:bg-muted/80 transition-colors">
+              <Flag className="w-4 h-4 text-muted-foreground" />
+              Discrepancy Reports
+            </div>
+          </Link>
+        </div>
       )}
 
       {/* Actions */}

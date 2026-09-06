@@ -1,6 +1,6 @@
 import React, { useState, useRef, useCallback } from "react";
 import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
-import { Zap, Calculator, BookOpen, UserCircle, Users, Calendar, ShieldCheck, FileCheck, Sun, Moon, FolderOpen } from "lucide-react";
+import { Zap, Calculator, BookOpen, UserCircle, Users, Calendar, ShieldCheck, FileCheck, Sun, Moon, FolderOpen, Flag } from "lucide-react";
 import TrialBanner from "@/components/TrialBanner";
 import { useAuth } from "@/lib/AuthContext";
 import { cn } from "@/lib/utils";
@@ -126,6 +126,17 @@ export default function AppLayout({ trialStatus }) {
                       Verify
                     </div>
                   </Link>
+                  <Link to="/admin/reports">
+                    <div className={cn(
+                      "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all",
+                      location.pathname === "/admin/reports"
+                        ? "bg-blue-600 text-white shadow-md shadow-blue-200"
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                    )}>
+                      <Flag className="w-3.5 h-3.5" />
+                      Reports
+                    </div>
+                  </Link>
                 </>
               )}
 
@@ -176,17 +187,30 @@ export default function AppLayout({ trialStatus }) {
       <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-50 bg-background/90 backdrop-blur-xl border-t border-border/60 shadow-[0_-4px_24px_rgba(0,0,0,0.08)]" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
         <div className="flex items-center justify-around py-1.5 px-2">
           {isAdmin && (
-            <Link to="/admin/users" className="flex-1">
-              <div className={cn(
-                "flex flex-col items-center gap-1 py-1.5 rounded-xl mx-1 transition-all",
-                location.pathname === "/admin/users" ? "text-blue-600" : "text-muted-foreground"
-              )}>
-                <div className={cn("w-10 h-6 rounded-full flex items-center justify-center transition-all", location.pathname === "/admin/users" ? "bg-blue-100" : "")}>
-                  <Users className="w-5 h-5" />
+            <>
+              <Link to="/admin/users" className="flex-1">
+                <div className={cn(
+                  "flex flex-col items-center gap-1 py-1.5 rounded-xl mx-1 transition-all",
+                  location.pathname === "/admin/users" ? "text-blue-600" : "text-muted-foreground"
+                )}>
+                  <div className={cn("w-10 h-6 rounded-full flex items-center justify-center transition-all", location.pathname === "/admin/users" ? "bg-blue-100" : "")}>
+                    <Users className="w-5 h-5" />
+                  </div>
+                  <span className={cn("text-[10px] font-semibold", location.pathname === "/admin/users" ? "text-blue-600" : "text-muted-foreground")}>Users</span>
                 </div>
-                <span className={cn("text-[10px] font-semibold", location.pathname === "/admin/users" ? "text-blue-600" : "text-muted-foreground")}>Users</span>
-              </div>
-            </Link>
+              </Link>
+              <Link to="/admin/reports" className="flex-1">
+                <div className={cn(
+                  "flex flex-col items-center gap-1 py-1.5 rounded-xl mx-1 transition-all",
+                  location.pathname === "/admin/reports" ? "text-blue-600" : "text-muted-foreground"
+                )}>
+                  <div className={cn("w-10 h-6 rounded-full flex items-center justify-center transition-all", location.pathname === "/admin/reports" ? "bg-blue-100" : "")}>
+                    <Flag className="w-5 h-5" />
+                  </div>
+                  <span className={cn("text-[10px] font-semibold", location.pathname === "/admin/reports" ? "text-blue-600" : "text-muted-foreground")}>Reports</span>
+                </div>
+              </Link>
+            </>
           )}
           {TABS.map((tab) => {
             const active = isTabActive(tab);
