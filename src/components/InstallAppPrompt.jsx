@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { Download, Share, PlusSquare, MoreVertical, X, Zap } from "lucide-react";
+import { Download, Share, PlusSquare, MoreVertical, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getInstallPlatform, isStandaloneDisplay } from "@/lib/pwa";
+import AppLogo from "@/components/branding/AppLogo";
 
 const DISMISS_KEY = "necalcul8r_install_dismissed_at";
 const DISMISS_MS = 7 * 24 * 60 * 60 * 1000;
@@ -101,9 +102,7 @@ export default function InstallAppPrompt() {
             <X className="w-4 h-4" />
           </button>
           <div className="flex items-center gap-3 pr-8">
-            <div className="w-12 h-12 rounded-2xl bg-white/15 border border-white/20 flex items-center justify-center">
-              <Zap className="w-6 h-6" />
-            </div>
+            <AppLogo className="w-12 h-12 rounded-2xl border border-white/20" />
             <div>
               <p className="text-[10px] font-bold uppercase tracking-widest text-blue-100">Install on this device</p>
               <h2 id="install-app-title" className="text-lg font-extrabold leading-tight">Add NECalcul8r</h2>

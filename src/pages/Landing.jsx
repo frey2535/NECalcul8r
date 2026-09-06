@@ -2,12 +2,13 @@ import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
 import {
-  Zap, Search, ChevronRight, Calculator, BookOpen, ShieldCheck,
+  Search, ChevronRight, Calculator, BookOpen, ShieldCheck,
   Check, ArrowRight, Calendar, Layers, X, Eye, GraduationCap,
   ClipboardCheck, FlaskConical, HardHat,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import AppLogo from "@/components/branding/AppLogo";
 import { NEC_CATEGORIES } from "@/pages/NECCalculator";
 import { bgMap } from "@/components/landing/MockPrimitives";
 import {
@@ -147,9 +148,7 @@ export default function Landing() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-14">
             <Link to="/landing" className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-500 to-violet-600 flex items-center justify-center shadow-md shadow-blue-200">
-                <Zap className="w-4 h-4 text-white" />
-              </div>
+              <AppLogo className="w-8 h-8 rounded-xl" />
               <div>
                 <h1 className="text-sm font-bold tracking-tight leading-none text-foreground">NECalcul8r</h1>
                 <p className="text-[9px] font-semibold text-muted-foreground tracking-widest uppercase">Electrical Tools</p>
@@ -404,9 +403,7 @@ export default function Landing() {
               {/* NECalcul8r */}
               <div className="rounded-2xl border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-violet-50 shadow-md p-6">
                 <div className="flex items-center gap-2 mb-5">
-                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-violet-600 flex items-center justify-center shadow-md shadow-blue-200">
-                    <Zap className="w-4 h-4 text-white" />
-                  </div>
+                  <AppLogo className="w-8 h-8 rounded-lg" />
                   <h3 className="text-base font-extrabold text-foreground">NECalcul8r</h3>
                 </div>
                 <div className="space-y-2.5">
@@ -530,9 +527,7 @@ export default function Landing() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-2.5">
-              <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-500 to-violet-600 flex items-center justify-center shadow-md shadow-blue-200">
-                <Zap className="w-3.5 h-3.5 text-white" />
-              </div>
+              <AppLogo className="w-7 h-7 rounded-lg" />
               <div>
                 <p className="text-xs font-bold text-foreground">NECalcul8r</p>
                 <p className="text-[9px] text-muted-foreground font-semibold tracking-widest uppercase">Electrical Tools</p>
