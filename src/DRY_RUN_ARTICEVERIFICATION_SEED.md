@@ -141,7 +141,7 @@
 
 ---
 
-### motor_branch_circuit
+### motor_full_load
 **Articles in audit.js:** 5  
 **Articles in database:** 4  
 **Missing:** 1 (but only partial — see note)
@@ -209,7 +209,7 @@ dwelling_standard|220.52|2026 (status: "pending_review", notes: "2026 code not y
 
 All current records will be kept as-is. No updates needed.
 
-### ⚠️ PRESERVE but FLAG (4 records in motor_branch_circuit)
+### ⚠️ PRESERVE but FLAG (4 records in motor_full_load)
 
 Records for `430.52(C)`, `430.32`, `430.6` are in database but NOT in audit.js. These are likely legitimate (calculator uses these) but audit.js doesn't explicitly list them. These will be preserved unchanged.
 
@@ -242,7 +242,7 @@ Safe to overwrite.
 
 - [ ] Review missing articles by calculator
 - [ ] Confirm 28 records should be created
-- [ ] Verify motor_branch_circuit extra articles (430.52(C), 430.32, 430.6) are intentional
+- [ ] Verify motor_full_load extra articles (430.52(C), 430.32, 430.6) are intentional
 - [ ] Approve idempotent delete + regenerate approach
 - [ ] Run seed function: `seedArticleVerificationsComplete()`
 - [ ] Verify final count: ~152 records
