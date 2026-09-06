@@ -42,6 +42,7 @@ function scopedList(db, user, name, records) {
   }
   // Reference data shared by everyone in the product.
   if (name === "ArticleVerification") return records;
+  if (name === "DiscrepancyReport" && user.role === "admin") return records;
   // Analyses, discrepancy reports, and any future saved calculations stay
   // private to the signed-in user — including org admins.
   return records.filter((r) => r.created_by_id === user.id);

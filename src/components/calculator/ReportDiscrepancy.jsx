@@ -72,6 +72,7 @@ export default function ReportDiscrepancy({ calculatorId, calculatorName, necYea
         calculator_id: calculatorId,
         calculator_name: calculatorName,
         nec_year: necYear,
+        status: "open",
         article_ref: form.article_ref.trim(),
         current_result: form.current_result.trim(),
         expected_result: form.expected_result.trim(),
