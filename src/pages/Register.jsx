@@ -14,11 +14,13 @@ export default function Register() {
   const [organizationName, setOrganizationName] = useState("");
   const [inviteCode, setInviteCode] = useState("");
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    setSuccess("");
     if (password !== confirmPassword) {
       setError("Passwords do not match");
       return;
@@ -33,6 +35,10 @@ export default function Register() {
         organizationName: trimmedInviteCode ? undefined : trimmedOrganizationName || undefined,
         inviteCode: trimmedInviteCode || undefined,
       });
+      if (result?.pendingEmailConfirmation) {
+        setSuccess("Account created. Check your email to confirm your account, then log in.");
+        return;
+      }
       if (result?.access_token) {
         base44.auth.setToken(result.access_token);
       }
@@ -61,6 +67,11 @@ export default function Register() {
       {error && (
         <div className="mb-4 p-3 rounded-lg bg-destructive/10 text-destructive text-sm">
           {error}
+        </div>
+      )}
+      {success && (
+        <div className="mb-4 p-3 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 text-sm">
+          {success}
         </div>
       )}
 

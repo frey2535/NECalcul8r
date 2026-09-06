@@ -69,25 +69,29 @@ async function profileFor(authUser) {
   if (error) throw error;
 
   if (!profile) {
+    const metadata = authUser.user_metadata || {};
+    const profilePayload = await buildProfilePayload(client, authUser, {
+      organizationName: metadata.organization_name,
+      inviteCode: metadata.invite_code,
+    });
     const { data: created, error: createError } = await client
       .from("profiles")
-      .insert({
-        id: authUser.id,
-        email: normalizeEmail(authUser.email),
-        full_name: normalizeEmail(authUser.email).split("@")[0],
-        org_id: null,
-        org_role: "individual",
-        role: "user",
-        access_type: "trial",
-        access_status: "trial",
-        trial_start_date: todayISODate(),
-        trial_end_date: daysFromNow(30),
-        purchase_source: "manual",
-      })
+      .insert(profilePayload)
       .select("*")
       .single();
     if (createError) throw createError;
-    return mapProfile(created, null);
+
+    let createdOrg = null;
+    if (created.org_id) {
+      const { data: orgData, error: orgError } = await client
+        .from("organizations")
+        .select("*")
+        .eq("id", created.org_id)
+        .maybeSingle();
+      if (orgError) throw orgError;
+      createdOrg = orgData;
+    }
+    return mapProfile(created, createdOrg);
   }
 
   let org = null;
@@ -184,9 +188,25 @@ export const supabaseAuth = {
     const { data, error } = await client.auth.signUp({
       email: normalized,
       password,
+      options: {
+        data: {
+          organization_name: String(organizationName || "").trim() || null,
+          invite_code: String(inviteCode || "").trim().toUpperCase() || null,
+        },
+      },
     });
     if (error) throw error;
     if (!data?.user) throw httpError("Registration did not return a user.");
+
+    if (!data.session) {
+      return {
+        access_token: null,
+        pendingEmailConfirmation: true,
+        user: {
+          email: normalized,
+        },
+      };
+    }
 
     const profile = await buildProfilePayload(client, data.user, { organizationName, inviteCode });
     const { error: profileError } = await client.from("profiles").upsert(profile);
