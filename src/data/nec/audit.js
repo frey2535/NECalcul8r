@@ -98,6 +98,14 @@ const GFCI_EQUIPMENT_SERVICING_YEAR_REFS = added2020Ref("210.8(E)");
 const GFCI_OUTDOOR_DWELLING_YEAR_REFS = added2020Ref("210.8(F)");
 const ARC_ENERGY_FUSE_YEAR_REFS = added2020Ref("240.67");
 const POOL_PUMP_REPLACEMENT_GFCI_YEAR_REFS = added2020Ref("680.21(D)");
+const DWELLING_SPD_YEAR_REFS = added2020Ref("230.67");
+const OUTDOOR_DISCONNECT_YEAR_REFS = added2020Ref("230.85");
+const EV_SERVICE_LOAD_MINIMUM_YEAR_REFS = {
+  "2017": null,
+  "2020": null,
+  "2023": "220.57",
+  "2026": "220.57 (pending)",
+};
 
 // ─── Helpers used by the audit page ──────────────────────────────────────
 
@@ -189,8 +197,8 @@ export const CALCULATORS = [
       { ref: "220.60", desc: "Noncoincident loads — larger of heating vs cooling", changed: false, source: N17 },
       { ref: "240.6(A)", desc: "Standard OCPD sizes", changed: false, source: DEV },
       { ref: "230.79(C)", desc: "Minimum one-family dwelling service — 100A", changed: false, source: DEV, note: "100A minimum dwelling service." },
-      { ref: "230.85", desc: "Outdoor emergency disconnect (2020+)", changed: true, source: PEND, note: "2017: not required. 2020+: required for 1- and 2-family dwellings. Displayed in NoteBox." },
-      { ref: "230.67", desc: "SPD required for dwelling services (2020+)", changed: true, source: PEND, note: "2017: not required. 2020+: Type 1 or Type 2 SPD required. Displayed in NoteBox." },
+      { ref: "230.85", desc: "Outdoor emergency disconnect (2020+)", changed: true, source: PEND, yearRefs: OUTDOOR_DISCONNECT_YEAR_REFS, note: "2017: not applicable. 2020+: required for 1- and 2-family dwellings. Displayed in NoteBox." },
+      { ref: "230.67", desc: "SPD required for dwelling services (2020+)", changed: true, source: PEND, yearRefs: DWELLING_SPD_YEAR_REFS, note: "2017: not applicable. 2020+: Type 1 or Type 2 SPD required. Displayed in NoteBox." },
       { ref: "210.8(A)", desc: "GFCI scope — dwelling receptacles", changed: true, source: PEND, note: "2017: narrower 125V/15-20A scope. 2020: expanded to 250V, more areas, laundry, all kitchen. Displayed in NoteBox." },
       { ref: "210.52(C)(2)", desc: "Island/peninsula countertop receptacle rule", changed: true, source: PEND, yearRefs: ISLAND_PENINSULA_YEAR_REFS, note: ISLAND_PENINSULA_NOTE },
       { ref: "210.52(G)", desc: "Garage/basement/accessory receptacle — multifamily expansion", changed: true, source: PEND, note: "2020: expanded to include multifamily dwellings. Displayed in NoteBox." },
@@ -215,8 +223,8 @@ export const CALCULATORS = [
       { ref: "220.82(B)", desc: "General loads — 100% first 10 kVA + 40% remainder, nameplate appliances", changed: false, source: N17, note: "40% remainder factor. Range/dryer at nameplate, not Table 220.55/220.54." },
       { ref: "220.82(C)", desc: "HVAC — largest of (C)(1)–(C)(6): 100% AC, 100% HP, 65% supplemental, 65%/40% space heat, 100% thermal storage", changed: false, source: N17 },
       { ref: "240.6(A)", desc: "Standard OCPD sizes", changed: false, source: DEV },
-      { ref: "230.85", desc: "Outdoor emergency disconnect (2020+)", changed: true, source: PEND, note: "2017: not required. 2020+: required for 1- and 2-family dwellings. Displayed in NoteBox." },
-      { ref: "230.67", desc: "SPD required for dwelling services (2020+)", changed: true, source: PEND, note: "2017: not required. 2020+: required. Displayed in NoteBox." },
+      { ref: "230.85", desc: "Outdoor emergency disconnect (2020+)", changed: true, source: PEND, yearRefs: OUTDOOR_DISCONNECT_YEAR_REFS, note: "2017: not applicable. 2020+: required for 1- and 2-family dwellings. Displayed in NoteBox." },
+      { ref: "230.67", desc: "SPD required for dwelling services (2020+)", changed: true, source: PEND, yearRefs: DWELLING_SPD_YEAR_REFS, note: "2017: not applicable. 2020+: required. Displayed in NoteBox." },
       { ref: "210.8(A)", desc: "GFCI scope — dwelling receptacles", changed: true, source: PEND, note: "2017: narrower scope. 2020: expanded. Displayed in NoteBox." },
       { ref: "210.52(C)(2)", desc: "Island/peninsula countertop receptacle rule", changed: true, source: PEND, yearRefs: ISLAND_PENINSULA_YEAR_REFS, note: ISLAND_PENINSULA_NOTE },
       { ref: "210.52(G)", desc: "Garage/basement/accessory receptacle — multifamily expansion", changed: true, source: PEND, note: "2020: expanded to multifamily dwellings. Displayed in NoteBox." },
@@ -475,9 +483,9 @@ export const CALCULATORS = [
       { ref: "625.42", desc: "EVSE/power transfer equipment rating and continuous-load treatment", changed: false, source: DEV, note: "625.42(A) addresses automatic load management / EMS, not a minimum VA rule." },
       { ref: "625.43", desc: "Disconnecting means threshold for EVSE", changed: false, source: DEV, note: "Displayed as a field-verification notice when ampere rating exceeds the modeled threshold." },
       { ref: "625.54", desc: "GFCI protection for EV charging receptacles", changed: false, source: DEV, note: "2017 and 2020 require GFCI for covered EV charging receptacles. Verify exact scope against adopted code text/amendments." },
-      { ref: "220.57", desc: "EVSE service/load calculation minimum — not Article 625 branch-circuit sizing", changed: true, source: PEND, note: "2023+: 7200VA or nameplate for service/load calculations; shown only as a note, not used to size Article 625 branch circuits." },
-      { ref: "230.67", desc: "SPD required for dwellings", changed: true, source: DEV, note: "2017:no, 2020+:yes. NEEDS VERIFICATION against NEC 2020 text." },
-      { ref: "230.85", desc: "Outdoor emergency disconnect", changed: true, source: DEV, note: "2017:no, 2020:yes. NEEDS VERIFICATION against NEC 2020 text." },
+      { ref: "220.57", desc: "EVSE service/load calculation minimum — not Article 625 branch-circuit sizing", changed: true, source: PEND, yearRefs: EV_SERVICE_LOAD_MINIMUM_YEAR_REFS, note: "2017/2020: not applicable. 2023+: 7200VA or nameplate for service/load calculations; shown only as a note, not used to size Article 625 branch circuits." },
+      { ref: "230.67", desc: "SPD required for dwellings", changed: true, source: DEV, yearRefs: DWELLING_SPD_YEAR_REFS, note: "2017: not applicable. 2020+: required. Needs verification against NEC 2020 text." },
+      { ref: "230.85", desc: "Outdoor emergency disconnect", changed: true, source: DEV, yearRefs: OUTDOOR_DISCONNECT_YEAR_REFS, note: "2017: not applicable. 2020+: required. Needs verification against NEC 2020 text." },
       { ref: "240.6(A)", desc: "Standard OCPD sizes", changed: false, source: DEV },
     ],
     sourceNotes: "Year-sensitive calculator. Article 625 branch-circuit/feeder sizing uses EVSE nameplate/current rating as continuous load. The 2023 7200VA value belongs to 220.57 service/load calculations, not 625.42(A). Edition-gated display requirements include EV charging receptacle GFCI (625.54, required in 2017+) and dwelling SPD/disconnect (2020+). The 2026 values are speculative.",
@@ -568,8 +576,8 @@ export const CALCULATORS = [
       { ref: "230.42(A)", desc: "Service conductor — 125% continuous + 100% noncontinuous", changed: false, source: DEV },
       { ref: "230.79(C)", desc: "Minimum one-family dwelling service — 100A", changed: false, source: DEV, note: "100A minimum dwelling service." },
       { ref: "240.6(A)", desc: "Standard OCPD sizes", changed: false, source: DEV },
-      { ref: "230.67", desc: "Dwelling SPD requirement", changed: true, source: PEND, note: "2020: new requirement — Type 1 or 2 SPD required for dwelling unit services. Displayed in result row + NoteBox." },
-      { ref: "230.85", desc: "Outdoor emergency disconnect", changed: true, source: PEND, note: "2020: new requirement for 1- and 2-family dwellings. Displayed in result row + NoteBox." },
+      { ref: "230.67", desc: "Dwelling SPD requirement", changed: true, source: PEND, yearRefs: DWELLING_SPD_YEAR_REFS, note: "2017: not applicable. 2020+: Type 1 or 2 SPD required for dwelling unit services. Displayed in result row + NoteBox." },
+      { ref: "230.85", desc: "Outdoor emergency disconnect", changed: true, source: PEND, yearRefs: OUTDOOR_DISCONNECT_YEAR_REFS, note: "2017: not applicable. 2020+: required for 1- and 2-family dwellings. Displayed in result row + NoteBox." },
     ],
     sourceNotes: "230.42 mirrors the 125% rule for service conductors. 230.79(C) carries the 100A one-family dwelling minimum. 230.67/230.85 added in 2020 per Eaton PDF — displayed dynamically.",
     testInputs: { totalVA: 40000, voltage: 240, continuousPct: 80 },
