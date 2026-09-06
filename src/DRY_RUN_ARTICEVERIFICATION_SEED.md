@@ -176,20 +176,20 @@
 ---
 
 ### ev_charging
-**Articles in audit.js:** 6  
-**Articles in database:** 4  
-**Missing:** 2
+**Articles in audit.js:** 9  
+**Correction:** `625.42(A)` is EMS/load management, not a minimum-VA rule. The 2023 minimum service/load value belongs to `220.57`.
 
 | Article | 2017 | 2020 | 2023 | 2026 | Status |
 |---------|------|------|------|------|--------|
-| 625.42 | ✅ | ✅ | ✅ | ✅ | **Seeded** |
-| 625.42(A) | ❌ | ❌ | ❌ | ❌ | **MISSING** |
+| 625.40 | ⚠️ | ⚠️ | ⚠️ | ⚠️ | Branch-circuit assumption |
+| 625.41 | ⚠️ | ⚠️ | ⚠️ | ⚠️ | OCPD 125% sizing |
+| 625.42 | ✅ | ✅ | ✅ | ✅ | Rating / continuous load |
+| 625.43 | ⚠️ | ⚠️ | ⚠️ | ⚠️ | Disconnecting means notice |
 | 625.54 | ✅ | ✅ | ✅ | ✅ | **Seeded** |
+| 220.57 | N/A | N/A | ⚠️ | ⚠️ | Service/load note only |
 | 230.67 | ✅ | ✅ | ✅ | ✅ | **Seeded** |
 | 230.85 | ✅ | ✅ | ✅ | ✅ | **Seeded** |
 | 240.6(A) | ❌ | ❌ | ❌ | ❌ | **MISSING** |
-
-**Records to create:** 8 (2 articles × 4 years)
 
 ---
 

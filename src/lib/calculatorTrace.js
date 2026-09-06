@@ -84,9 +84,9 @@ export const FIELD_META = {
   CONDUCTOR_VOLUME:                     { value: "2.0–5.0 in³",      source: "Table 314.16(B)",    description: "Box fill volume allowances per conductor by wire size.", usedBy: ["Box Fill"] },
 
   // ── EV ────────────────────────────────────────────────────────────
-  EV_CONTINUOUS_MULTIPLIER:             { value: "1.25 (125%)",      source: "625.42",             description: "EV supply equipment is continuous load; circuit rated at 125% of EVSE rating.", usedBy: ["EV Charging"] },
+  EV_CONTINUOUS_MULTIPLIER:             { value: "1.25 (125%)",      source: "625.41 / 625.42",    description: "EVSE branch-circuit/OCPD sizing uses 125% of maximum load; 625.42 treats EV charging as continuous load and covers service/feed rating/load management.", usedBy: ["EV Charging"] },
   EV_GFCI_REQUIRED:                     { value: "See year",         source: "625.54",             description: "GFCI protection requirement for covered EV charging receptacles; required in the 2017 model and later.", usedBy: ["EV Charging"] },
-  EV_MINIMUM_LOAD_VA:                   { value: "See year",         source: "220.57",             description: "Minimum EV load VA for dwelling load calculations.", usedBy: ["EV Charging"] },
+  EV_SERVICE_LOAD_MINIMUM_VA:           { value: "See year",         source: "220.57",             description: "Minimum EVSE service/load calculation value added in 2023; not an Article 625 branch-circuit sizing rule.", usedBy: ["EV Charging note"] },
 
   // ── Solar PV ──────────────────────────────────────────────────────
   SOLAR_BUSBAR_120PCT:                  { value: "1.20 (120%)",      source: "705.12(B)(3)(a)",    description: "Busbar rating must be ≥ 120% of sum of OCPD ratings for line-side tap.", usedBy: ["Solar PV"] },
@@ -124,7 +124,11 @@ export const ARTICLE_META = {
   "430.247":       { title: "Full-Load Currents — Direct-Current Motors", usedBy: ["Motor Branch Circuit"] },
   "430.52":        { title: "Motor Branch Circuit OCPD Rating",    usedBy: ["Motor Branch Circuit"] },
   "430.62":        { title: "Motor Feeder OCPD Rating",            usedBy: ["Motor Feeder"] },
-  "625.42":        { title: "EVSE as Continuous Load",             usedBy: ["EV Charging"] },
+  "220.57":        { title: "EVSE Load for Service Calculations",  usedBy: ["EV Charging note"] },
+  "625.40":        { title: "EVSE Branch Circuit",                 usedBy: ["EV Charging"] },
+  "625.41":        { title: "EVSE Overcurrent Protection",         usedBy: ["EV Charging"] },
+  "625.42":        { title: "EVSE Rating / Continuous Load",       usedBy: ["EV Charging"] },
+  "625.43":        { title: "EVSE Disconnecting Means",            usedBy: ["EV Charging"] },
   "625.54":        { title: "GFCI Protection for EVSE",            usedBy: ["EV Charging"] },
   "250.66":        { title: "Grounding Electrode Conductor Sizing", usedBy: ["GEC Sizing"] },
   "250.122":       { title: "Equipment Grounding Conductor Sizing", usedBy: ["EGC Sizing"] },

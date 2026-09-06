@@ -14,6 +14,7 @@ export function calcEVCharging(v, nec) {
   const voltage = parseFloat(v.voltage) || 240;
   const evseA = parseFloat(v.evseA) || 32;
   const numUnits = parseFloat(v.numUnits) || 1;
+  const connectionType = v.connectionType || "receptacle";
 
   const conductorA_each = evseA * nec.EV_CONTINUOUS_MULTIPLIER;
   const ocpdCalc = evseA * nec.EV_CONTINUOUS_MULTIPLIER;
@@ -25,12 +26,15 @@ export function calcEVCharging(v, nec) {
     ? evseA * numUnits * simultaneousPct * nec.EV_CONTINUOUS_MULTIPLIER
     : conductorA_each * numUnits;
   const totalKW = (voltage * totalA) / 1000;
+  const gfciRequired = !!nec.EV_GFCI_REQUIRED && connectionType === "receptacle";
+  const disconnectRequired = evseA > 60 || v.level === "dc";
+  const serviceLoadMinimumVA = nec.EV_SERVICE_LOAD_MINIMUM_VA || 0;
 
   const steps = [
-    { label: "Conductor Ampacity per Unit (625.42)", formula: "A = EVSE rating × 125%", expression: `${evseA} × ${nec.EV_CONTINUOUS_MULTIPLIER}`, result: Math.round(conductorA_each * 10) / 10, unit: "A", note: "125% of EVSE rating (continuous load)" },
-    { label: "OCPD per Unit", formula: "OCPD = next standard ≥ conductor amps", expression: `next standard ≥ ${Math.round(ocpdCalc * 10) / 10} A`, result: ocpd_each, unit: "A" },
+    { label: "Continuous Load per Unit (625.41/625.42)", formula: "A = EVSE rating × 125%", expression: `${evseA} × ${nec.EV_CONTINUOUS_MULTIPLIER}`, result: Math.round(conductorA_each * 10) / 10, unit: "A", note: "125% of EVSE rating for continuous-load sizing" },
+    { label: "OCPD per Unit (625.41)", formula: "OCPD = next standard ≥ EVSE rating × 125%", expression: `next standard ≥ ${Math.round(ocpdCalc * 10) / 10} A`, result: ocpd_each, unit: "A" },
     { label: "Power per Unit", formula: "kW = V × A ÷ 1000", expression: `${voltage} × ${evseA} ÷ 1000`, result: Math.round(kW_each * 10) / 10, unit: "kW" },
-    { label: "Total Feeder Ampacity", formula: "A = EVSE × units × simultaneity × 125%", expression: v.demandManaged === "yes" ? `${evseA} × ${numUnits} × ${(simultaneousPct * 100).toFixed(0)}% × ${nec.EV_CONTINUOUS_MULTIPLIER}` : `${Math.round(conductorA_each * 10) / 10} × ${numUnits}`, result: Math.round(totalA * 10) / 10, unit: "A", note: v.demandManaged === "yes" ? "Demand-managed" : "Full simultaneous load" },
+    { label: "Total Feeder Ampacity (625.42)", formula: "A = EVSE × units × simultaneity × 125%", expression: v.demandManaged === "yes" ? `${evseA} × ${numUnits} × ${(simultaneousPct * 100).toFixed(0)}% × ${nec.EV_CONTINUOUS_MULTIPLIER}` : `${Math.round(conductorA_each * 10) / 10} × ${numUnits}`, result: Math.round(totalA * 10) / 10, unit: "A", note: v.demandManaged === "yes" ? "Demand-managed per 625.42(A)/EMS input" : "Full simultaneous load" },
     { label: "Total Power", formula: "kW = V × total A ÷ 1000", expression: `${voltage} × ${Math.round(totalA * 10) / 10} ÷ 1000`, result: Math.round(totalKW * 10) / 10, unit: "kW" },
   ];
   const result = {
@@ -39,21 +43,34 @@ export function calcEVCharging(v, nec) {
     kW_each: Math.round(kW_each * 10) / 10,
     feederAmps: Math.round(totalA * 10) / 10,
     totalKW: Math.round(totalKW * 10) / 10,
-    min_load_VA: nec.EV_MINIMUM_LOAD_VA || 0,
-    GFCI_required: !!nec.EV_GFCI_REQUIRED,
-    GFCI_requirement_text: nec.EV_GFCI_REQUIREMENT_TEXT || (nec.EV_GFCI_REQUIRED ? "GFCI protection required by NEC 625.54." : "No EV-specific GFCI requirement modeled for this NEC edition."),
+    GFCI_required: gfciRequired,
+    GFCI_requirement_text: connectionType === "receptacle"
+      ? (nec.EV_GFCI_REQUIREMENT_TEXT || (nec.EV_GFCI_REQUIRED ? "GFCI protection required by NEC 625.54." : "No EV-specific GFCI requirement modeled for this NEC edition."))
+      : "625.54 is modeled here for EV charging receptacles. Verify hardwired equipment requirements and manufacturer instructions separately.",
+    disconnect_required: disconnectRequired,
+    disconnect_text: disconnectRequired
+      ? "Disconnecting means may be required by 625.43 when EVSE rating exceeds 60 A or 150 V to ground. Verify voltage-to-ground and installation details."
+      : "No 625.43 disconnect trigger modeled at this ampere rating; verify voltage-to-ground and installation details.",
+    service_load_minimum_VA: serviceLoadMinimumVA,
+    service_load_note: serviceLoadMinimumVA > 0
+      ? `NEC 220.57 service/load calculations may require ${serviceLoadMinimumVA} VA or EVSE nameplate, whichever is larger. This is not an Article 625.42(A) branch-circuit sizing rule.`
+      : "No Article 220.57 EVSE service-load minimum is modeled for this NEC edition.",
     SPD_required: !!nec.DWELLING_SPD_REQUIRED,
     outdoor_disconnect: !!nec.DWELLING_OUTDOOR_DISCONNECT_REQUIRED,
     steps,
   };
   return withTrace(result, {
     articles_used: [
+      "625.40",
+      "625.41",
       "625.42",
-      ...(nec.EV_GFCI_REQUIRED ? ["625.54"] : []),
+      ...(disconnectRequired ? ["625.43"] : []),
+      ...(connectionType === "receptacle" ? ["625.54"] : []),
+      ...(serviceLoadMinimumVA > 0 ? ["220.57"] : []),
       ...(nec.DWELLING_SPD_REQUIRED ? ["230.67"] : []),
       ...(nec.DWELLING_OUTDOOR_DISCONNECT_REQUIRED ? ["230.85"] : []),
     ],
     tables_used: ["Table 240.6(A)"],
-    fields_used: ["EV_CONTINUOUS_MULTIPLIER", "EV_GFCI_REQUIRED", "EV_GFCI_REQUIREMENT_TEXT", "EV_MINIMUM_LOAD_VA", "STD_OCPD_SIZES", "DWELLING_SPD_REQUIRED", "DWELLING_OUTDOOR_DISCONNECT_REQUIRED"],
+    fields_used: ["EV_CONTINUOUS_MULTIPLIER", "EV_GFCI_REQUIRED", "EV_GFCI_REQUIREMENT_TEXT", "EV_SERVICE_LOAD_MINIMUM_VA", "STD_OCPD_SIZES", "DWELLING_SPD_REQUIRED", "DWELLING_OUTDOOR_DISCONNECT_REQUIRED"],
   });
 }

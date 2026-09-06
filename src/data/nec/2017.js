@@ -8,7 +8,7 @@
  * - No SPD requirement for dwellings (added 2023 230.67)
  * - Kitchen GFCI: only within 6ft of sink, not all receptacles
  * - Dishwasher GFCI scope: pending verification against authorized NFPA 70-2017
- * - No minimum EV load (added 2023 625.42)
+ * - No Article 220.57 EV service-load minimum (added in 2023)
  */
 
 export const NEC_YEAR = "2017";
@@ -126,8 +126,9 @@ export const DWELLING_SPD_REQUIRED = false;                  // 230.67 — added
 // (countertop area) if ≥ 12 in. wide. Supply via countertop, wall, or base.
 export const ISLAND_PENINSULA_RULE = "≥12 sq ft countertop area: at least 1 receptacle required. May be supplied from countertop, wall, or base cabinet. NEC 210.52(C)(2)/(C)(3).";
 
-// ─── EV Charging (NEC 625) ──────────────────────────────────────────
-export const EV_MINIMUM_LOAD_VA = 0;  // No minimum per-EVSE load in 2017
+// ─── EV Service Load (NEC 220.57) ───────────────────────────────────
+export const EV_SERVICE_LOAD_MINIMUM_VA = 0; // Article 220.57 EV service-load minimum was added in 2023
+export const EV_MINIMUM_LOAD_VA = 0;         // Legacy EV calculator field; Article 625 sizing uses nameplate × 125%
 
 // ─── Pool pump GFCI (NEC 680.21(C) 2017) ──────────────────────────
 // 2017: GFCI required for single-phase 120–240V pool pump motors on

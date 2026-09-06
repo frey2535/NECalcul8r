@@ -168,8 +168,9 @@ export const GFCI_210_8F_METADATA = {
   note: "Values copied from 2020.js as placeholders. NOT verified against NFPA 70-2026. Pending official source verification.",
 };
 
-// ─── EV Charging (NEC 625) ──────────────────────────────────────────
-export const EV_MINIMUM_LOAD_VA = 7200;  // ⚠️ PENDING — same as 2023, subject to change
+// ─── EV Service Load (NEC 220.57) ───────────────────────────────────
+export const EV_SERVICE_LOAD_MINIMUM_VA = 7200;  // ⚠️ PENDING — service/load calculation, not 625.42(A)
+export const EV_MINIMUM_LOAD_VA = 0;             // Legacy EV calculator field; Article 625 sizing uses nameplate × 125%
 
 // ─── Service Minimums ────────────────────────────────────────────────
 export const DWELLING_MIN_SERVICE_AMPS = 100;  // 230.79(C)

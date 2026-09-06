@@ -8,9 +8,9 @@ import { getNecData } from "@/data/nec";
 import { calcEVCharging } from "./logic/evChargingCalc";
 
 const FORMULAS = [
-  { label: "Conductor Ampacity (NEC 625.42)", formula: "Min Conductor = EVSE Rating × 125%", description: "EVSE is a continuous load — multiplier applies to conductor and OCPD" },
-  { label: "OCPD Rating", formula: "Min OCPD = EVSE Rating × 125% → next standard size", description: "Select next standard breaker size at or above the calculated minimum" },
-  { label: "Total Feeder (multiple units)", formula: "Total A = Σ (EVSE_rating × 1.25 × simultaneous %)", description: "Demand management may reduce simultaneous charging percentage" },
+  { label: "Continuous-load sizing (NEC 625.41 / 625.42)", formula: "Min ampacity = EVSE Rating × 125%", description: "EV charging is treated as continuous load; OCPD uses the 125% maximum-load rule" },
+  { label: "OCPD Rating (NEC 625.41)", formula: "Min OCPD = EVSE Rating × 125% → next standard size", description: "Select next standard breaker size at or above the calculated minimum" },
+  { label: "Total Feeder (NEC 625.42)", formula: "Total A = Σ (EVSE_rating × 1.25 × simultaneous %)", description: "Demand management / EMS may limit the service or feeder load under 625.42(A)" },
 ];
 
 export default function EVCharging({ category, necYear = "2023" }) {
@@ -18,7 +18,7 @@ export default function EVCharging({ category, necYear = "2023" }) {
   const TABLES = getTablesById(["240_6_std_sizes", "310_15_b_16_copper"], necYear);
 
   const [v, setV] = useCalculatorInputs({
-    level: "l2", voltage: 240, evseA: 32, numUnits: 1,
+    level: "l2", voltage: 240, evseA: 32, numUnits: 1, connectionType: "receptacle",
     demandManaged: "no", simultaneousLoad: 100,
   });
   const set = k => val => setV(p => ({ ...p, [k]: val }));
@@ -56,8 +56,8 @@ export default function EVCharging({ category, necYear = "2023" }) {
           )}
         </ResultSection>
         <ResultSection title={`NEC ${necYear} Requirements`}>
-          <ResultRow label="GFCI Protection" value={r.GFCI_required ? "Required (625.54)" : "Not required"} sub={r.GFCI_requirement_text} />
-          <ResultRow label="Minimum Load per EVSE" value={nec.EV_MINIMUM_LOAD_VA > 0 ? `${nec.EV_MINIMUM_LOAD_VA}VA` : "None (use nameplate)"} sub="NEC 625.42" />
+          <ResultRow label="GFCI Protection" value={r.GFCI_required ? "Required (625.54)" : "Not shown as required"} sub={r.GFCI_requirement_text} />
+          <ResultRow label="Disconnecting Means" value={r.disconnect_required ? "Verify / likely required (625.43)" : "No ampere trigger modeled"} sub={r.disconnect_text} />
           {nec.DWELLING_SPD_REQUIRED !== undefined && (
             <ResultRow label="SPD Required (Dwelling)" value={nec.DWELLING_SPD_REQUIRED ? "Yes (230.67)" : "No"} />
           )}
@@ -76,11 +76,13 @@ export default function EVCharging({ category, necYear = "2023" }) {
         {TABLES.map(t => <NECTableDisplay key={t.id} title={t.article + " — " + t.title} headers={t.headers} rows={t.rows} note={t.note} compact />)}
         <NoteBox>
           <ul className="list-disc pl-3.5 space-y-1">
-            <li>NEC {necYear} 625.42: EVSE branch circuits are continuous loads — conductor and OCPD rated at 125% of nameplate.</li>
-            <li>NEC 625.54 — GFCI:{" "}
-              {r.GFCI_requirement_text}</li>
-            {nec.EV_MINIMUM_LOAD_VA > 0 && (
-              <li>NEC 625.42: minimum {nec.EV_MINIMUM_LOAD_VA}VA load per EVSE circuit applies.</li>
+            <li>NEC 625.40: per-unit OCPD results assume each EVSE branch circuit is dedicated unless listed equipment, adjustable settings, or load management permits another arrangement.</li>
+            <li>NEC {necYear} 625.41 / 625.42: EV charging load is treated as continuous; this calculator sizes from the EVSE nameplate rating at 125%.</li>
+            <li>NEC 625.42(A): automatic load management / EMS may limit maximum service or feeder load; use the demand-management input only when the installed system supports it.</li>
+            <li>NEC 625.43: verify disconnecting-means requirements when rating exceeds 60 A or voltage-to-ground exceeds 150 V.</li>
+            <li>NEC 625.54 — GFCI: {r.GFCI_requirement_text}</li>
+            {nec.EV_SERVICE_LOAD_MINIMUM_VA > 0 && (
+              <li>{r.service_load_note}</li>
             )}
             {nec.DWELLING_SPD_REQUIRED && (
               <li>NEC 230.67: Surge Protective Device (SPD) required for dwelling unit services.</li>
@@ -108,6 +110,12 @@ export default function EVCharging({ category, necYear = "2023" }) {
       </Field>
       <Field label="EVSE Ampere Rating" unit="A" hint="Per-unit nameplate rating">
         <NumInput value={v.evseA} onChange={set("evseA")} placeholder="32" />
+      </Field>
+      <Field label="Connection Type">
+        <Select value={v.connectionType} onChange={set("connectionType")} options={[
+          { value: "receptacle", label: "Cord-and-plug / receptacle" },
+          { value: "hardwired", label: "Hardwired" },
+        ]} />
       </Field>
       <Field label="Number of EVSE Units"><NumInput value={v.numUnits} onChange={set("numUnits")} placeholder="1" min={1} /></Field>
       <Field label="Demand Management?">

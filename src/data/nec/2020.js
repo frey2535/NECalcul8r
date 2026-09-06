@@ -433,7 +433,8 @@ export const TAMPER_RESISTANT_SCOPE =
 // ─────────────────────────────────────────────────────────────────────────────
 export const EV_GFCI_REQUIRED = true;   // 625.54 — required for covered EV charging receptacles
 export const EV_GFCI_REQUIREMENT_TEXT = "Required by 625.54 for receptacles installed for electric vehicle charging. Verify exact outlet/receptacle scope against the adopted NEC edition and local amendments.";
-export const EV_MINIMUM_LOAD_VA = 0;    // Inherited from 2017 — no change in 2020
+export const EV_SERVICE_LOAD_MINIMUM_VA = 0; // Article 220.57 EV service-load minimum was added in 2023
+export const EV_MINIMUM_LOAD_VA = 0;         // Legacy EV calculator field; Article 625 sizing uses nameplate × 125%
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 680.21(C)/(D) — Pool Pump Motor GFCI and Replacement
@@ -656,7 +657,7 @@ export const SUPPLY_SIDE_DISCONNECT_NOTE =
 // CONTINUOUS_LOAD_MULTIPLIER = 1.25       (210.19(A)(1)) — inherited from 2017 baseline
 // COPPER_AMPACITY / ALUMINUM_AMPACITY     (Table 310.15(B)(16)) — inherited from 2017 baseline
 // All motor, transformer, grounding, conduit fill tables — inherited from 2017 baseline
-// EV_CONTINUOUS_MULTIPLIER = 1.25         (625.42) — inherited from 2017 baseline
+// EV_CONTINUOUS_MULTIPLIER = 1.25         (625.41 / 625.42) — inherited from 2017 baseline
 // SOLAR_BUSBAR_120PCT / SOLAR_BACKFEED_MULTIPLIER — inherited from 2017 baseline (pending confirmation, see KNOWN GAPS above)
 
 // ─────────────────────────────────────────────────────────────────────────────

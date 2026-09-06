@@ -17,7 +17,7 @@
 export const POST_2017_ARTICLES = {
   "230.85": { addedIn: "2020", description: "Outdoor emergency disconnect for dwelling units" },
   "230.67":  { addedIn: "2020", description: "Surge-protective device (SPD) required for dwelling unit services" },
-  "220.57":  { addedIn: "2023", description: "EV minimum load for dwelling load calculations" },
+  "220.57":  { addedIn: "2023", description: "EVSE service/load calculation minimum" },
   "210.8(A)(10)": { addedIn: "2020", description: "GFCI for laundry areas" },
   "210.8(A)(11)": { addedIn: "2020", description: "GFCI for dishwashers" },
   "210.8(A)(12)": { addedIn: "2023", description: "GFCI for bathtubs and shower stalls" },
@@ -32,7 +32,7 @@ export const YEAR_SENSITIVE_FIELDS = {
   EV_GFCI_REQUIRED:                   { nec2017: true,    changedIn: "2017", article: "625.54",     note: "GFCI required for covered EV charging receptacles in 2017" },
   DWELLING_OUTDOOR_DISCONNECT_REQUIRED:{ nec2017: false,   changedIn: "2020", article: "230.85",     note: "Outdoor emergency disconnect not required in 2017" },
   DWELLING_SPD_REQUIRED:               { nec2017: false,   changedIn: "2023", article: "230.67",     note: "SPD not required in 2017" },
-  EV_MINIMUM_LOAD_VA:                  { nec2017: 0,       changedIn: "2023", article: "220.57",     note: "No minimum EV load in 2017" },
+  EV_SERVICE_LOAD_MINIMUM_VA:          { nec2017: 0,       changedIn: "2023", article: "220.57",     note: "No Article 220.57 EVSE service-load minimum in 2017" },
   ISLAND_PENINSULA_RULE:               { nec2017: "≥12 sq ft with ≥12 in. width", changedIn: "2020", article: "210.52(C)", note: "2017 island rule differs from 2020+" },
   GFCI_SCOPE_DWELLING:                 { nec2017: "6 ft of sink only (kitchen)", changedIn: "2020", article: "210.8(A)", note: "2017 kitchen GFCI scope is narrower than 2020+" },
 };
@@ -71,7 +71,7 @@ export const VALID_2017_ARTICLES = new Set([
   "440.22", "440.32",
   "450.3", "450.3(B)",
   "460.8",
-  "625.14", "625.17", "625.19", "625.42", "625.54",
+  "625.14", "625.17", "625.19", "625.40", "625.41", "625.42", "625.43", "625.54",
   "630.11", "630.12",
   "555.12", "555.19", "555.19(A)",
   "680.8", "680.22", "680.26", "680.43",

@@ -498,7 +498,8 @@ export const BJ_TABLE_ALUMINUM = [
 ];
 
 // ─── EV Charging: NEC 625 ────────────────────────────────────────
-// 2023: Major changes — GFCI required for all L1/L2, load calc refined
+// Article 625 sizing uses the EVSE nameplate/current rating as a continuous load.
+// The 2023 7200 VA service-load minimum is Article 220.57, not 625.42(A).
 export const EV_CONTINUOUS_MULTIPLIER = 1.25;
 
 // ─── Small Conductor Max OCPD: NEC 240.4(D) ──────────────────────
