@@ -9,9 +9,9 @@ import {
 } from "lucide-react";
 
 const STATUS_META = {
-  verified: { label: "2020 VERIFIED", icon: CheckCircle2, color: "text-emerald-600", bg: "bg-emerald-100 dark:bg-emerald-950/30", border: "border-emerald-300 dark:border-emerald-800" },
+  verified: { label: "2020 SOURCE VERIFIED", icon: CheckCircle2, color: "text-emerald-600", bg: "bg-emerald-100 dark:bg-emerald-950/30", border: "border-emerald-300 dark:border-emerald-800" },
   correct: { label: "Correct (pure math)", icon: CheckCircle2, color: "text-emerald-600", bg: "bg-emerald-100 dark:bg-emerald-950/30", border: "border-emerald-300 dark:border-emerald-800" },
-  needs_verification: { label: "Needs verification", icon: AlertTriangle, color: "text-amber-600", bg: "bg-amber-100 dark:bg-amber-950/30", border: "border-amber-300 dark:border-amber-800" },
+  needs_verification: { label: "2020 SOURCE REVIEW NEEDED", icon: AlertTriangle, color: "text-amber-600", bg: "bg-amber-100 dark:bg-amber-950/30", border: "border-amber-300 dark:border-amber-800" },
   assumed: { label: "Assumed (dev)", icon: ShieldAlert, color: "text-orange-600", bg: "bg-orange-100 dark:bg-orange-950/30", border: "border-orange-300 dark:border-orange-800" },
   missing: { label: "Missing", icon: XCircle, color: "text-rose-600", bg: "bg-rose-100 dark:bg-rose-950/30", border: "border-rose-300 dark:border-rose-800" },
   placeholder: { label: "Placeholder", icon: FileText, color: "text-violet-600", bg: "bg-violet-100 dark:bg-violet-950/30", border: "border-violet-300 dark:border-violet-800" },
@@ -19,9 +19,11 @@ const STATUS_META = {
 };
 
 const VERIF_STATUS = {
-  pending: { label: "PENDING", color: "text-slate-500", bg: "bg-slate-100 dark:bg-slate-800" },
-  in_progress: { label: "IN PROGRESS", color: "text-blue-600", bg: "bg-blue-100 dark:bg-blue-950/30" },
-  verified: { label: "VERIFIED", color: "text-emerald-600", bg: "bg-emerald-100 dark:bg-emerald-950/30" },
+  pending: { label: "TEST GATE PENDING", color: "text-slate-500", bg: "bg-slate-100 dark:bg-slate-800" },
+  in_progress: { label: "TEST GATE IN PROGRESS", color: "text-blue-600", bg: "bg-blue-100 dark:bg-blue-950/30" },
+  verified: { label: "BASELINE PASSED", color: "text-emerald-600", bg: "bg-emerald-100 dark:bg-emerald-950/30" },
+  verified_with_limitations: { label: "BASELINE PASSED WITH LIMITS", color: "text-amber-600", bg: "bg-amber-100 dark:bg-amber-950/30" },
+  defect_corrected_additional_defect_found: { label: "DEFECT FOLLOW-UP NEEDED", color: "text-orange-600", bg: "bg-orange-100 dark:bg-orange-950/30" },
 };
 
 function DependencyMatrix({ dependencies }) {
@@ -138,13 +140,17 @@ function ConsumerAudit({ audit }) {
 
 export default function CalculatorVerificationCard({ calc }) {
   const [open, setOpen] = useState(false);
-  const status = STATUS_META[calc.status2020] || STATUS_META.needs_verification;
-  const verifStatus = VERIF_STATUS[calc.verificationStatus] || VERIF_STATUS.pending;
-  const StatusIcon = status.icon;
   const depCount = calc.dependencies.length;
   const verifiedDeps = calc.dependencies.filter((d) => d.verified).length;
   const runtimeDeps = calc.dependencies.filter((d) => d.runtimeCalculation).length;
   const displayDeps = calc.dependencies.filter((d) => d.displayOnly).length;
+  const hasUnverifiedDependencies = depCount > 0 && verifiedDeps < depCount;
+  const status = STATUS_META[calc.status2020] || STATUS_META.needs_verification;
+  const verifStatus = VERIF_STATUS[calc.verificationStatus] || VERIF_STATUS.pending;
+  const StatusIcon = status.icon;
+  const sourceVerificationNote = hasUnverifiedDependencies
+    ? "Baseline/regression tests may pass, but this calculator is not fully source-verified until every dependency row is checked against the applicable NEC edition."
+    : null;
 
   return (
     <Card className={`overflow-hidden shadow-sm hover:shadow-md transition-shadow border-${status.border}`}>
@@ -178,7 +184,7 @@ export default function CalculatorVerificationCard({ calc }) {
         {/* Quick stats */}
         <div className="px-4 pb-2 flex flex-wrap gap-3 text-[10px] text-muted-foreground">
           <span><strong className="text-foreground">{depCount}</strong> dependencies</span>
-          <span><strong className="text-emerald-600">{verifiedDeps}</strong> verified</span>
+          <span><strong className="text-emerald-600">{verifiedDeps}</strong> source-verified</span>
           <span><strong className="text-foreground">{runtimeDeps}</strong> runtime</span>
           <span><strong className="text-amber-600">{displayDeps}</strong> display-only</span>
           <span><strong className="text-rose-600">{calc.dependencies.filter(d => d.missing).length}</strong> missing</span>
@@ -218,9 +224,14 @@ export default function CalculatorVerificationCard({ calc }) {
                   <StatusIcon className="w-3.5 h-3.5" /> {status.label}
                 </span>
                 <span className="text-[10px] text-muted-foreground">
-                  {verifiedDeps} of {depCount} dependencies verified
+                  {verifiedDeps} of {depCount} dependencies source-verified
                 </span>
               </div>
+              {sourceVerificationNote && (
+                <p className="text-[10px] text-amber-700 dark:text-amber-300 mt-1.5">
+                  {sourceVerificationNote}
+                </p>
+              )}
               {calc.sourceNotes && (
                 <p className="text-[10px] text-muted-foreground mt-1.5 italic">{calc.sourceNotes}</p>
               )}
