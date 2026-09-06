@@ -83,6 +83,7 @@ export default function ReportDiscrepancy({ calculatorId, calculatorName, necYea
         file_urls: fileUrls,
         contact_email: form.contact_email.trim() || null,
       });
+      window.dispatchEvent(new CustomEvent("necalcul8r-reports-updated"));
       setDone(true);
     } catch (e) {
       setSubmitError(e?.message || "Report submission failed. Please try again.");
