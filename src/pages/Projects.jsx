@@ -247,7 +247,7 @@ export default function Projects() {
       await new Promise((resolve) => window.requestAnimationFrame(resolve));
 
       const bounds = node.getBoundingClientRect();
-      const captureWidth = Math.ceil(Math.max(node.scrollWidth, node.offsetWidth, bounds.width));
+      const captureWidth = Math.ceil(Math.max(node.offsetWidth, bounds.width));
       const captureHeight = Math.ceil(Math.max(node.scrollHeight, node.offsetHeight, bounds.height));
       const renderedBackground = window.getComputedStyle(node).backgroundColor;
       const backgroundColor = renderedBackground && renderedBackground !== "rgba(0, 0, 0, 0)"
@@ -277,7 +277,7 @@ export default function Projects() {
         scale,
         useCORS: true,
         width: captureWidth,
-        windowWidth: captureWidth,
+        windowWidth: window.innerWidth,
         windowHeight: captureNodeHeight,
         onclone: (clonedDocument) => {
           const clonedRoot = clonedDocument.querySelector("[data-saved-pdf-root]");
