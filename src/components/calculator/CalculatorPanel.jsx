@@ -98,26 +98,30 @@ const MAP = {
 
 const VALID_YEARS = ["2017", "2020"];
 
-export default function CalculatorPanel({ category }) {
+export default function CalculatorPanel({ category, savedCalculation = null, necYearOverride = null }) {
   const { year, setYear, years } = useNECYear();
   const [searchParams] = useSearchParams();
-  const savedId = searchParams.get("saved");
+  const savedId = savedCalculation ? null : searchParams.get("saved");
 
-  const { data: saved, isLoading: loadingSaved } = useQuery({
+  const { data: fetchedSaved, isLoading: loadingSaved } = useQuery({
     queryKey: ["saved-calculation", savedId],
     queryFn: () => base44.entities.SavedCalculation.get(savedId),
     enabled: !!savedId,
   });
 
+  const saved = savedCalculation || fetchedSaved;
+  const renderYear = necYearOverride || (savedCalculation?.nec_year && years.includes(savedCalculation.nec_year) ? savedCalculation.nec_year : year);
+
   useEffect(() => {
+    if (necYearOverride || savedCalculation) return;
     if (saved?.nec_year && years.includes(saved.nec_year) && saved.nec_year !== year) {
       setYear(saved.nec_year);
     }
-  }, [saved, years, year, setYear]);
+  }, [necYearOverride, saved, savedCalculation, years, year, setYear]);
 
   const Comp = MAP[category.id];
   if (!Comp) return <div className="p-8 text-center text-muted-foreground">Calculator coming soon.</div>;
-  if (!year || !VALID_YEARS.includes(year)) {
+  if (!renderYear || !VALID_YEARS.includes(renderYear)) {
     return (
       <div className="p-8 text-center text-muted-foreground text-sm">
         Please select a valid NEC year (2017, 2020, 2023, or 2026) to use this calculator.
@@ -144,7 +148,7 @@ export default function CalculatorPanel({ category }) {
 
   return (
     <CalcRestoreContext.Provider value={restore}>
-      <Comp key={restore?.id || "fresh"} category={category} necYear={year} />
+      <Comp key={`${restore?.id || "fresh"}-${renderYear}`} category={category} necYear={renderYear} />
     </CalcRestoreContext.Provider>
   );
 }
