@@ -465,17 +465,20 @@ export default function Projects() {
             <>
               <div ref={printRef} data-saved-pdf-root className="saved-calculation-print bg-background p-1 sm:p-2 space-y-3">
                 <DialogHeader>
+                  <DialogTitle className="sr-only">{activeCalc.title || activeCalc.calculator_label}</DialogTitle>
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                    <div>
-                      <DialogTitle>{activeCalc.title || activeCalc.calculator_label}</DialogTitle>
-                      <DialogDescription className="flex flex-wrap items-center gap-2 mt-1">
+                    <div className="min-w-0 text-left">
+                      <h2 className="text-lg font-semibold leading-none tracking-tight">
+                        {activeCalc.title || activeCalc.calculator_label}
+                      </h2>
+                      <p className="text-sm text-muted-foreground flex flex-wrap items-center gap-2 mt-1">
                         <span>{activeCalc.project_name}</span>
                         <Badge variant="outline">NEC {activeCalc.nec_year}</Badge>
                         <span className="inline-flex items-center gap-1">
                           <Calendar className="w-3 h-3" />
                           {new Date(activeCalc.updated_date || activeCalc.created_date).toLocaleDateString()}
                         </span>
-                      </DialogDescription>
+                      </p>
                     </div>
                     <div className="no-print flex flex-wrap gap-2" data-html2canvas-ignore="true">
                       <Button variant="outline" size="sm" className="gap-1.5" onClick={handlePrint}>
