@@ -432,7 +432,7 @@ create policy "app records read scoped"
   using (
     entity_type = 'ArticleVerification'
     or created_by_id = auth.uid()
-    or public.current_is_platform_admin()
+    or (entity_type = 'DiscrepancyReport' and public.current_is_platform_admin())
   );
 
 drop policy if exists "app records create own" on public.app_records;
@@ -445,12 +445,12 @@ create policy "app records update own"
   on public.app_records for update
   using (
     created_by_id = auth.uid()
-    or public.current_is_platform_admin()
+    or (entity_type = 'DiscrepancyReport' and public.current_is_platform_admin())
     or (entity_type = 'ArticleVerification' and public.current_can_manage_codebook())
   )
   with check (
     created_by_id = auth.uid()
-    or public.current_is_platform_admin()
+    or (entity_type = 'DiscrepancyReport' and public.current_is_platform_admin())
     or (entity_type = 'ArticleVerification' and public.current_can_manage_codebook())
   );
 
@@ -459,7 +459,7 @@ create policy "app records delete own"
   on public.app_records for delete
   using (
     created_by_id = auth.uid()
-    or public.current_is_platform_admin()
+    or (entity_type = 'DiscrepancyReport' and public.current_is_platform_admin())
     or (entity_type = 'ArticleVerification' and public.current_can_manage_codebook())
   );
 

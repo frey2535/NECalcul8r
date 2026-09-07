@@ -27,6 +27,8 @@ const ACTIVE_ACCESS_TYPES = new Set([
   "apple_app_store",
 ]);
 
+const PLATFORM_ADMIN_SHARED_RECORDS = new Set(["ArticleVerification", "DiscrepancyReport"]);
+
 const RECORD_METADATA_FIELDS = new Set([
   "id",
   "created_date",
@@ -326,7 +328,10 @@ async function listRecords(name, sort, limit, query) {
   const currentUser = await supabaseAuth.me();
   let request = client.from("app_records").select("*").eq("entity_type", name);
 
-  if (name !== "ArticleVerification" && !currentUser.is_platform_admin) {
+  if (
+    name !== "ArticleVerification"
+    && !(currentUser.is_platform_admin && PLATFORM_ADMIN_SHARED_RECORDS.has(name))
+  ) {
     request = request.eq("created_by_id", currentUser.id);
   }
 
