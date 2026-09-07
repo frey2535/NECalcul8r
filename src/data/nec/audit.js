@@ -164,7 +164,10 @@ export function computeVerifiedPerYear(calc) {
   if (!calc.articles || calc.articles.length === 0) {
     // Pure-math calculators — verified by definition across all years
     const r = {};
-    for (const y of years) r[y] = { verified: true, reason: "No NEC articles consumed — pure math/engineering." };
+    const reason = calc.codebookVerificationExempt
+      ? "Engineering/design calculator — no Codebook Matrix verification required."
+      : "No NEC articles consumed — pure math/engineering.";
+    for (const y of years) r[y] = { verified: true, reason };
     return r;
   }
   const r = {};
@@ -587,12 +590,9 @@ export const CALCULATORS = [
   {
     id: "data_center", name: "Data Center",
     category: "Power / Misc", usesGetNecData: true, yearSensitive: false,
-    articles: [
-      { ref: "210.19(A)(1)", desc: "Continuous load — 125%", changed: false, source: DEV },
-      { ref: "240.6(A)", desc: "Standard OCPD sizes", changed: false, source: DEV },
-      { ref: "—", desc: "PUE defaults (1.4) / UPS efficiency (94%)", changed: false, source: DEV, note: "Industry practice values, not NEC-specified. No codebook needed." },
-    ],
-    sourceNotes: "Only NEC values are the 125% continuous rule and OCPD sizes. PUE/UPS efficiency are industry defaults.",
+    codebookVerificationExempt: true,
+    articles: [],
+    sourceNotes: "Engineering/design calculator only. PUE defaults, UPS efficiency, redundancy multipliers, conservative continuous-load margin, and breaker-size selection are app engineering assumptions, not codebook-derived requirements. No Codebook Matrix verification is required; review math and project-specific design criteria instead.",
     testInputs: { itLoad_kW: 100, pue: 1.4, voltage: 480 },
     calculate: (i, nec) => {
       const tk = i.itLoad_kW * i.pue, tkva = tk / 0.9;

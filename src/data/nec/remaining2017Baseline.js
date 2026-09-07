@@ -287,7 +287,7 @@ def("pool_spa", "Pool / Spa 680 / 430", calcPoolSpa, [
   },
 ]);
 
-def("data_center", "Data Center 708 engineering", calcDataCenter, [
+def("data_center", "Data Center engineering design", calcDataCenter, [
   {
     id: "dc_n1",
     description: "PUE × IT, N+1 redundancy, 125% continuous breaker",

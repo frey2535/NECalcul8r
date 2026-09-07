@@ -41,7 +41,7 @@ export function auditCalculator(calc) {
   const exceptionRefs = articles.filter(articleHasExceptionReview);
 
   const gaps = [];
-  if (articles.length === 0 && calc.usesGetNecData) {
+  if (articles.length === 0 && calc.usesGetNecData && !calc.codebookVerificationExempt) {
     gaps.push("uses NEC data but declares no article/table references");
   }
   if (unverifiedArticles.length > 0) {
