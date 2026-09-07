@@ -1034,7 +1034,7 @@ export const NEC_TABLES = [
       ["750 kcmil", "750", "750,000", "61", "0.0171", "0.0282"],
       ["1000 kcmil", "1000", "1,000,000", "61", "0.0129", "0.0212"],
     ],
-    note: "NEC Ch.9 Table 8: Circular mil (CM) area is used in voltage drop calculations: VD = (K × I × D × 2) / CM for single-phase, VD = (1.732 × K × I × D) / CM for three-phase. K = 12.9 (copper) or 21.2 (aluminum). DC resistance values at 75°C; for AC resistance and reactance, use Table 9.",
+    note: "NEC Ch.9 Table 8 provides conductor circular-mil (CM) area used in voltage-drop calculations. The K values used by the app, 12.9 for copper and 21.2 for aluminum, are engineering resistivity constants and are not specifically listed in the NEC. NEC 210.19 and 215.2 informational notes point users to voltage-drop design guidance; for AC resistance and reactance, use NEC Chapter 9 Table 9.",
   },
   {
     id: "ch9_t9_impedance",

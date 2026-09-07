@@ -666,9 +666,9 @@ export const CALCULATORS = [
     category: "Wire / Conduit / Sizing", usesGetNecData: true, yearSensitive: false,
     articles: [
       { ref: "Ch.9 Table 8", desc: "Conductor circular mil areas", changed: false, source: DEV, note: "AWG standard dimensions. Physics-based. Needs per-AWG verification." },
-      { ref: "— (Physics)", desc: "Resistivity K=12.9 (Cu) / 21.2 (Al)", changed: false, source: DEV, note: "Material constants. Based on standard resistivity values." },
+      { ref: "— (Physics)", desc: "Resistivity K=12.9 (Cu) / 21.2 (Al)", changed: true, source: PEND, note: "K values are engineering resistivity constants and are not specifically listed in the NEC. Point users to NEC Chapter 9 Table 8 for conductor circular-mil area, 210.19/215.2 informational notes for voltage-drop guidance, and Chapter 9 Table 9 for AC resistance/reactance." },
     ],
-    sourceNotes: "Voltage drop uses Ch.9 Table 8 (physical wire dimensions — inherently stable) and material resistivity constants. The 3%/5% limits are Informational Notes, not mandatory requirements.",
+    sourceNotes: "Voltage drop uses NEC Chapter 9 Table 8 for conductor circular-mil areas plus engineering K resistivity constants for copper/aluminum. K=12.9/21.2 is not specifically listed in the NEC. The 3%/5% voltage-drop values are informational notes in 210.19/215.2, not mandatory requirements.",
     testInputs: { current: 20, length: 100, voltage: 120, material: "copper", phases: "single" },
     calculate: (i, nec) => {
       const K = nec.RESISTIVITY[i.material], f = i.phases === "single" ? 2 : 1.732;

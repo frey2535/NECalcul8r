@@ -142,7 +142,8 @@ export const CONDUCTOR_CM = {
   "1250": 1250000,
 };
 
-// ─── Resistivity (Ω·cm per Ω·kFT for voltage drop calc) ─────────
+// ─── Engineering resistivity constants for voltage drop calc ─────
+// K values are not specifically listed in the NEC; NEC Ch.9 Table 8 supplies CM.
 export const RESISTIVITY = { copper: 12.9, aluminum: 21.2 };
 
 // ─── Grounding Electrode Conductor: NEC Table 250.66 ─────────────
