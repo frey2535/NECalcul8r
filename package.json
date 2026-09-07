@@ -10,6 +10,8 @@
     "lint:fix": "eslint . --fix",
     "typecheck": "tsc -p ./jsconfig.json",
     "preview": "vite preview",
+    "android:sync": "npm run build && cap sync android",
+    "android:bundle:release": "npm run android:sync && cd android && ./gradlew bundleRelease",
     "verify:dwelling-optional": "node scripts/verify-dwelling-optional.mjs",
     "verify:mutation:dwelling-optional": "node scripts/verify-mutation-dwelling-optional.mjs",
     "verify:dwelling-standard": "node scripts/verify-dwelling-standard.mjs",
@@ -35,6 +37,8 @@
     "verify:release": "npm run verify:dwelling-optional && npm run verify:dwelling-standard && npm run verify:commercial-load && npm run verify:kitchen-equipment && npm run verify:multifamily-load && npm run verify:farm-load && npm run verify:rv-park && npm run verify:marina && npm run verify:remaining-2017 && npm run verify:neutral-load && npm run verify:pull-box && npm run verify:2020"
   },
   "dependencies": {
+    "@capacitor/android": "^8.5.1",
+    "@capacitor/core": "^8.5.1",
     "@hello-pangea/dnd": "^17.0.0",
     "@hookform/resolvers": "^4.1.2",
     "@radix-ui/react-accordion": "^1.2.3",
@@ -101,6 +105,7 @@
     "zod": "^3.24.2"
   },
   "devDependencies": {
+    "@capacitor/cli": "^8.5.1",
     "@eslint/js": "^9.19.0",
     "@types/node": "^22.13.5",
     "@types/react": "^18.2.66",
@@ -117,5 +122,8 @@
     "tailwindcss": "^3.4.17",
     "typescript": "^5.8.2",
     "vite": "^6.1.0"
+  },
+  "overrides": {
+    "uuid": "11.1.1"
   }
 }

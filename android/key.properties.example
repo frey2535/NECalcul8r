@@ -1,0 +1,7 @@
+# Copy this file to android/key.properties and fill in local values.
+# Do not commit android/key.properties or any keystore file.
+
+storeFile=/absolute/path/to/necalcul8r-upload.jks
+storePassword=replace-with-local-keystore-password
+keyAlias=replace-with-upload-key-alias
+keyPassword=replace-with-local-key-password
