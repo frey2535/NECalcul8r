@@ -1,5 +1,5 @@
 /**
- * Pure calculation logic for Receptacle Load (NEC 220.14 / 220.44).
+ * Pure calculation logic for Receptacle Load (NEC 220.14 / 220.44, 2023: 220.47).
  * Shared by the live calculator UI and the /admin/coverage year-switch parity test.
  */
 
@@ -14,6 +14,7 @@ export function calcReceptacleLoad(v, nec) {
   const voltage = parseFloat(v.voltage) || 120;
   const factor = v.phases === "three" ? 1.732 : 1;
   const applyDemand = v.applyDemand === "true" || v.applyDemand === true;
+  const receptacleDemandArticle = nec.RECEPTACLE_DEMAND_ARTICLE || "220.44";
 
   const totalVA = count * vaEach;
 
@@ -36,7 +37,7 @@ export function calcReceptacleLoad(v, nec) {
 
   const steps = [
     { label: "Connected Load", formula: "VA = count × VA per receptacle", expression: `${count} × ${vaEach} VA`, result: Math.round(totalVA), unit: "VA" },
-    { label: "Demand-Adjusted Load (220.44)", formula: "Demand = first 10,000 @ 100% + remainder @ 50%", expression: applyDemand ? `First 10,000 @ 100% + remainder @ 50%` : `${Math.round(totalVA)} @ 100%`, result: Math.round(demandVA), unit: "VA", note: applyDemand ? "Demand factor applied" : "No demand factor" },
+    { label: `Demand-Adjusted Load (${receptacleDemandArticle})`, formula: "Demand = first 10,000 @ 100% + remainder @ 50%", expression: applyDemand ? `First 10,000 @ 100% + remainder @ 50%` : `${Math.round(totalVA)} @ 100%`, result: Math.round(demandVA), unit: "VA", note: applyDemand ? "Demand factor applied" : "No demand factor" },
     { label: "Total Amps", formula: "A = VA ÷ (V × √3)", expression: `${Math.round(demandVA)} ÷ (${voltage} ${v.phases === "three" ? "× 1.732" : ""})`, result: Math.round(demandAmps * 10) / 10, unit: "A" },
     { label: "Circuits Needed", formula: "Circuits = ceil(demand VA ÷ 20A circuit capacity)", expression: `ceil(${Math.round(demandVA)} ÷ ${Math.round(circuitCapacity)} VA per 20A circuit)`, result: circuitsNeeded, note: "20A circuit at 80% capacity" },
   ];
@@ -46,6 +47,7 @@ export function calcReceptacleLoad(v, nec) {
     totalAmps: Math.round(totalAmps * 10) / 10,
     demandAmps: Math.round(demandAmps * 10) / 10,
     circuits_required: circuitsNeeded,
+    receptacleDemandArticle,
     GFCI_scope: nec.GFCI_SCOPE_DWELLING || null,
     island_peninsula_rule: nec.ISLAND_PENINSULA_RULE || null,
     GFCI_scope_other: nec.GFCI_SCOPE_OTHER_THAN_DWELLING || null,

@@ -31,6 +31,11 @@ export function calcCommercialLoad(v, nec) {
   const lightingVA = sqft * unitLoad;
   const lightingArticle = lightingLoadCite(nec, occupancy);
   const lightingDemandTable = nec.LIGHTING_DEMAND_TABLE || "Table 220.42";
+  const receptacleDemandArticle = nec.RECEPTACLE_DEMAND_ARTICLE || "220.44";
+  const receptacleDemandTable = nec.RECEPTACLE_DEMAND_TABLE || `Table ${receptacleDemandArticle}`;
+  const officeReceptacleArticle = nec.OFFICE_RECEPTACLE_MIN_ARTICLE || "220.14(K)";
+  const showWindowArticle = nec.SHOW_WINDOW_ARTICLE || "220.14(G)";
+  const signArticle = nec.SIGN_OUTLET_ARTICLE || "220.14(F)";
 
   const lightingDemandCfg = nec.LIGHTING_DEMAND?.[occupancy] || { tiers: [{ band: Infinity, factor: 1.00 }] };
   // Lighting-demand footnote: demand factors shall not apply to hospitals/hotels/motels
@@ -61,7 +66,8 @@ export function calcCommercialLoad(v, nec) {
     if (recRemaining <= 0) break;
   }
 
-  // 220.14(K): office buildings (and banks) — receptacle load not less than 1 VA/ft²
+  // 220.14(K): office buildings (and banks in 2017 heading) — receptacle load
+  // not less than 1 VA/ft².
   const officeMinApplies = occupancy === "office" || occupancy === "bank";
   const recMinVA = officeMinApplies ? sqft * (nec.OFFICE_RECEPTACLE_MIN_VA_PER_SQFT ?? 1) : 0;
   if (recMinVA > receptacleDemand) receptacleDemand = recMinVA;
@@ -84,9 +90,9 @@ export function calcCommercialLoad(v, nec) {
     { label: `Lighting Load (${lightingArticle})`, formula: "VA = sqft × unit load (VA/ft²)", expression: `${sqft} ft² × ${unitLoad} VA/ft²`, result: Math.round(lightingVA), unit: "VA", note: `${occupancy} occupancy` },
     { label: `Lighting Demand (${lightingDemandTable})`, formula: skipLightingDemand ? `${lightingDemandTable} footnote — demand not applied (lighting likely used at one time)` : "Demand = tiered factors by occupancy; All Others 100%", expression: skipLightingDemand ? `${Math.round(lightingVA)} @ 100%` : "Tiered demand factors", result: Math.round(lightingDemand), unit: "VA" },
     { label: "Receptacle Load (220.14(I))", formula: "VA = yokes × 180 VA", expression: `${Math.max(0, parseFloat(v.receptacles) || 0)} × ${yokeVA} VA`, result: Math.round(receptacleTotal), unit: "VA" },
-    { label: "Receptacle Demand (220.44)", formula: "First 10,000 @ 100% + remainder @ 50%" + (officeMinApplies ? "; not less than 1 VA/ft² (220.14(K))" : ""), expression: officeMinApplies && recMinVA > receptacleDemand ? `max(220.44, ${sqft} × 1)` : "First 10,000 @ 100% + remainder @ 50%", result: Math.round(receptacleDemand), unit: "VA" },
-    { label: "Show Window (220.14(F))", formula: "VA = linear feet × 200 VA/ft", expression: `${showFt} ft × ${showPerFt}`, result: Math.round(showWindowVA), unit: "VA" },
-    { label: "Signs (220.14(E))", formula: `Not less than ${signMin} VA per installation if a sign load is entered`, expression: signInput > 0 ? `max(${signInput}, ${signMin})` : "0", result: Math.round(signVA), unit: "VA" },
+    { label: `Receptacle Demand (${receptacleDemandArticle})`, formula: "First 10,000 @ 100% + remainder @ 50%" + (officeMinApplies ? `; not less than 1 VA/ft² (${officeReceptacleArticle})` : ""), expression: officeMinApplies && recMinVA > receptacleDemand ? `max(${receptacleDemandArticle}, ${sqft} × 1)` : "First 10,000 @ 100% + remainder @ 50%", result: Math.round(receptacleDemand), unit: "VA" },
+    { label: `Show Window (${showWindowArticle})`, formula: "VA = linear feet × 200 VA/ft", expression: `${showFt} ft × ${showPerFt}`, result: Math.round(showWindowVA), unit: "VA" },
+    { label: `Signs (${signArticle})`, formula: `Not less than ${signMin} VA per installation if a sign load is entered`, expression: signInput > 0 ? `max(${signInput}, ${signMin})` : "0", result: Math.round(signVA), unit: "VA" },
     { label: "Total Calculated Load", formula: "Total = lighting demand + receptacle demand + window + sign + appliances + HVAC", expression: `${Math.round(lightingDemand)} + ${Math.round(receptacleDemand)} + ${Math.round(showWindowVA)} + ${Math.round(signVA)} + ${Math.round(appliancesVA)} + ${Math.round(hvacVA)}`, result: Math.round(totalVA), unit: "VA" },
     { label: "Service Size", formula: "Amps = Total VA ÷ (V × √3) [3φ] or VA ÷ V [1φ]", expression: `${Math.round(totalVA)} ÷ (${voltage}${v.phases === "three" ? " × 1.732" : ""})`, result: Math.round(totalAmps * 10) / 10, unit: "A" },
   ];
@@ -95,6 +101,10 @@ export function calcCommercialLoad(v, nec) {
     lightingDemand: Math.round(lightingDemand),
     lightingArticle,
     lightingDemandTable,
+    receptacleDemandArticle,
+    officeReceptacleArticle,
+    showWindowArticle,
+    signArticle,
     unitLoad,
     receptacleTotal: Math.round(receptacleTotal),
     receptacleDemand: Math.round(receptacleDemand),
@@ -109,8 +119,8 @@ export function calcCommercialLoad(v, nec) {
     steps,
   };
   return withTrace(result, {
-    articles_used: [lightingArticle, "220.14(E)", "220.14(F)", "220.14(I)", "220.14(K)", "220.40", lightingDemandTable, "220.44", "210.8(B)"],
-    tables_used: [lightingArticle.startsWith("Table ") ? lightingArticle : null, lightingDemandTable, "Table 220.44"].filter(Boolean),
-    fields_used: ["OCCUPANCY_UNIT_LOADS", "OCCUPANCY_UNIT_LOAD_ARTICLES", "OCCUPANCY_UNIT_LOAD_DEFAULT", "OCCUPANCY_UNIT_LOAD_TABLE", "LIGHTING_DEMAND", "LIGHTING_DEMAND_TABLE", "RECEPTACLE_DEMAND_TIERS", "OFFICE_RECEPTACLE_MIN_VA_PER_SQFT", "SHOW_WINDOW_VA_PER_FOOT", "SIGN_OUTLET_MIN_VA", "RECEPTACLE_YOKE_VA"],
+    articles_used: [lightingArticle, signArticle, showWindowArticle, "220.14(I)", officeReceptacleArticle, "220.40", lightingDemandTable, receptacleDemandArticle, "210.8(B)"],
+    tables_used: [lightingArticle.startsWith("Table ") ? lightingArticle : null, lightingDemandTable, receptacleDemandTable].filter(Boolean),
+    fields_used: ["OCCUPANCY_UNIT_LOADS", "OCCUPANCY_UNIT_LOAD_ARTICLES", "OCCUPANCY_UNIT_LOAD_DEFAULT", "OCCUPANCY_UNIT_LOAD_TABLE", "LIGHTING_DEMAND", "LIGHTING_DEMAND_TABLE", "RECEPTACLE_DEMAND_TIERS", "RECEPTACLE_DEMAND_ARTICLE", "RECEPTACLE_DEMAND_TABLE", "OFFICE_RECEPTACLE_MIN_VA_PER_SQFT", "OFFICE_RECEPTACLE_MIN_ARTICLE", "OFFICE_RECEPTACLE_MIN_HEADING", "SHOW_WINDOW_VA_PER_FOOT", "SHOW_WINDOW_ARTICLE", "SIGN_OUTLET_MIN_VA", "SIGN_OUTLET_ARTICLE", "RECEPTACLE_YOKE_VA"],
   });
 }

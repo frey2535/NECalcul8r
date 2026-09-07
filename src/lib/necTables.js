@@ -112,11 +112,17 @@ export const NEC_TABLES = [
     article: "NEC 220.44",
     title: "Receptacle Loads — Demand Factors (Non-Dwelling)",
     headers: ["Portion of Receptacle Load", "Demand Factor"],
+    yearRefs: {
+      "2017": "220.44",
+      "2020": "220.44",
+      "2023": "220.47",
+      "2026": "220.47 (pending)",
+    },
     rows: [
       ["First 10,000 VA or less", "100%"],
       ["Remainder over 10,000 VA", "50%"],
     ],
-    note: "NEC 220.44: Applies to non-dwelling receptacle loads at 180 VA each per 220.14(I).",
+    note: "NEC 220.44 (2017/2020), moved to 220.47 in 2023: Applies to non-dwelling receptacle loads at 180 VA each per 220.14(I).",
   },
   {
     id: "220_54_dryer_demand",

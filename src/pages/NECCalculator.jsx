@@ -34,7 +34,7 @@ export const NEC_CATEGORIES = [
   { id: "farm_load", label: "Farm Load Calculation", article: "NEC 220.102", description: "Demand factors for farm buildings & dwelling", color: "green", emoji: "🌾" },
   { id: "fixed_electric_heat", label: "Fixed Electric Space Heating", article: "NEC 220.51", description: "100% load — no demand factor permitted", color: "red", emoji: "🔆" },
   { id: "kitchen_equipment_demand", label: "Kitchen Equipment Demand", article: "NEC 220.56", description: "Commercial cooking equipment demand factors", color: "orange", emoji: "🍳" },
-  { id: "demand_factor", label: "Demand Factor", article: "NEC 220.42 / 220.44", description: "Lighting & receptacle demand factors", color: "blue", emoji: "📊" },
+  { id: "demand_factor", label: "Demand Factor", article: "NEC 220.42 / 220.44 / 220.47", description: "Lighting & receptacle demand factors", color: "blue", emoji: "📊" },
   { id: "continuous_load", label: "Continuous Load & OCPD", article: "NEC 210.20 / 215.3", description: "125% rule for continuous loads", color: "red", emoji: "♾️" },
   { id: "hvac_load", label: "HVAC / A/C Load", article: "NEC 440.32 / 440.33", description: "A/C & refrigeration circuit sizing", color: "cyan", emoji: "❄️" },
   { id: "welding_receptacle", label: "Welder / Arc Welder", article: "NEC 630.11", description: "Arc welder conductor and OCPD sizing", color: "gray", emoji: "🔥" },

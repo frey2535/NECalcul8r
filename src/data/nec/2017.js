@@ -175,8 +175,15 @@ export const OCCUPANCY_UNIT_LOADS = {
 };
 export const OCCUPANCY_UNIT_LOAD_DEFAULT = 2.0; // Table 220.12 note — occupancies not listed
 export const OFFICE_RECEPTACLE_MIN_VA_PER_SQFT = 1; // 220.14(K) office buildings (and banks)
-export const SHOW_WINDOW_VA_PER_FOOT = 200; // 220.14(F)
-export const SIGN_OUTLET_MIN_VA = 1200; // 220.14(E)
+export const SHOW_WINDOW_VA_PER_FOOT = 200; // 220.14(G)
+export const SIGN_OUTLET_MIN_VA = 1200; // 220.14(F)
+export const HEAVY_DUTY_LAMPHOLDER_ARTICLE = "220.14(E)";
+export const SIGN_OUTLET_ARTICLE = "220.14(F)";
+export const SHOW_WINDOW_ARTICLE = "220.14(G)";
+export const OFFICE_RECEPTACLE_MIN_ARTICLE = "220.14(K)";
+export const OFFICE_RECEPTACLE_MIN_HEADING = "(K) Banks and Office Buildings";
+export const RECEPTACLE_DEMAND_ARTICLE = "220.44";
+export const RECEPTACLE_DEMAND_TABLE = "Table 220.44";
 export const RECEPTACLE_YOKE_VA = 180; // 220.14(I)
 export const DWELLING_LIGHTING_ARTICLE = "Table 220.12";
 export const DWELLING_BATHROOM_LOAD_ARTICLE = "220.14(J)";

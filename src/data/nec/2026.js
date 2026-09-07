@@ -44,6 +44,13 @@ export const DWELLING_BATHROOM_LOAD_ARTICLE = "220.41 (pending)";
 export const HOTEL_LIGHTING_ARTICLE = "Table 220.42(A)";
 export const OCCUPANCY_UNIT_LOAD_TABLE = "Table 220.42(A)";
 export const LIGHTING_DEMAND_TABLE = "Table 220.45";
+export const HEAVY_DUTY_LAMPHOLDER_ARTICLE = "220.14(E) (pending)";
+export const SIGN_OUTLET_ARTICLE = "220.14(F) (pending)";
+export const SHOW_WINDOW_ARTICLE = "220.14(G) (pending)";
+export const OFFICE_RECEPTACLE_MIN_ARTICLE = "220.14(K) (pending)";
+export const OFFICE_RECEPTACLE_MIN_HEADING = "(K) Office Buildings (pending)";
+export const RECEPTACLE_DEMAND_ARTICLE = "220.47 (pending)";
+export const RECEPTACLE_DEMAND_TABLE = "Table 220.47 (pending)";
 export const OCCUPANCY_UNIT_LOAD_ARTICLES = {
   dwelling: "220.41",
   hotel_motel: "Table 220.42(A)",

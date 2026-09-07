@@ -73,6 +73,34 @@ const LIGHTING_DEMAND_TABLE_YEAR_REFS = {
   "2026": "Table 220.45 (pending)",
 };
 
+const RECEPTACLE_DEMAND_YEAR_REFS = {
+  "2017": "220.44",
+  "2020": "220.44",
+  "2023": "220.47",
+  "2026": "220.47 (pending)",
+};
+
+const SIGN_OUTLET_YEAR_REFS = {
+  "2017": "220.14(F)",
+  "2020": "220.14(F)",
+  "2023": "220.14(F)",
+  "2026": "220.14(F) (pending)",
+};
+
+const SHOW_WINDOW_YEAR_REFS = {
+  "2017": "220.14(G)",
+  "2020": "220.14(G)",
+  "2023": "220.14(G)",
+  "2026": "220.14(G) (pending)",
+};
+
+const OFFICE_RECEPTACLE_YEAR_REFS = {
+  "2017": "220.14(K) Banks and Office Buildings",
+  "2020": "220.14(K) Office Buildings",
+  "2023": "220.14(K) Office Buildings",
+  "2026": "220.14(K) Office Buildings (pending)",
+};
+
 const AMPACITY_TABLE_YEAR_REFS = {
   "2017": "Table 310.15(B)(16)",
   "2020": "Table 310.16",
@@ -261,20 +289,21 @@ export const CALCULATORS = [
     },
   },
   {
-    id: "commercial_load", name: "Commercial Load (220 lighting / 220.44)",
+    id: "commercial_load", name: "Commercial Load (220 lighting / receptacle demand)",
     category: "Load Calculations", usesGetNecData: true, yearSensitive: true,
     articles: [
       { ref: "Table 220.12", desc: "Non-dwelling unit loads by occupancy (VA/sq ft)", changed: true, source: DEV, yearRefs: OCCUPANCY_UNIT_LOAD_TABLE_YEAR_REFS, note: "2023 Article 220 reorganization moved former Table 220.12 non-dwelling unit loads to Table 220.42(A)." },
       { ref: "Table 220.42", desc: "Lighting demand factors", changed: true, source: DEV, yearRefs: LIGHTING_DEMAND_TABLE_YEAR_REFS, note: "2023 Article 220 reorganization moved former Table 220.42 demand factors to Table 220.45." },
-      { ref: "220.14(E)", desc: "Sign and outline lighting outlet minimum load", changed: false, source: DEV },
-      { ref: "220.14(F)", desc: "Show-window load — 200 VA per linear foot", changed: false, source: DEV },
+      { ref: "220.14(E)", desc: "Heavy-duty lampholders", changed: false, source: DEV },
+      { ref: "220.14(F)", desc: "Sign and outline lighting outlet minimum load", changed: false, source: DEV, yearRefs: SIGN_OUTLET_YEAR_REFS },
+      { ref: "220.14(G)", desc: "Show-window load — 200 VA per linear foot", changed: false, source: DEV, yearRefs: SHOW_WINDOW_YEAR_REFS },
       { ref: "220.14(I)", desc: "Receptacle outlets — 180 VA per yoke", changed: false, source: DEV },
-      { ref: "220.14(K)", desc: "Office and bank receptacle load not less than 1 VA per square foot", changed: false, source: DEV },
+      { ref: "220.14(K)", desc: "Office receptacle load not less than 1 VA per square foot; 2017 heading includes banks", changed: true, source: DEV, yearRefs: OFFICE_RECEPTACLE_YEAR_REFS },
       { ref: "220.40", desc: "Standard-method calculated load basis", changed: false, source: DEV },
-      { ref: "220.44", desc: "Receptacle demand — first 10 kVA at 100%, remainder at 50%", changed: false, source: DEV },
+      { ref: "220.44", desc: "Receptacle demand — first 10 kVA at 100%, remainder at 50%", changed: true, source: DEV, yearRefs: RECEPTACLE_DEMAND_YEAR_REFS, note: "220.44 applies to 2017/2020; 2023 Article 220 reorganization moved this rule to 220.47." },
       { ref: "210.8(B)", desc: "Other-than-dwelling GFCI scope", changed: true, source: PEND, note: "2020: expanded 125V-250V coverage; kitchens/food-prep, damp/wet, accessory buildings, laundry, bathtub/shower. Displayed in NoteBox." },
     ],
-    sourceNotes: "Three interconnected tables. Industry consensus: no numeric changes 2017–2026. Each occupancy type's unit load and demand factor needs independent verification. 210.8(B) GFCI scope changed in 2020 per Eaton PDF — displayed in NoteBox.",
+    sourceNotes: "Three interconnected tables. Industry consensus: no numeric changes 2017–2026. Each occupancy type's unit load and demand factor needs independent verification. Article labels are year-aware: 220.14(E) is heavy-duty lampholders, sign/outline lighting is 220.14(F), show windows are 220.14(G), 220.14(K) heading changes from Banks and Office Buildings in 2017 to Office Buildings in 2020/2023, and receptacle demand moves from 220.44 to 220.47 in 2023. 210.8(B) GFCI scope changed in 2020 per Eaton PDF — displayed in NoteBox.",
     testInputs: { sqft: 5000, occupancy: "office", receptacles: 30 },
     calculate: (i, nec) => {
       const ul = nec.OCCUPANCY_UNIT_LOADS[i.occupancy] || 3.5;
@@ -372,11 +401,11 @@ export const CALCULATORS = [
     },
   },
   {
-    id: "receptacle_load", name: "Receptacle Load (220.14 / 220.44)",
+    id: "receptacle_load", name: "Receptacle Load (220.14 / 220.44-220.47)",
     category: "Equipment / Appliance", usesGetNecData: true, yearSensitive: true,
     articles: [
       { ref: "220.14(I)", desc: "Receptacle load — 180 VA each", changed: false, source: DEV, note: "180 VA per yoke. Needs verification across editions." },
-      { ref: "220.44", desc: "Receptacle demand — 100%/50% tiers", changed: false, source: DEV },
+      { ref: "220.44", desc: "Receptacle demand — 100%/50% tiers", changed: true, source: DEV, yearRefs: RECEPTACLE_DEMAND_YEAR_REFS, note: "220.44 applies to 2017/2020; 2023 moves this rule to 220.47." },
       { ref: "210.52(C)(2)", desc: "Island/peninsula countertop receptacle rule", changed: true, source: PEND, yearRefs: ISLAND_PENINSULA_YEAR_REFS, note: ISLAND_PENINSULA_NOTE },
       { ref: "210.52(G)", desc: "Garage/basement/accessory receptacle — multifamily expansion", changed: true, source: PEND, note: "2020: expanded to multifamily dwellings. Displayed in NoteBox." },
       { ref: "210.8(A)", desc: "GFCI scope — dwelling receptacles", changed: true, source: PEND, note: "2017: narrower scope. 2020: expanded to 250V and more areas. Displayed in NoteBox." },
@@ -618,7 +647,7 @@ export const CALCULATORS = [
     category: "Power / Misc", usesGetNecData: true, yearSensitive: true,
     articles: [
       { ref: "Table 220.42", desc: "Lighting demand factors", changed: true, source: DEV, yearRefs: LIGHTING_DEMAND_TABLE_YEAR_REFS, note: "2023 Article 220 reorganization moved former Table 220.42 demand factors to Table 220.45." },
-      { ref: "220.44", desc: "Receptacle demand factors", changed: false, source: DEV },
+      { ref: "220.44", desc: "Receptacle demand factors", changed: true, source: DEV, yearRefs: RECEPTACLE_DEMAND_YEAR_REFS, note: "220.44 applies to 2017/2020; 2023 moves this rule to 220.47." },
       { ref: "220.53", desc: "Fixed appliance demand — 75% for 4+", changed: false, source: DEV },
       { ref: "220.61", desc: "Neutral demand — 70% beyond 200kVA", changed: false, source: DEV },
     ],

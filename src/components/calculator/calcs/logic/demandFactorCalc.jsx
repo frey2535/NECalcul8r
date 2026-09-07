@@ -1,5 +1,5 @@
 /**
- * Pure calculation logic for Demand Factor (NEC 220.42 / 220.44 / 220.53 / 220.61).
+ * Pure calculation logic for Demand Factor (NEC 220.42 / 220.44-220.47 / 220.53 / 220.61).
  */
 
 function applyTier(tiers, total) {
@@ -21,6 +21,7 @@ function applyTier(tiers, total) {
 export function calcDemandFactor(v, nec) {
   const total = parseFloat(v.totalVA) || 0;
   const lightingDemandTable = nec.LIGHTING_DEMAND_TABLE || "Table 220.42";
+  const receptacleDemandArticle = nec.RECEPTACLE_DEMAND_ARTICLE || "220.44";
   let demand = 0;
   let explanation = "";
 
@@ -36,7 +37,7 @@ export function calcDemandFactor(v, nec) {
     explanation = `NEC ${lightingDemandTable}: 100% first 12.5 kVA, 50% remainder`;
   } else if (v.loadType === "receptacle_commercial") {
     demand = applyTier(nec.RECEPTACLE_DEMAND_TIERS, total);
-    explanation = "NEC 220.44: 100% first 10 kVA, 50% remainder";
+    explanation = `NEC ${receptacleDemandArticle}: 100% first 10 kVA, 50% remainder`;
   } else if (v.loadType === "dryer_dwelling") {
     demand = Math.max(5000, total);
     explanation = "NEC 220.54: 1 dryer = 100% (min 5000W)";
@@ -66,6 +67,7 @@ export function calcDemandFactor(v, nec) {
     savingsPct: Math.round(savingsPct * 10) / 10,
     explanation,
     lightingDemandTable,
+    receptacleDemandArticle,
     steps,
   };
 }

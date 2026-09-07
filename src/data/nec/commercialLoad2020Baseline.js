@@ -129,7 +129,7 @@ export function runCommercialLoad2020Baseline(calcFn = calcCommercialLoad) {
       },
       {
         id: "pending_bank_3_5",
-        description: "PENDING 2020 bank 3.5 (with office) so 220.14(K) still has a unit load",
+        description: "PENDING 2020 bank 3.5 (kept with office pending primary-source verification)",
         inputs: { occupancy: "bank", sqft: 2000, receptacles: 0, showWindow: 0, outsideSign: 0, hvac: 0, majorAppliances: 0 },
         expected: { unitLoad: 3.5, lightingVA: 7000, receptacleDemand: 2000 },
       },
