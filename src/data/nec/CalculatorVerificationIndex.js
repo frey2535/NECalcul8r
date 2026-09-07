@@ -237,10 +237,13 @@ function statusForDependency(statusMap, calculatorId, dependency, necYear) {
 
 function buildRecordBackedRegressionResults(calc, dependencies, statusMap) {
   if (!dependencies.length) {
+    const reason = calc.codebookVerificationExempt
+      ? "Engineering/design calculator — no Codebook Matrix verification required."
+      : "No NEC articles consumed — pure math/engineering.";
     return Object.fromEntries(
       YEARS.map((year) => [
         year,
-        { verified: true, reason: "No NEC articles consumed — pure math/engineering." },
+        { verified: true, reason },
       ])
     );
   }

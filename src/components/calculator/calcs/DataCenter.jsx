@@ -33,16 +33,15 @@ export default function DataCenter({ category, necYear = "2023" }) {
           <ResultRow label={`Service Current (${v.redundancy} redundancy)`} value={serviceA_redundant.toFixed(1)} unit="A" highlight />
           <ResultRow label="Recommended Breaker" value={breaker} unit="A" highlight />
         </ResultSection>
-        <ResultSection title="NEC 708 — Critical Operations">
+        <ResultSection title="Engineering Design Notes">
           <div className="px-3 py-2 bg-muted/50 rounded text-xs space-y-1">
-            <p>• Legally Required Standby — NEC Article 701</p>
-            <p>• Alternate power source for critical systems per NEC 708</p>
-            <p>• Transfer switch required for UPS bypass</p>
-            <p>• Ground fault protection of equipment per NEC 230.95</p>
+            <p>• PUE, UPS efficiency, and redundancy are engineering/design inputs.</p>
+            <p>• Confirm standby power, transfer equipment, grounding, and protection with the applicable project code sections and AHJ.</p>
+            <p>• This calculator is reviewed for math only and does not require Codebook Matrix verification.</p>
           </div>
         </ResultSection>
         <FormulaBox steps={steps} />
-        <NoteBox>Data centers use PUE to measure efficiency. PUE = Total Facility Power / IT Equipment Power. Ideal PUE = 1.0. Typical: 1.2–1.5. Service sizing should account for redundancy (N+1, 2N) per NEC 708 for critical operations power systems.</NoteBox>
+        <NoteBox>Data centers use PUE to measure efficiency. PUE = Total Facility Power / IT Equipment Power. Ideal PUE = 1.0. Typical: 1.2–1.5. Service sizing should account for selected redundancy (N+1, 2N) as an engineering design input. This item is not codebook-derived and does not require NEC article verification.</NoteBox>
       </div>
     }>
       <Field label="IT Equipment Load" unit="kW" hint="Nameplate / measured IT load">

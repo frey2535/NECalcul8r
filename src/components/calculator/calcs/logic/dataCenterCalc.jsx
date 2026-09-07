@@ -1,5 +1,5 @@
 /**
- * Pure calculation logic for Data Center (NEC 708).
+ * Pure calculation logic for Data Center engineering load planning.
  */
 
 /**
@@ -32,7 +32,7 @@ export function calcDataCenter(v, nec) {
     { label: "Cooling Load", formula: "kW = total facility − IT load", expression: `${Math.round(totalFacilityKW * 10) / 10} − ${itKW}`, result: Math.round(coolingKW * 10) / 10, unit: "kW" },
     { label: "Service Amps", formula: "A = kVA × 1000 ÷ (V × √3)", expression: `${Math.round(totalKVA * 10) / 10} kVA × 1000 ÷ (${voltage} × ${factor})`, result: Math.round(serviceA * 10) / 10, unit: "A", note: `PF = ${pf}` },
     { label: "Redundant Service Amps", formula: "A = service amps × redundancy multiplier", expression: `${Math.round(serviceA * 10) / 10} × ${redundancyMultiplier} (${v.redundancy})`, result: Math.round(serviceA_redundant * 10) / 10, unit: "A" },
-    { label: "Main Breaker (240.6)", formula: "Breaker = next standard ≥ redundant amps × 125%", expression: `next standard ≥ ${Math.round(serviceA_redundant * 10) / 10} × ${nec.CONTINUOUS_LOAD_MULTIPLIER}`, result: breaker, unit: "A", note: "125% (continuous load)" },
+    { label: "Recommended Breaker", formula: "Breaker = next standard size ≥ redundant amps × continuous-load margin", expression: `next standard size ≥ ${Math.round(serviceA_redundant * 10) / 10} × ${nec.CONTINUOUS_LOAD_MULTIPLIER}`, result: breaker, unit: "A", note: "Engineering planning value; confirm final OCPD with project code requirements" },
   ];
   return {
     totalFacilityKW: Math.round(totalFacilityKW * 10) / 10,

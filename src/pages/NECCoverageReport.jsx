@@ -381,11 +381,11 @@ const COVERAGE = [
     name: "Data Center",
     category: "Power / Misc",
     sourceFile: "components/calculator/calcs/DataCenter.jsx",
-    uiArticles: ["NEC 708", "701", "230.95"],
+    uiArticles: [],
     uiTables: [],
     calcSharedFields: ["CONTINUOUS_LOAD_MULTIPLIER", "STD_OCPD_SIZES", "DATA_CENTER_REDUNDANCY", "DATA_CENTER_DEFAULT_UPS_EFFICIENCY"],
     calcYearFields: [],
-    flags: [],
+    flags: [{ type: "no_nec_data", detail: "Engineering design calculator; no codebook verification required" }],
   },
   {
     id: "generator_sizing",

@@ -48,7 +48,7 @@ export const NEC_CATEGORIES = [
   { id: "pool_spa", label: "Pool / Spa", article: "NEC 680", description: "Bonding conductor & GFCI requirements", color: "cyan", emoji: "🏊" },
   { id: "solar_pv", label: "Solar PV System", article: "NEC 690", description: "PV conductor, combiner & inverter sizing", color: "yellow", emoji: "☀️" },
   { id: "ev_charging", label: "EV Charging / EVSE", article: "NEC 625", description: "EV supply equipment circuit sizing", color: "green", emoji: "🚗" },
-  { id: "data_center", label: "Critical / Data Center", article: "NEC 645 / 708", description: "IT equipment and UPS load calculation", color: "slate", emoji: "🖥️" },
+  { id: "data_center", label: "Critical / Data Center", article: "Engineering design", description: "IT equipment and UPS load planning", color: "slate", emoji: "🖥️" },
   { id: "rv_park_load", label: "RV Park / Campsite Load", article: "NEC Table 551.73(A)", description: "Campground service & feeder load calculation", color: "green", emoji: "🚐" },
   { id: "marina_shore_power", label: "Marina Shore Power", article: "NEC 555.12", description: "Marina shore power demand & service sizing", color: "cyan", emoji: "⚓" },
   { id: "pull_box_sizing", label: "Pull Box Sizing", article: "NEC 314.28", description: "Straight, angle & U pull box dimensions", color: "purple", emoji: "📐" },
