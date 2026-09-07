@@ -15,20 +15,19 @@ export function registerServiceWorker() {
     navigator.serviceWorker.register("/sw.js").then((registration) => {
       const promptUpdate = () => {
         if (!registration.waiting || !navigator.serviceWorker.controller) return;
-        window.dispatchEvent(new CustomEvent("necalcul8r-update-available", {
-          detail: {
-            source: "service-worker",
-            applyUpdate: () => applyServiceWorkerUpdate(registration),
-          },
-        }));
+        dispatchUpdateAvailable({
+          source: "service-worker",
+          applyUpdate: () => applyServiceWorkerUpdate(registration),
+        });
       };
 
       promptUpdate();
+      registration.update().catch(() => undefined);
       registration.addEventListener("updatefound", () => {
         const worker = registration.installing;
         if (!worker) return;
         worker.addEventListener("statechange", () => {
-          if (worker.state === "installed") promptUpdate();
+          if (worker.state === "installed") window.setTimeout(promptUpdate, 0);
         });
       });
 
@@ -128,24 +127,28 @@ function watchForBuildUpdates() {
         return;
       }
       promptedSha = next.sha;
-      window.dispatchEvent(new CustomEvent("necalcul8r-update-available", {
-        detail: {
-          source: "build-version",
-          targetSha: next.sha,
-          applyUpdate: () => reloadFresh(next.sha),
-        },
-      }));
+      dispatchUpdateAvailable({
+        source: "build-version",
+        targetSha: next.sha,
+        applyUpdate: () => reloadFresh(next.sha),
+      });
     } catch {
       /* update checks should never interrupt app usage */
     }
   };
 
+  window.setTimeout(check, 1000);
   window.setTimeout(check, 10 * 1000);
   window.setInterval(check, 60 * 1000);
   window.addEventListener("focus", check);
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "visible") check();
   });
+}
+
+function dispatchUpdateAvailable(detail) {
+  window.__necalcul8rPendingUpdate = detail;
+  window.dispatchEvent(new CustomEvent("necalcul8r-update-available", { detail }));
 }
 
 async function applyServiceWorkerUpdate(registration) {

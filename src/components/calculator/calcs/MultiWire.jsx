@@ -46,7 +46,7 @@ export default function MultiWire({ category, necYear = "2023" }) {
           <ResultRow label="Neutral = Current-Carrying?" value={neutralI > 0 ? "Yes — count for derating" : "No — balanced"} />
         </ResultSection>
         <FormulaBox steps={steps} />
-        <NoteBox>          NEC {necYear} 210.4: MWBC must have a means to disconnect all ungrounded conductors simultaneously. For 3-wire 120/240V, neutral current = difference of the two phase currents. An unbalanced neutral carries current and must be counted for conduit fill derating.</NoteBox>
+        <NoteBox>          NEC {necYear} 210.4(B): MWBC must have a means to disconnect all ungrounded conductors simultaneously. For 3-wire 120/240V, neutral current = difference of the two phase currents. An unbalanced neutral carries current and must be counted for conduit fill derating.</NoteBox>
       </div>
     }>
       <Field label="Circuit Type">

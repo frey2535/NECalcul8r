@@ -52,6 +52,13 @@ const DWELLING_LIGHTING_TABLE_YEAR_REFS = {
   "2026": "220.41 (pending)",
 };
 
+const DWELLING_BATHROOM_LOAD_YEAR_REFS = {
+  "2017": "220.14(J)",
+  "2020": "220.14(J)",
+  "2023": "220.41",
+  "2026": "220.41 (pending)",
+};
+
 const OCCUPANCY_UNIT_LOAD_TABLE_YEAR_REFS = {
   "2017": "Table 220.12",
   "2020": "Table 220.12",
@@ -64,6 +71,34 @@ const LIGHTING_DEMAND_TABLE_YEAR_REFS = {
   "2020": "Table 220.42",
   "2023": "Table 220.45",
   "2026": "Table 220.45 (pending)",
+};
+
+const RECEPTACLE_DEMAND_YEAR_REFS = {
+  "2017": "220.44",
+  "2020": "220.44",
+  "2023": "220.47",
+  "2026": "220.47 (pending)",
+};
+
+const SIGN_OUTLET_YEAR_REFS = {
+  "2017": "220.14(F)",
+  "2020": "220.14(F)",
+  "2023": "220.14(F)",
+  "2026": "220.14(F) (pending)",
+};
+
+const SHOW_WINDOW_YEAR_REFS = {
+  "2017": "220.14(G)",
+  "2020": "220.14(G)",
+  "2023": "220.14(G)",
+  "2026": "220.14(G) (pending)",
+};
+
+const OFFICE_RECEPTACLE_YEAR_REFS = {
+  "2017": "220.14(K) Banks and Office Buildings",
+  "2020": "220.14(K) Office Buildings",
+  "2023": "220.14(K) Office Buildings",
+  "2026": "220.14(K) Office Buildings (pending)",
 };
 
 const AMPACITY_TABLE_YEAR_REFS = {
@@ -200,7 +235,7 @@ export const CALCULATORS = [
     category: "Load Calculations", usesGetNecData: true, yearSensitive: true,
     articles: [
       { ref: "220.12", desc: "Dwelling lighting — 3 VA/sq ft; exclude unused cellar, unfinished attic, open porches", changed: true, source: N17, yearRefs: DWELLING_LIGHTING_YEAR_REFS, note: "2023 Article 220 reorganization moved the former 220.12 dwelling lighting rule to 220.41." },
-      { ref: "220.14(J)", desc: "Dwelling lighting/receptacle load — bathroom circuits not extra 1500 VA", changed: false, source: N17 },
+      { ref: "220.14(J)", desc: "Dwelling lighting/receptacle load — bathroom circuits not extra 1500 VA", changed: true, source: N17, yearRefs: DWELLING_BATHROOM_LOAD_YEAR_REFS, note: "220.14(J) applies to 2017/2020; the 2023 Article 220 reorganization moved this dwelling general lighting load rule to 220.41." },
       { ref: "220.40", desc: "Standard method — sum of computed loads", changed: false, source: N17 },
       { ref: "220.52", desc: "Small appliance circuits — 1,500 VA each (min 2)", changed: false, source: N17 },
       { ref: "220.52(B)", desc: "Laundry circuit — 1,500 VA (min 1)", changed: false, source: N17 },
@@ -220,7 +255,7 @@ export const CALCULATORS = [
       { ref: "210.8(F)", desc: "GFCI for outdoor dwelling outlets ≤50A", changed: true, source: PEND, yearRefs: GFCI_OUTDOOR_DWELLING_YEAR_REFS, note: "2017: not applicable; 210.8(F) did not exist. 2020/2023: outdoor dwelling outlets on single-phase circuits rated ≤150V to ground and ≤50A; lighting-outlet exception. Displayed in NoteBox." },
       { ref: "422.5", desc: "Appliance GFCI list (dishwashers, sump pumps)", changed: true, source: PEND, note: "2020: dishwashers and sump pumps added. Displayed in NoteBox." },
     ],
-    sourceNotes: "2017/2020 standard method uses former 220.12 for dwelling lighting and Table 220.42 for demand. 2023 reorganizes those to 220.41 and Table 220.45. Other standard-method items: Table 220.54/220.55, 220.52 mins, 220.14(J), 220.53, 220.60. Neutral 220.61 and D1(b) 430.24 are other calculators. Installation notes year-gated.",
+    sourceNotes: "2017/2020 standard method uses former 220.12 for dwelling lighting, 220.14(J) for the bathroom/general-lighting inclusion note, and Table 220.42 for demand. 2023 reorganizes the dwelling lighting items to 220.41 and demand to Table 220.45. Other standard-method items: Table 220.54/220.55, 220.52 mins, 220.53, 220.60. Neutral 220.61 and D1(b) 430.24 are other calculators. Installation notes year-gated.",
     testInputs: { sqft: 2000, smallAppliance: 2, laundry: 1, range: 12000, dryer: 5000, dishwasher: 0, disposer: 0, waterHeater: 0, hvac: 0, other: 0, voltage: 240 },
     calculate: (i, nec) => {
       const r = calcDwellingStandard(i, nec);
@@ -254,20 +289,21 @@ export const CALCULATORS = [
     },
   },
   {
-    id: "commercial_load", name: "Commercial Load (220 lighting / 220.44)",
+    id: "commercial_load", name: "Commercial Load (220 lighting / receptacle demand)",
     category: "Load Calculations", usesGetNecData: true, yearSensitive: true,
     articles: [
       { ref: "Table 220.12", desc: "Non-dwelling unit loads by occupancy (VA/sq ft)", changed: true, source: DEV, yearRefs: OCCUPANCY_UNIT_LOAD_TABLE_YEAR_REFS, note: "2023 Article 220 reorganization moved former Table 220.12 non-dwelling unit loads to Table 220.42(A)." },
       { ref: "Table 220.42", desc: "Lighting demand factors", changed: true, source: DEV, yearRefs: LIGHTING_DEMAND_TABLE_YEAR_REFS, note: "2023 Article 220 reorganization moved former Table 220.42 demand factors to Table 220.45." },
-      { ref: "220.14(E)", desc: "Sign and outline lighting outlet minimum load", changed: false, source: DEV },
-      { ref: "220.14(F)", desc: "Show-window load — 200 VA per linear foot", changed: false, source: DEV },
+      { ref: "220.14(E)", desc: "Heavy-duty lampholders", changed: false, source: DEV },
+      { ref: "220.14(F)", desc: "Sign and outline lighting outlet minimum load", changed: false, source: DEV, yearRefs: SIGN_OUTLET_YEAR_REFS },
+      { ref: "220.14(G)", desc: "Show-window load — 200 VA per linear foot", changed: false, source: DEV, yearRefs: SHOW_WINDOW_YEAR_REFS },
       { ref: "220.14(I)", desc: "Receptacle outlets — 180 VA per yoke", changed: false, source: DEV },
-      { ref: "220.14(K)", desc: "Office and bank receptacle load not less than 1 VA per square foot", changed: false, source: DEV },
+      { ref: "220.14(K)", desc: "Office receptacle load not less than 1 VA per square foot; 2017 heading includes banks", changed: true, source: DEV, yearRefs: OFFICE_RECEPTACLE_YEAR_REFS },
       { ref: "220.40", desc: "Standard-method calculated load basis", changed: false, source: DEV },
-      { ref: "220.44", desc: "Receptacle demand — first 10 kVA at 100%, remainder at 50%", changed: false, source: DEV },
+      { ref: "220.44", desc: "Receptacle demand — first 10 kVA at 100%, remainder at 50%", changed: true, source: DEV, yearRefs: RECEPTACLE_DEMAND_YEAR_REFS, note: "220.44 applies to 2017/2020; 2023 Article 220 reorganization moved this rule to 220.47." },
       { ref: "210.8(B)", desc: "Other-than-dwelling GFCI scope", changed: true, source: PEND, note: "2020: expanded 125V-250V coverage; kitchens/food-prep, damp/wet, accessory buildings, laundry, bathtub/shower. Displayed in NoteBox." },
     ],
-    sourceNotes: "Three interconnected tables. Industry consensus: no numeric changes 2017–2026. Each occupancy type's unit load and demand factor needs independent verification. 210.8(B) GFCI scope changed in 2020 per Eaton PDF — displayed in NoteBox.",
+    sourceNotes: "Three interconnected tables. Industry consensus: no numeric changes 2017–2026. Each occupancy type's unit load and demand factor needs independent verification. Article labels are year-aware: 220.14(E) is heavy-duty lampholders, sign/outline lighting is 220.14(F), show windows are 220.14(G), 220.14(K) heading changes from Banks and Office Buildings in 2017 to Office Buildings in 2020/2023, and receptacle demand moves from 220.44 to 220.47 in 2023. 210.8(B) GFCI scope changed in 2020 per Eaton PDF — displayed in NoteBox.",
     testInputs: { sqft: 5000, occupancy: "office", receptacles: 30 },
     calculate: (i, nec) => {
       const ul = nec.OCCUPANCY_UNIT_LOADS[i.occupancy] || 3.5;
@@ -365,11 +401,11 @@ export const CALCULATORS = [
     },
   },
   {
-    id: "receptacle_load", name: "Receptacle Load (220.14 / 220.44)",
+    id: "receptacle_load", name: "Receptacle Load (220.14 / 220.44-220.47)",
     category: "Equipment / Appliance", usesGetNecData: true, yearSensitive: true,
     articles: [
       { ref: "220.14(I)", desc: "Receptacle load — 180 VA each", changed: false, source: DEV, note: "180 VA per yoke. Needs verification across editions." },
-      { ref: "220.44", desc: "Receptacle demand — 100%/50% tiers", changed: false, source: DEV },
+      { ref: "220.44", desc: "Receptacle demand — 100%/50% tiers", changed: true, source: DEV, yearRefs: RECEPTACLE_DEMAND_YEAR_REFS, note: "220.44 applies to 2017/2020; 2023 moves this rule to 220.47." },
       { ref: "210.52(C)(2)", desc: "Island/peninsula countertop receptacle rule", changed: true, source: PEND, yearRefs: ISLAND_PENINSULA_YEAR_REFS, note: ISLAND_PENINSULA_NOTE },
       { ref: "210.52(G)", desc: "Garage/basement/accessory receptacle — multifamily expansion", changed: true, source: PEND, note: "2020: expanded to multifamily dwellings. Displayed in NoteBox." },
       { ref: "210.8(A)", desc: "GFCI scope — dwelling receptacles", changed: true, source: PEND, note: "2017: narrower scope. 2020: expanded to 250V and more areas. Displayed in NoteBox." },
@@ -611,7 +647,7 @@ export const CALCULATORS = [
     category: "Power / Misc", usesGetNecData: true, yearSensitive: true,
     articles: [
       { ref: "Table 220.42", desc: "Lighting demand factors", changed: true, source: DEV, yearRefs: LIGHTING_DEMAND_TABLE_YEAR_REFS, note: "2023 Article 220 reorganization moved former Table 220.42 demand factors to Table 220.45." },
-      { ref: "220.44", desc: "Receptacle demand factors", changed: false, source: DEV },
+      { ref: "220.44", desc: "Receptacle demand factors", changed: true, source: DEV, yearRefs: RECEPTACLE_DEMAND_YEAR_REFS, note: "220.44 applies to 2017/2020; 2023 moves this rule to 220.47." },
       { ref: "220.53", desc: "Fixed appliance demand — 75% for 4+", changed: false, source: DEV },
       { ref: "220.61", desc: "Neutral demand — 70% beyond 200kVA", changed: false, source: DEV },
     ],
@@ -893,9 +929,9 @@ export const CALCULATORS = [
     { ref: "110.10", desc: "Circuit impedance and short-circuit current ratings selected to withstand available fault current", changed: false, source: DEV },
   ], sourceNotes: "Engineering AFC math plus NEC 110.9/110.10 equipment-rating checks displayed in the UI. AIC standard rating list needs codebook/manufacturer verification." },
   { id: "multiwire_branch", name: "Multiwire Branch Circuits", category: "Others", usesGetNecData: false, yearSensitive: false, articles: [
-    { ref: "210.4", desc: "Multiwire branch-circuit simultaneous disconnect and grouping requirements", changed: false, source: DEV },
+    { ref: "210.4(B)", desc: "Multiwire branch-circuit simultaneous disconnect and grouping requirements", changed: false, source: DEV, yearRefs: { "2017": "210.4(B)", "2020": "210.4(B)", "2023": "210.4(B)", "2026": "210.4(B) (pending)" } },
     { ref: "210.12", desc: "Dwelling AFCI applicability note", changed: true, source: PEND, note: "Displayed in result section as a dwelling-condition note; not part of neutral-current math." },
-  ], sourceNotes: "Circuit-analysis math plus NEC 210.4 simultaneous disconnect display. AFCI note is conditional/display-only and needs per-year verification." },
+  ], sourceNotes: "Circuit-analysis math plus NEC 210.4(B) simultaneous disconnect display. AFCI note is conditional/display-only and needs per-year verification." },
 
   // ═══ PULL BOX SIZING ═══════════════════════════════════════════════════
   {

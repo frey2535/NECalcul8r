@@ -55,7 +55,7 @@
  * secondary sources (Mike Holt / Eaton). Rows without a confirmed source are
  * intentionally left at their inherited 2017 value — see PENDING_IMPACT_LIST.
  *
- * CORRECTION — 220.14(K) (office/bank receptacle load = larger of 180VA/yoke
+ * CORRECTION — 220.14(K) (office receptacle load = larger of 180VA/yoke
  * after demand OR 1 VA/sq ft) is NOT a 2020 rule — it already existed in the
  * 2017 NEC. It is NOT added here. It is a pre-existing coverage gap in BOTH
  * 2017 and 2020 (Receptacle Load calculator has no occupancy-aware branch at
@@ -499,7 +499,7 @@ export const OCCUPANCY_UNIT_LOADS = {
   hotel_motel: 1.70,    // CHANGED from 2.0 — confirmed (Mike Holt 2020 NEC newsletter; now 220.14(M))
   hospital: 1.6,        // CHANGED from 2.0 — confirmed (Eaton NEC 2020 load calculations blog)
   office: 3.5,          // PENDING verification — kept at 2017 value, not yet source-confirmed for 2020
-  bank: 3.5,            // PENDING — 2017 matched office; 220.14(K) still names banks. Not in the confirmed 2020 Table 220.12 rows.
+  bank: 3.5,            // PENDING — 2017 matched office; 2020 220.14(K) heading changed to Office Buildings. Not in the confirmed 2020 Table 220.12 rows.
   store: 3.0,           // PENDING verification — kept at 2017 value, not yet source-confirmed for 2020
   school: 3.0,          // PENDING verification — kept at 2017 value, not yet source-confirmed for 2020
   restaurant: 2.0,      // PENDING verification — kept at 2017 value, not yet source-confirmed for 2020
@@ -516,8 +516,16 @@ export const OFFICE_RECEPTACLE_MIN_VA_PER_SQFT = 1; // 220.14(K) existed in 2017
 export const SHOW_WINDOW_VA_PER_FOOT = 200;
 export const SIGN_OUTLET_MIN_VA = 1200;
 export const RECEPTACLE_YOKE_VA = 180;
+export const HEAVY_DUTY_LAMPHOLDER_ARTICLE = "220.14(E)";
+export const SIGN_OUTLET_ARTICLE = "220.14(F)";
+export const SHOW_WINDOW_ARTICLE = "220.14(G)";
+export const OFFICE_RECEPTACLE_MIN_ARTICLE = "220.14(K)";
+export const OFFICE_RECEPTACLE_MIN_HEADING = "(K) Office Buildings";
+export const RECEPTACLE_DEMAND_ARTICLE = "220.44";
+export const RECEPTACLE_DEMAND_TABLE = "Table 220.44";
 export const DWELLING_LIGHTING_VA_PER_SQFT = 3; // 220.14(J) — value unchanged
 export const DWELLING_LIGHTING_ARTICLE = "220.14(J)";
+export const DWELLING_BATHROOM_LOAD_ARTICLE = "220.14(J)";
 export const HOTEL_LIGHTING_ARTICLE = "220.14(M)";
 export const OCCUPANCY_UNIT_LOAD_TABLE = "Table 220.12";
 export const LIGHTING_DEMAND_TABLE = "Table 220.42";
@@ -984,7 +992,7 @@ export const PENDING_IMPACT_LIST = [
   },
   {
     article: "220.14(K)",
-    item: "Office/bank receptacle load = larger of (180 VA/yoke after demand) or (1 VA/sq ft). Confirmed to already exist in the 2017 NEC — NOT a 2020-only rule. Currently unimplemented in BOTH 2017 and 2020 — Receptacle Load calculator has no occupancy-aware branch.",
+    item: "Office receptacle load = larger of (180 VA/yoke after demand) or (1 VA/sq ft). Confirmed to already exist in the 2017 NEC, where the heading includes banks — NOT a 2020-only rule. Currently unimplemented in the standalone Receptacle Load calculator because it has no occupancy-aware branch.",
     status: "existing_coverage_gap_both_years",
     next_step: "Report as a 2017+2020 coverage gap (not a year-diff item). Requires separate approval before implementing — do not add to 2020.js only.",
   },

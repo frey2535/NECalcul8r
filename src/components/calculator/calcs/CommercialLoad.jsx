@@ -10,6 +10,7 @@ import { calcCommercialLoad } from "./logic/commercialLoadCalc";
 function buildFormulas(nec) {
   const unitLoadTable = nec.OCCUPANCY_UNIT_LOAD_TABLE || "Table 220.12";
   const demandTable = nec.LIGHTING_DEMAND_TABLE || "Table 220.42";
+  const receptacleDemandArticle = nec.RECEPTACLE_DEMAND_ARTICLE || "220.44";
   const recDesc = nec.RECEPTACLE_DEMAND_TIERS.map(t =>
     `${(t.factor * 100).toFixed(0)}%${t.band < Infinity ? ` first ${t.band.toLocaleString()} VA` : " remainder"}`
   ).join(" + ");
@@ -19,7 +20,7 @@ function buildFormulas(nec) {
   return [
     { label: "Lighting Load", formula: "Lighting VA = Floor Area × Unit Load (VA/sq ft)", description: `Unit loads from NEC ${unitLoadTable} by occupancy type` },
     { label: `Lighting Demand (${demandTable})`, formula: `Demand = ${ltDesc}`, description: "For all occupancies except dwellings and hotels" },
-    { label: "Receptacle Demand (NEC 220.44)", formula: `Demand = ${recDesc}`, description: "Applied to total receptacle VA (180 VA each per 220.14(I))" },
+    { label: `Receptacle Demand (NEC ${receptacleDemandArticle})`, formula: `Demand = ${recDesc}`, description: "Applied to total receptacle VA (180 VA each per 220.14(I))" },
     { label: "Total Current", formula: "I = Total VA / (V × √3)  [3-phase]  or  I = Total VA / V  [1-phase]", description: "Use 1.732 factor for 3-phase systems" },
   ];
 }
@@ -44,6 +45,11 @@ export default function CommercialLoad({ category, necYear = "2023" }) {
   const r = calcCommercialLoad(v, nec);
   const { lightingVA, lightingDemand, receptacleTotal, receptacleDemand,
     showWindowVA, signVA, appliancesVA, hvacVA, totalVA, totalAmps, lightingArticle, lightingDemandTable, steps } = r;
+  const receptacleDemandArticle = r.receptacleDemandArticle || nec.RECEPTACLE_DEMAND_ARTICLE || "220.44";
+  const officeReceptacleArticle = r.officeReceptacleArticle || nec.OFFICE_RECEPTACLE_MIN_ARTICLE || "220.14(K)";
+  const officeReceptacleHeading = nec.OFFICE_RECEPTACLE_MIN_HEADING || "(K) Banks and Office Buildings";
+  const showWindowArticle = r.showWindowArticle || nec.SHOW_WINDOW_ARTICLE || "220.14(G)";
+  const signArticle = r.signArticle || nec.SIGN_OUTLET_ARTICLE || "220.14(F)";
 
   return (
     <CalcLayout category={category} necYear={necYear} inputValues={v} outputValues={r} result={
@@ -54,7 +60,7 @@ export default function CommercialLoad({ category, necYear = "2023" }) {
         </ResultSection>
         <ResultSection title="Receptacle Load">
           <ResultRow label={`${v.receptacles} receptacles × ${v.receptacleVA} VA`} value={receptacleTotal.toFixed(0)} unit="VA" />
-          <ResultRow label="After Demand Factor (220.44)" value={receptacleDemand.toFixed(0)} unit="VA" />
+          <ResultRow label={`After Demand Factor (${receptacleDemandArticle})`} value={receptacleDemand.toFixed(0)} unit="VA" />
         </ResultSection>
         <ResultSection title="Other Loads">
           <ResultRow label="Show Window" value={showWindowVA.toFixed(0)} unit="VA" />
@@ -71,7 +77,7 @@ export default function CommercialLoad({ category, necYear = "2023" }) {
         <NoteBox>
           <ul className="list-disc pl-3.5 space-y-1">
             <li>NEC {necYear} {lightingArticle} unit load for the selected occupancy. {lightingDemandTable} lighting demand — hospitals/hotels/motels: do not apply the demand factors to areas where the entire lighting is likely to be used at one time. All other occupancies: 100% unless a demand row exists for that occupancy.</li>
-            <li>Receptacles: 180 VA per yoke (220.14(I)), then 220.44 (first 10 kVA at 100%, remainder 50%). Offices and banks: not less than 1 VA/ft² (220.14(K)). Show window: 200 VA per linear foot (220.14(F)). Sign outlet: not less than 1,200 VA if a sign load is entered (220.14(E)).</li>
+            <li>Receptacles: 180 VA per yoke (220.14(I)), then {receptacleDemandArticle} (first 10 kVA at 100%, remainder 50%). {officeReceptacleHeading}: not less than 1 VA/ft² ({officeReceptacleArticle}). Show windows: 200 VA per linear foot ({showWindowArticle}). Sign and outline lighting: not less than 1,200 VA if a sign load is entered ({signArticle}).</li>
             {nec.GFCI_SCOPE_OTHER_THAN_DWELLING && <li><strong>210.8(B) GFCI ({necYear}):</strong> {nec.GFCI_SCOPE_OTHER_THAN_DWELLING}</li>}
           </ul>
         </NoteBox>
@@ -85,11 +91,11 @@ export default function CommercialLoad({ category, necYear = "2023" }) {
       <Field label="Floor Area" unit="sq ft"><NumInput value={v.sqft} onChange={set("sqft")} placeholder="5000" /></Field>
       <Field label="Number of Receptacles"><NumInput value={v.receptacles} onChange={set("receptacles")} placeholder="30" /></Field>
       <Field label="VA per Receptacle" unit="VA" hint="NEC: 180 VA each"><NumInput value={v.receptacleVA} onChange={set("receptacleVA")} placeholder="180" /></Field>
-      <Field label="Show Window" unit="linear ft"><NumInput value={v.showWindow} onChange={set("showWindow")} placeholder="0" /></Field>
-      <Field label="Outside Sign Circuit" unit="VA" hint="If used, not less than 1200 VA per 220.14(E)"><NumInput value={v.outsideSign} onChange={set("outsideSign")} placeholder="0" /></Field>
-      <Field label="Hospital/Hotel lighting used at one time?" hint="Table 220.42 footnote — demand factors do not apply to those areas">
+      <Field label="Show Window" unit="linear ft" hint={`200 VA per linear foot, ${showWindowArticle}`}><NumInput value={v.showWindow} onChange={set("showWindow")} placeholder="0" /></Field>
+      <Field label="Outside Sign Circuit" unit="VA" hint={`If used, not less than 1200 VA per ${signArticle}`}><NumInput value={v.outsideSign} onChange={set("outsideSign")} placeholder="0" /></Field>
+      <Field label="Hospital/Hotel lighting used at one time?" hint={`${lightingDemandTable} footnote — demand factors do not apply to those areas`}>
         <Select value={v.lightingUsedAtOneTime} onChange={set("lightingUsedAtOneTime")} options={[
-          { value: false, label: "No — apply Table 220.42" },
+          { value: false, label: `No — apply ${lightingDemandTable}` },
           { value: true, label: "Yes — 100% (footnote)" },
         ]} />
       </Field>

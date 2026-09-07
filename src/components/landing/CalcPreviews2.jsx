@@ -15,7 +15,7 @@ export function CommercialLoadPreview() {
       <div className="pt-2 space-y-2">
         <MockResultSection title="Load Calculation">
           <MockResultRow label="Lighting Load (Table 220.12)" value="30,000" unit="VA" sub="Retail @ 3 VA/sq ft" />
-          <MockResultRow label="Receptacle Demand (220.44)" value="14,400" unit="VA" sub="First 10k @ 100% + 50%" />
+          <MockResultRow label="Receptacle Demand (220.44 / 220.47)" value="14,400" unit="VA" sub="First 10k @ 100% + 50%" />
           <MockResultRow label="Total Connected Load" value="44,400" unit="VA" highlight />
           <MockResultRow label="Service Current" value="167" unit="A" highlight sub="208V/3Ø" />
         </MockResultSection>
@@ -356,7 +356,7 @@ export function MarinaPreview() {
 export function DemandFactorPreview() {
   return (
     <div className="space-y-3">
-      <MockHeader article="NEC 220.42 / 220.44" label="Demand Factor" emoji="📊" color="blue" />
+      <MockHeader article="NEC 220.42 / 220.44 / 220.47" label="Demand Factor" emoji="📊" color="blue" />
       <div className="grid grid-cols-2 gap-3">
         <MockField label="Connected Load" unit="VA" value="12,000" />
         <MockField label="Load Type" value="Lighting" />
@@ -411,7 +411,7 @@ export function PowerFactorPreview() {
 export function MultiWirePreview() {
   return (
     <div className="space-y-3">
-      <MockHeader article="NEC 210.4" label="Multiwire Branch Circuit" emoji="〰️" color="purple" />
+      <MockHeader article="NEC 210.4(B)" label="Multiwire Branch Circuit" emoji="〰️" color="purple" />
       <div className="grid grid-cols-2 gap-3">
         <MockField label="Voltage" unit="V" value="120/240" />
         <MockField label="Phase" value="Single-Phase" />
