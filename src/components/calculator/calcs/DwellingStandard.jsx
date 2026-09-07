@@ -46,6 +46,7 @@ export default function DwellingStandard({ category, necYear = "2023" }) {
     dryerDemand_VA: dryerDemand, fixedLoads_VA: fixedLoads, totalVA, totalAmps, minService_A: minService, steps } = r;
   const rangeDemandArticle = r.rangeDemandArticle || "Table 220.55";
   const dwellingLightingArticle = nec.DWELLING_LIGHTING_ARTICLE || "Table 220.12";
+  const bathroomLoadArticle = nec.DWELLING_BATHROOM_LOAD_ARTICLE || "220.14(J)";
   const lightingDemandArticle = nec.LIGHTING_DEMAND_TABLE || "Table 220.42";
   const islandPeninsulaArticle = nec.ISLAND_PENINSULA_ARTICLE || "210.52(C)(2)";
   const bathroomCount = parseFloat(v.bathroom) || 0;
@@ -57,7 +58,7 @@ export default function DwellingStandard({ category, necYear = "2023" }) {
           <ResultRow label="General Lighting (3 VA/sq ft)" value={genLighting.toFixed(0)} unit="VA" />
           <ResultRow label="Small Appliance Circuits" value={smallApplVA.toFixed(0)} unit="VA" />
           <ResultRow label="Laundry Circuit" value={laundryVA.toFixed(0)} unit="VA" />
-          {bathroomCount > 0 && <ResultRow label="Bathroom Circuits (not added)" value={`${bathroomCount} circuit(s)`} sub="210.11(C)(3) included in general lighting per 220.14(J)" />}
+          {bathroomCount > 0 && <ResultRow label="Bathroom Circuits (not added)" value={`${bathroomCount} circuit(s)`} sub={`210.11(C)(3) included in general lighting per ${bathroomLoadArticle}`} />}
           <ResultRow label="Subtotal (before demand)" value={subtotal.toFixed(0)} unit="VA" />
         </ResultSection>
         <ResultSection title="After Demand Factors">
@@ -76,7 +77,7 @@ export default function DwellingStandard({ category, necYear = "2023" }) {
         <NoteBox>
           <ul className="list-disc pl-3.5 space-y-1">
             <li>NEC {necYear} 220.40 Standard Method. General dwelling lighting uses {dwellingLightingArticle}; lighting demand ({lightingDemandArticle} dwelling): {nec.DWELLING_DEMAND_TABLE.map((t) => `${(t.factor * 100).toFixed(0)}%${t.band < Infinity ? ` first ${t.band.toLocaleString()} VA` : " remainder"}`).join(", ")}.</li>
-            <li>220.52 / 210.11(C): minimum 2 small-appliance circuits and 1 laundry circuit at 1500 VA each. 210.11(C)(3) bathroom circuit is required but is not an extra 1500 VA — 220.14(J).</li>
+            <li>220.52 / 210.11(C): minimum 2 small-appliance circuits and 1 laundry circuit at 1500 VA each. 210.11(C)(3) bathroom circuit is required but is not an extra 1500 VA — {bathroomLoadArticle}.</li>
             <li>Range per {rangeDemandArticle} (Columns A/B/C and Note 1). One household dryer: 5000 W or nameplate, 220.54. 220.53 75% applies only with 4+ fastened appliances other than range, dryer, space heating, or AC. Enter the larger of heating vs cooling in HVAC.</li>
             <li>Feeder/service neutral (220.61) is not calculated here — use the Neutral Load calculator. D1(b) motor/A/C additions (430.24 / 440) are not in this calculator.</li>
             <li>Minimum one-family dwelling service: {nec.DWELLING_MIN_SERVICE_AMPS}A per 230.79(C).</li>
@@ -102,7 +103,7 @@ export default function DwellingStandard({ category, necYear = "2023" }) {
       <Field label="Laundry Branch Circuits" unit="min. 1" hint="1500 VA each, NEC 210.11(C)(2)">
         <NumInput value={v.laundry} onChange={set("laundry")} min={1} />
       </Field>
-      <Field label="Bathroom Branch Circuits" unit="count" hint="210.11(C)(3) required; load is in general lighting (220.14(J)), not extra 1500 VA">
+      <Field label="Bathroom Branch Circuits" unit="count" hint={`210.11(C)(3) required; load is in general lighting (${bathroomLoadArticle}), not extra 1500 VA`}>
         <NumInput value={v.bathroom} onChange={set("bathroom")} min={0} />
       </Field>
       <Field label="Range / Oven Nameplate" unit="watts" hint="0 if none">

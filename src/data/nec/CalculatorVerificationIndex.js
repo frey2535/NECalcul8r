@@ -374,7 +374,7 @@ export const VERIFICATION_RESULTS = {
     // STEP 1: Complete NEC dependency audit
     completeDependencyList: [
       "220.12 (Table — dwelling lighting 3 VA/sq ft; unused cellar/attic/porches excluded from area)",
-      "220.14(J) (bathroom circuits included in general lighting — not extra 1500 VA)",
+      "2017/2020 220.14(J); 2023 220.41 (bathroom circuits included in general lighting — not extra 1500 VA)",
       "220.40 (standard method)",
       "220.42 (Table — lighting demand 100%/35%/25% dwelling tiers)",
       "220.52(A) (small appliance — 1500 VA/circuit, min 2)",
@@ -400,7 +400,7 @@ export const VERIFICATION_RESULTS = {
       "Table 220.55": { status: "VERIFIED", detail: "Columns A/B/C and Note 1 (5% per kW or major fraction over 12 kW). Multiple ranges and 26+ Column C formula (15 kW + 1 kW per range) gated. Note 4 wall-oven/cooktop split is a documented input limitation." },
       "Table 220.54": { status: "VERIFIED", detail: "Single household dryer: max(5000 W, nameplate). Multiple dryers are the multifamily calculator." },
       "220.53": { status: "VERIFIED", detail: "75% applied when 4 or more fastened appliances other than range, dryer, space heating, or AC. Three appliances stay at 100%." },
-      "220.14(J)": { status: "VERIFIED", detail: "Bathroom circuit count does not add 1500 VA." },
+      "220.14(J) / 220.41": { status: "VERIFIED", detail: "Bathroom circuit count does not add 1500 VA. 220.14(J) applies to 2017/2020; this reference moves to 220.41 in 2023." },
       "220.52": { status: "VERIFIED", detail: "Minimum 2 small-appliance and 1 laundry circuit enforced in the load, not only in the UI." },
       "220.60": { status: "VERIFIED", detail: "User enters the larger of heating vs cooling in the HVAC input." },
     },

@@ -38,7 +38,7 @@ export const RELEASE_SUMMARY = {
       defectsFixed: 2,
       ready: "✅",
       lastReviewed: "2026-08-22",
-      notes: "2017 gated: Table 220.55 A/B/C + Note 1, 220.52 mins, 220.14(J), 220.53, 26+ Column C. Annex D D1(a)/D6 pass. Neutral 220.61 and D1(b) are other calculators. FROZEN BASELINE v1.0.0.",
+      notes: "2017 gated: Table 220.55 A/B/C + Note 1, 220.52 mins, 220.14(J), 220.53, 26+ Column C. 2023 display maps the bathroom/general-lighting inclusion reference to 220.41. Annex D D1(a)/D6 pass. Neutral 220.61 and D1(b) are other calculators. FROZEN BASELINE v1.0.0.",
       baselineGate: { frozen: true, version: "1.0.0", date: "2026-08-22", totalTests: 16 },
     },
     {

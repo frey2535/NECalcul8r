@@ -518,6 +518,7 @@ export const SIGN_OUTLET_MIN_VA = 1200;
 export const RECEPTACLE_YOKE_VA = 180;
 export const DWELLING_LIGHTING_VA_PER_SQFT = 3; // 220.14(J) — value unchanged
 export const DWELLING_LIGHTING_ARTICLE = "220.14(J)";
+export const DWELLING_BATHROOM_LOAD_ARTICLE = "220.14(J)";
 export const HOTEL_LIGHTING_ARTICLE = "220.14(M)";
 export const OCCUPANCY_UNIT_LOAD_TABLE = "Table 220.12";
 export const LIGHTING_DEMAND_TABLE = "Table 220.42";

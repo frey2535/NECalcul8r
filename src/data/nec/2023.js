@@ -187,6 +187,7 @@ export const OCCUPANCY_UNIT_LOADS = {
   armory: 1.7,          // copied from 2020 (was 1.0 in 2017) — pending 2023 verification
 };
 export const DWELLING_LIGHTING_ARTICLE = "220.41";
+export const DWELLING_BATHROOM_LOAD_ARTICLE = "220.41";
 export const HOTEL_LIGHTING_ARTICLE = "Table 220.42(A)";
 export const OCCUPANCY_UNIT_LOAD_TABLE = "Table 220.42(A)";
 export const LIGHTING_DEMAND_TABLE = "Table 220.45";

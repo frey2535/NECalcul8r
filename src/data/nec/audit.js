@@ -52,6 +52,13 @@ const DWELLING_LIGHTING_TABLE_YEAR_REFS = {
   "2026": "220.41 (pending)",
 };
 
+const DWELLING_BATHROOM_LOAD_YEAR_REFS = {
+  "2017": "220.14(J)",
+  "2020": "220.14(J)",
+  "2023": "220.41",
+  "2026": "220.41 (pending)",
+};
+
 const OCCUPANCY_UNIT_LOAD_TABLE_YEAR_REFS = {
   "2017": "Table 220.12",
   "2020": "Table 220.12",
@@ -200,7 +207,7 @@ export const CALCULATORS = [
     category: "Load Calculations", usesGetNecData: true, yearSensitive: true,
     articles: [
       { ref: "220.12", desc: "Dwelling lighting — 3 VA/sq ft; exclude unused cellar, unfinished attic, open porches", changed: true, source: N17, yearRefs: DWELLING_LIGHTING_YEAR_REFS, note: "2023 Article 220 reorganization moved the former 220.12 dwelling lighting rule to 220.41." },
-      { ref: "220.14(J)", desc: "Dwelling lighting/receptacle load — bathroom circuits not extra 1500 VA", changed: false, source: N17 },
+      { ref: "220.14(J)", desc: "Dwelling lighting/receptacle load — bathroom circuits not extra 1500 VA", changed: true, source: N17, yearRefs: DWELLING_BATHROOM_LOAD_YEAR_REFS, note: "220.14(J) applies to 2017/2020; the 2023 Article 220 reorganization moved this dwelling general lighting load rule to 220.41." },
       { ref: "220.40", desc: "Standard method — sum of computed loads", changed: false, source: N17 },
       { ref: "220.52", desc: "Small appliance circuits — 1,500 VA each (min 2)", changed: false, source: N17 },
       { ref: "220.52(B)", desc: "Laundry circuit — 1,500 VA (min 1)", changed: false, source: N17 },
@@ -220,7 +227,7 @@ export const CALCULATORS = [
       { ref: "210.8(F)", desc: "GFCI for outdoor dwelling outlets ≤50A", changed: true, source: PEND, yearRefs: GFCI_OUTDOOR_DWELLING_YEAR_REFS, note: "2017: not applicable; 210.8(F) did not exist. 2020/2023: outdoor dwelling outlets on single-phase circuits rated ≤150V to ground and ≤50A; lighting-outlet exception. Displayed in NoteBox." },
       { ref: "422.5", desc: "Appliance GFCI list (dishwashers, sump pumps)", changed: true, source: PEND, note: "2020: dishwashers and sump pumps added. Displayed in NoteBox." },
     ],
-    sourceNotes: "2017/2020 standard method uses former 220.12 for dwelling lighting and Table 220.42 for demand. 2023 reorganizes those to 220.41 and Table 220.45. Other standard-method items: Table 220.54/220.55, 220.52 mins, 220.14(J), 220.53, 220.60. Neutral 220.61 and D1(b) 430.24 are other calculators. Installation notes year-gated.",
+    sourceNotes: "2017/2020 standard method uses former 220.12 for dwelling lighting, 220.14(J) for the bathroom/general-lighting inclusion note, and Table 220.42 for demand. 2023 reorganizes the dwelling lighting items to 220.41 and demand to Table 220.45. Other standard-method items: Table 220.54/220.55, 220.52 mins, 220.53, 220.60. Neutral 220.61 and D1(b) 430.24 are other calculators. Installation notes year-gated.",
     testInputs: { sqft: 2000, smallAppliance: 2, laundry: 1, range: 12000, dryer: 5000, dishwasher: 0, disposer: 0, waterHeater: 0, hvac: 0, other: 0, voltage: 240 },
     calculate: (i, nec) => {
       const r = calcDwellingStandard(i, nec);

@@ -11,7 +11,7 @@ function dwellingYearArticles(nec, base) {
   if (nec.GFCI_OUTDOOR_DWELLING_50A) articles.push("210.8(F)");
   if (nec.DWELLING_SPD_REQUIRED) articles.push("230.67");
   if (nec.DWELLING_OUTDOOR_DISCONNECT_REQUIRED) articles.push("230.85");
-  return articles;
+  return [...new Set(articles.filter(Boolean))];
 }
 
 function lightingDemandTiers(nec) {
@@ -64,8 +64,8 @@ export function calcDwellingStandard(v, nec) {
   const genLighting = sqft * nec.DWELLING_LIGHTING_VA_PER_SQFT;
   const smallApplVA = smallCount * nec.SMALL_APPLIANCE_VA;
   const laundryVA = laundryCount * nec.LAUNDRY_VA;
-  // 210.11(C)(3) bathroom circuits are included in general lighting/receptacle
-  // load per 220.14(J). Do not add extra 1500 VA (220.52 is small-appliance + laundry only).
+  // 210.11(C)(3) bathroom circuits are included in the dwelling general
+  // lighting load; the article reference is edition-specific.
   const bathroomCount = Math.max(0, parseFloat(v.bathroom) || 0);
   const subtotal = genLighting + smallApplVA + laundryVA;
 
@@ -126,12 +126,13 @@ export function calcDwellingStandard(v, nec) {
   const minService = Math.max(minServiceFromLoad, nec.DWELLING_MIN_SERVICE_AMPS || 100);
   const rangeDemandArticle = nec.RANGE_DEMAND_ARTICLE || "Table 220.55";
   const dwellingLightingArticle = nec.DWELLING_LIGHTING_ARTICLE || "Table 220.12";
+  const bathroomLoadArticle = nec.DWELLING_BATHROOM_LOAD_ARTICLE || "220.14(J)";
   const lightingDemandArticle = nec.LIGHTING_DEMAND_TABLE || "Table 220.42";
   const islandPeninsulaArticle = nec.ISLAND_PENINSULA_ARTICLE || "210.52(C)(2)";
 
   const steps = [
     { label: `General Lighting Load (${dwellingLightingArticle})`, formula: "VA = sqft × 3 VA/ft² (exclude unused cellar, unfinished attic, open porches)", expression: `${sqft} ft² × ${nec.DWELLING_LIGHTING_VA_PER_SQFT} VA/ft²`, result: Math.round(genLighting), unit: "VA" },
-    { label: "Small Appliance + Laundry (220.52)", formula: `VA = (max(${saMin}, circuits) × 1500) + (max(${laMin}, laundry) × 1500)`, expression: `${smallCount} × ${nec.SMALL_APPLIANCE_VA} + ${laundryCount} × ${nec.LAUNDRY_VA}`, result: Math.round(smallApplVA + laundryVA), unit: "VA", note: bathroomCount > 0 ? "Bathroom circuits are included in general lighting (220.14(J)); 1500 VA is not added" : "210.11(C)(1) min 2 small-appliance; 210.11(C)(2) min 1 laundry" },
+    { label: "Small Appliance + Laundry (220.52)", formula: `VA = (max(${saMin}, circuits) × 1500) + (max(${laMin}, laundry) × 1500)`, expression: `${smallCount} × ${nec.SMALL_APPLIANCE_VA} + ${laundryCount} × ${nec.LAUNDRY_VA}`, result: Math.round(smallApplVA + laundryVA), unit: "VA", note: bathroomCount > 0 ? `Bathroom circuits are included in general lighting (${bathroomLoadArticle}); 1500 VA is not added` : "210.11(C)(1) min 2 small-appliance; 210.11(C)(2) min 1 laundry" },
     { label: `Lighting Demand (${lightingDemandArticle})`, formula: "Demand = first 3,000 @ 100% + next 117,000 @ 35% + remainder @ 25%", expression: `First 3,000 @ 100% + remainder @ 35%`, result: Math.round(lightingDemand), unit: "VA", note: `Subtotal: ${Math.round(subtotal)} VA` },
     { label: `Range Demand (${rangeDemandArticle})`, formula: rangeColumn === "C" && rangeKwOver12(rangeW, nec) > 0 ? "Column C × (1 + 5% per kW or major fraction over 12 kW) Note 1" : rangeCount > 1 ? `Multiple ranges (${rangeCount}) — ${rangeDemandArticle} Column ${rangeColumn || "C"}` : "Col A: <3½ kW 80% | Col B: 3½–8¾ kW 80% (1 range) | Col C: 8 kW (8¾–12 kW) | Note 1: +5%/kW over 12", expression: rangeW > 0 ? (rangeColumn === "A" || rangeColumn === "B" ? `${rangeCount} × ${rangeW} × ${(rangeColumn === "A" ? rowPct(nec, rangeCount, "A") : rowPct(nec, rangeCount, "B"))}%` : `${Math.round(rangeColumnC_VA(nec, rangeCount))} × (1 + 0.05 × ${rangeKwOver12(rangeW, nec)})`) : "0", result: Math.round(rangeDemand), unit: "VA", note: rangeColumn ? `Column ${rangeColumn}${rangeKwOver12(rangeW, nec) > 0 ? " + Note 1" : ""}` : undefined },
     { label: "Dryer Demand (Table 220.54)", formula: "Demand = max(5,000, nameplate) for one household dryer", expression: dryerW > 0 ? `max(5,000, ${dryerW})` : "0", result: Math.round(dryerDemand), unit: "VA" },
@@ -169,13 +170,13 @@ export function calcDwellingStandard(v, nec) {
   };
   return withTrace(result, {
     articles_used: dwellingYearArticles(nec, [
-      dwellingLightingArticle, "220.14(J)", "220.40", lightingDemandArticle, "220.52(A)", "220.52(B)",
+      dwellingLightingArticle, bathroomLoadArticle, "220.40", lightingDemandArticle, "220.52(A)", "220.52(B)",
       "220.54", rangeDemandArticle.replace(/^Table /, ""), "220.60", "210.11(C)(1)", "210.11(C)(2)", "210.11(C)(3)",
       "240.6(A)", "230.42", "230.79(C)", "210.8(A)", islandPeninsulaArticle,
       ...(apply220_53 ? ["220.53"] : []),
     ]),
     tables_used: [tableRefOrNull(dwellingLightingArticle), lightingDemandArticle, "Table 220.54", rangeDemandArticle, "Table 240.6(A)"].filter(Boolean),
-    fields_used: ["DWELLING_LIGHTING_VA_PER_SQFT", "DWELLING_LIGHTING_ARTICLE", "LIGHTING_DEMAND_TABLE", "SMALL_APPLIANCE_VA", "LAUNDRY_VA", "SMALL_APPLIANCE_MIN_CIRCUITS", "LAUNDRY_MIN_CIRCUITS", "LIGHTING_DEMAND", "RANGE_DEMAND", "RANGE_DEMAND_ARTICLE", "FIXED_APPLIANCE_DEMAND_FACTOR", "STD_OCPD_SIZES", "DWELLING_MIN_SERVICE_AMPS", "DWELLING_SPD_REQUIRED", "DWELLING_OUTDOOR_DISCONNECT_REQUIRED", "GFCI_SCOPE_DWELLING", "ISLAND_PENINSULA_ARTICLE", "ISLAND_PENINSULA_RULE", "DISHWASHER_GFCI_REQUIRED", "SUMP_PUMP_GFCI_REQUIRED", "GFCI_OUTDOOR_DWELLING_50A", "GARAGE_BASEMENT_RECEPTACLE_SCOPE"],
+    fields_used: ["DWELLING_LIGHTING_VA_PER_SQFT", "DWELLING_LIGHTING_ARTICLE", "DWELLING_BATHROOM_LOAD_ARTICLE", "LIGHTING_DEMAND_TABLE", "SMALL_APPLIANCE_VA", "LAUNDRY_VA", "SMALL_APPLIANCE_MIN_CIRCUITS", "LAUNDRY_MIN_CIRCUITS", "LIGHTING_DEMAND", "RANGE_DEMAND", "RANGE_DEMAND_ARTICLE", "FIXED_APPLIANCE_DEMAND_FACTOR", "STD_OCPD_SIZES", "DWELLING_MIN_SERVICE_AMPS", "DWELLING_SPD_REQUIRED", "DWELLING_OUTDOOR_DISCONNECT_REQUIRED", "GFCI_SCOPE_DWELLING", "ISLAND_PENINSULA_ARTICLE", "ISLAND_PENINSULA_RULE", "DISHWASHER_GFCI_REQUIRED", "SUMP_PUMP_GFCI_REQUIRED", "GFCI_OUTDOOR_DWELLING_50A", "GARAGE_BASEMENT_RECEPTACLE_SCOPE"],
   });
 }
 
