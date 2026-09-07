@@ -44,6 +44,36 @@ import {
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import PullToRefreshIndicator from "@/components/ui/PullToRefreshIndicator";
 
+const MAX_PDF_PAGE_HEIGHT_PX = 14000;
+
+function pageOrientation(width, height) {
+  return width > height ? "landscape" : "portrait";
+}
+
+function canvasSliceToImage(canvas, sourceY, sourceHeight) {
+  if (sourceY === 0 && sourceHeight === canvas.height) {
+    return canvas.toDataURL("image/png");
+  }
+
+  const slice = document.createElement("canvas");
+  slice.width = canvas.width;
+  slice.height = sourceHeight;
+  const context = slice.getContext("2d");
+  if (!context) throw new Error("Unable to prepare PDF image slice.");
+  context.drawImage(
+    canvas,
+    0,
+    sourceY,
+    canvas.width,
+    sourceHeight,
+    0,
+    0,
+    canvas.width,
+    sourceHeight
+  );
+  return slice.toDataURL("image/png");
+}
+
 export default function Projects() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
@@ -189,29 +219,67 @@ export default function Projects() {
     if (!node || !activeCalc) return;
     setExportingPdf(true);
     try {
-      const canvas = await html2canvas(node, {
-        backgroundColor: "#ffffff",
-        scale: Math.min(2, window.devicePixelRatio || 1.5),
-        useCORS: true,
-        windowWidth: node.scrollWidth,
-        windowHeight: node.scrollHeight,
-      });
-      const imgData = canvas.toDataURL("image/png");
-      const pdf = new jsPDF({ orientation: "portrait", unit: "pt", format: "a4" });
-      const pageWidth = pdf.internal.pageSize.getWidth();
-      const pageHeight = pdf.internal.pageSize.getHeight();
-      const margin = 24;
-      const printableHeight = pageHeight - margin * 2;
-      const imgWidth = pageWidth - margin * 2;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      let renderedHeight = 0;
+      if (document.fonts?.ready) await document.fonts.ready;
+      await new Promise((resolve) => window.requestAnimationFrame(resolve));
 
-      pdf.addImage(imgData, "PNG", margin, margin, imgWidth, imgHeight);
-      renderedHeight += printableHeight;
-      while (renderedHeight < imgHeight) {
-        pdf.addPage();
-        pdf.addImage(imgData, "PNG", margin, margin - renderedHeight, imgWidth, imgHeight);
-        renderedHeight += printableHeight;
+      const bounds = node.getBoundingClientRect();
+      const captureWidth = Math.ceil(Math.max(node.scrollWidth, node.offsetWidth, bounds.width));
+      const captureHeight = Math.ceil(Math.max(node.scrollHeight, node.offsetHeight, bounds.height));
+      const renderedBackground = window.getComputedStyle(node).backgroundColor;
+      const backgroundColor = renderedBackground && renderedBackground !== "rgba(0, 0, 0, 0)"
+        ? renderedBackground
+        : "#ffffff";
+      const scale = Math.max(1, Math.min(2, window.devicePixelRatio || 1.5));
+      const canvas = await html2canvas(node, {
+        backgroundColor,
+        height: captureHeight,
+        scale,
+        useCORS: true,
+        width: captureWidth,
+        windowWidth: captureWidth,
+        windowHeight: captureHeight,
+        onclone: (clonedDocument) => {
+          const clonedRoot = clonedDocument.querySelector("[data-saved-pdf-root]");
+          if (clonedRoot) {
+            clonedRoot.style.width = `${captureWidth}px`;
+            clonedRoot.style.backgroundColor = backgroundColor;
+          }
+          clonedDocument.querySelectorAll(".calculator-results").forEach((element) => {
+            element.style.maxHeight = "none";
+            element.style.overflow = "visible";
+          });
+        },
+      });
+
+      const canvasScale = canvas.width / captureWidth;
+      const pageWidth = captureWidth;
+      const firstPageHeight = Math.min(captureHeight, MAX_PDF_PAGE_HEIGHT_PX);
+      const pdf = new jsPDF({
+        compress: true,
+        format: [pageWidth, firstPageHeight],
+        hotfixes: ["px_scaling"],
+        orientation: pageOrientation(pageWidth, firstPageHeight),
+        unit: "px",
+      });
+
+      let sourceY = 0;
+      let pageIndex = 0;
+      while (sourceY < canvas.height) {
+        const remainingCanvasHeight = canvas.height - sourceY;
+        const sliceCanvasHeight = Math.min(
+          remainingCanvasHeight,
+          Math.floor(MAX_PDF_PAGE_HEIGHT_PX * canvasScale)
+        );
+        const pageHeight = Math.ceil(sliceCanvasHeight / canvasScale);
+        const imageData = canvasSliceToImage(canvas, sourceY, sliceCanvasHeight);
+
+        if (pageIndex > 0) {
+          pdf.addPage([pageWidth, pageHeight], pageOrientation(pageWidth, pageHeight));
+        }
+        pdf.addImage(imageData, "PNG", 0, 0, pageWidth, pageHeight, undefined, "FAST");
+
+        sourceY += sliceCanvasHeight;
+        pageIndex += 1;
       }
       pdf.save(`${savedFileName(activeCalc)}.pdf`);
     } catch (error) {
@@ -402,7 +470,7 @@ export default function Projects() {
                   </div>
                 </div>
               </DialogHeader>
-              <div ref={printRef} className="saved-calculation-print bg-background p-1 sm:p-2">
+              <div ref={printRef} data-saved-pdf-root className="saved-calculation-print bg-background p-1 sm:p-2">
                 <CalculatorPanel
                   category={activeCategory}
                   savedCalculation={activeCalc}
