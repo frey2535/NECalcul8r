@@ -232,7 +232,10 @@ export default function Projects() {
       const scale = Math.max(1, Math.min(2, window.devicePixelRatio || 1.5));
       const canvas = await html2canvas(node, {
         backgroundColor,
+        foreignObjectRendering: true,
         height: captureHeight,
+        imageTimeout: 15000,
+        logging: false,
         scale,
         useCORS: true,
         width: captureWidth,
@@ -244,6 +247,21 @@ export default function Projects() {
             clonedRoot.style.width = `${captureWidth}px`;
             clonedRoot.style.backgroundColor = backgroundColor;
           }
+          const style = clonedDocument.createElement("style");
+          style.textContent = `
+            [data-saved-pdf-root],
+            [data-saved-pdf-root] * {
+              font-kerning: normal;
+              text-rendering: geometricPrecision;
+            }
+            [data-saved-pdf-root] input,
+            [data-saved-pdf-root] select,
+            [data-saved-pdf-root] textarea {
+              -webkit-appearance: none;
+              appearance: none;
+            }
+          `;
+          clonedDocument.head.appendChild(style);
           clonedDocument.querySelectorAll(".calculator-results").forEach((element) => {
             element.style.maxHeight = "none";
             element.style.overflow = "visible";
@@ -276,7 +294,7 @@ export default function Projects() {
         if (pageIndex > 0) {
           pdf.addPage([pageWidth, pageHeight], pageOrientation(pageWidth, pageHeight));
         }
-        pdf.addImage(imageData, "PNG", 0, 0, pageWidth, pageHeight, undefined, "FAST");
+        pdf.addImage(imageData, "PNG", 0, 0, pageWidth, pageHeight);
 
         sourceY += sliceCanvasHeight;
         pageIndex += 1;
@@ -445,32 +463,32 @@ export default function Projects() {
         <DialogContent className="sm:max-w-6xl max-h-[92vh] overflow-y-auto">
           {activeCalc && activeCategory && (
             <>
-              <DialogHeader>
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                  <div>
-                    <DialogTitle>{activeCalc.title || activeCalc.calculator_label}</DialogTitle>
-                    <DialogDescription className="flex flex-wrap items-center gap-2 mt-1">
-                      <span>{activeCalc.project_name}</span>
-                      <Badge variant="outline">NEC {activeCalc.nec_year}</Badge>
-                      <span className="inline-flex items-center gap-1">
-                        <Calendar className="w-3 h-3" />
-                        {new Date(activeCalc.updated_date || activeCalc.created_date).toLocaleDateString()}
-                      </span>
-                    </DialogDescription>
+              <div ref={printRef} data-saved-pdf-root className="saved-calculation-print bg-background p-1 sm:p-2 space-y-3">
+                <DialogHeader>
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                      <DialogTitle>{activeCalc.title || activeCalc.calculator_label}</DialogTitle>
+                      <DialogDescription className="flex flex-wrap items-center gap-2 mt-1">
+                        <span>{activeCalc.project_name}</span>
+                        <Badge variant="outline">NEC {activeCalc.nec_year}</Badge>
+                        <span className="inline-flex items-center gap-1">
+                          <Calendar className="w-3 h-3" />
+                          {new Date(activeCalc.updated_date || activeCalc.created_date).toLocaleDateString()}
+                        </span>
+                      </DialogDescription>
+                    </div>
+                    <div className="no-print flex flex-wrap gap-2" data-html2canvas-ignore="true">
+                      <Button variant="outline" size="sm" className="gap-1.5" onClick={handlePrint}>
+                        <Printer className="w-4 h-4" />
+                        Print
+                      </Button>
+                      <Button size="sm" className="gap-1.5" onClick={handlePdf} disabled={exportingPdf}>
+                        {exportingPdf ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileDown className="w-4 h-4" />}
+                        Download PDF
+                      </Button>
+                    </div>
                   </div>
-                  <div className="no-print flex flex-wrap gap-2">
-                    <Button variant="outline" size="sm" className="gap-1.5" onClick={handlePrint}>
-                      <Printer className="w-4 h-4" />
-                      Print
-                    </Button>
-                    <Button size="sm" className="gap-1.5" onClick={handlePdf} disabled={exportingPdf}>
-                      {exportingPdf ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileDown className="w-4 h-4" />}
-                      Download PDF
-                    </Button>
-                  </div>
-                </div>
-              </DialogHeader>
-              <div ref={printRef} data-saved-pdf-root className="saved-calculation-print bg-background p-1 sm:p-2">
+                </DialogHeader>
                 <CalculatorPanel
                   category={activeCategory}
                   savedCalculation={activeCalc}
