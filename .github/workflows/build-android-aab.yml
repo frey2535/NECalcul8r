@@ -70,7 +70,14 @@ jobs:
           ANDROID_UPLOAD_KEYSTORE_BASE64: ${{ secrets.ANDROID_UPLOAD_KEYSTORE_BASE64 }}
         run: |
           mkdir -p "$RUNNER_TEMP/android-signing"
-          printf '%s' "$ANDROID_UPLOAD_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/android-signing/necalcul8r-upload.jks"
+          if ! printf '%s' "$ANDROID_UPLOAD_KEYSTORE_BASE64" | tr -d '\r\n\t ' | base64 --decode > "$RUNNER_TEMP/android-signing/necalcul8r-upload.jks"; then
+            echo "::error ::ANDROID_UPLOAD_KEYSTORE_BASE64 is not valid base64. Recreate it from the .jks file, not from the file path."
+            exit 1
+          fi
+          if [ ! -s "$RUNNER_TEMP/android-signing/necalcul8r-upload.jks" ]; then
+            echo "::error ::Decoded upload keystore is empty. Check ANDROID_UPLOAD_KEYSTORE_BASE64."
+            exit 1
+          fi
 
       - name: Build signed release bundle
         env:
