@@ -74,6 +74,29 @@ function canvasSliceToImage(canvas, sourceY, sourceHeight) {
   return slice.toDataURL("image/png");
 }
 
+function syncFormControlValues(sourceRoot, clonedRoot) {
+  const sourceFields = sourceRoot.querySelectorAll("input, textarea, select");
+  const clonedFields = clonedRoot.querySelectorAll("input, textarea, select");
+
+  sourceFields.forEach((field, index) => {
+    const clonedField = clonedFields[index];
+    if (!clonedField) return;
+
+    if ("value" in field && "value" in clonedField) {
+      clonedField.value = field.value;
+      clonedField.setAttribute("value", field.value);
+    }
+    if (field.tagName === "TEXTAREA") {
+      clonedField.textContent = field.value;
+    }
+    if (field.tagName === "SELECT") {
+      Array.from(clonedField.options || []).forEach((option) => {
+        option.selected = option.value === field.value;
+      });
+    }
+  });
+}
+
 export default function Projects() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
@@ -218,6 +241,7 @@ export default function Projects() {
     const node = printRef.current;
     if (!node || !activeCalc) return;
     setExportingPdf(true);
+    let captureNode = null;
     try {
       if (document.fonts?.ready) await document.fonts.ready;
       await new Promise((resolve) => window.requestAnimationFrame(resolve));
@@ -230,17 +254,31 @@ export default function Projects() {
         ? renderedBackground
         : "#ffffff";
       const scale = Math.max(1, Math.min(2, window.devicePixelRatio || 1.5));
-      const canvas = await html2canvas(node, {
+
+      captureNode = node.cloneNode(true);
+      syncFormControlValues(node, captureNode);
+      captureNode.style.position = "absolute";
+      captureNode.style.left = "0";
+      captureNode.style.top = `${window.scrollY}px`;
+      captureNode.style.width = `${captureWidth}px`;
+      captureNode.style.backgroundColor = backgroundColor;
+      captureNode.style.pointerEvents = "none";
+      captureNode.style.transform = "none";
+      document.body.appendChild(captureNode);
+      await new Promise((resolve) => window.requestAnimationFrame(resolve));
+
+      const captureNodeHeight = Math.ceil(Math.max(captureNode.scrollHeight, captureNode.offsetHeight, captureHeight));
+      const canvas = await html2canvas(captureNode, {
         backgroundColor,
         foreignObjectRendering: true,
-        height: captureHeight,
+        height: captureNodeHeight,
         imageTimeout: 15000,
         logging: false,
         scale,
         useCORS: true,
         width: captureWidth,
         windowWidth: captureWidth,
-        windowHeight: captureHeight,
+        windowHeight: captureNodeHeight,
         onclone: (clonedDocument) => {
           const clonedRoot = clonedDocument.querySelector("[data-saved-pdf-root]");
           if (clonedRoot) {
@@ -269,26 +307,21 @@ export default function Projects() {
         },
       });
 
-      const canvasScale = canvas.width / captureWidth;
-      const pageWidth = captureWidth;
-      const firstPageHeight = Math.min(captureHeight, MAX_PDF_PAGE_HEIGHT_PX);
+      const pageWidth = canvas.width;
+      const firstPageHeight = Math.min(canvas.height, MAX_PDF_PAGE_HEIGHT_PX);
       const pdf = new jsPDF({
         compress: true,
         format: [pageWidth, firstPageHeight],
-        hotfixes: ["px_scaling"],
         orientation: pageOrientation(pageWidth, firstPageHeight),
-        unit: "px",
+        unit: "pt",
       });
 
       let sourceY = 0;
       let pageIndex = 0;
       while (sourceY < canvas.height) {
         const remainingCanvasHeight = canvas.height - sourceY;
-        const sliceCanvasHeight = Math.min(
-          remainingCanvasHeight,
-          Math.floor(MAX_PDF_PAGE_HEIGHT_PX * canvasScale)
-        );
-        const pageHeight = Math.ceil(sliceCanvasHeight / canvasScale);
+        const sliceCanvasHeight = Math.min(remainingCanvasHeight, MAX_PDF_PAGE_HEIGHT_PX);
+        const pageHeight = sliceCanvasHeight;
         const imageData = canvasSliceToImage(canvas, sourceY, sliceCanvasHeight);
 
         if (pageIndex > 0) {
@@ -307,6 +340,7 @@ export default function Projects() {
         variant: "destructive",
       });
     } finally {
+      if (captureNode) captureNode.remove();
       setExportingPdf(false);
     }
   };
