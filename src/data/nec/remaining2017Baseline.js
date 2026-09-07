@@ -562,7 +562,7 @@ def("short_circuit", "Short Circuit 110.9 / 110.10", calcShortCircuit, [
   },
 ], 2);
 
-def("multiwire_branch", "Multiwire Branch Circuits 210.4", (v) => calcMultiwire(v), [
+def("multiwire_branch", "Multiwire Branch Circuits 210.4(B)", (v) => calcMultiwire(v), [
   {
     id: "mwbc_3w",
     description: "120/240 V MWBC neutral = |A−B|; handle tie required",

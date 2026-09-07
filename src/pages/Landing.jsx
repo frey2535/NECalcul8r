@@ -87,7 +87,7 @@ const FEATURED_CALCS = [
   { id: "marina_shore_power", label: "Marina Shore Power", article: "NEC 555.12", emoji: "⚓", color: "cyan", preview: <MarinaPreview /> },
   { id: "demand_factor", label: "Demand Factors", article: "NEC 220.42 / 220.44", emoji: "📊", color: "blue", preview: <DemandFactorPreview /> },
   { id: "power_factor", label: "Power Factor", article: "IEEE / NEC 460", emoji: "📐", color: "green", preview: <PowerFactorPreview /> },
-  { id: "multiwire_branch", label: "Multi-Wire Branch", article: "NEC 210.4", emoji: "〰️", color: "purple", preview: <MultiWirePreview /> },
+  { id: "multiwire_branch", label: "Multi-Wire Branch", article: "NEC 210.4(B)", emoji: "〰️", color: "purple", preview: <MultiWirePreview /> },
 ];
 
 const TYPICAL_CONS = [

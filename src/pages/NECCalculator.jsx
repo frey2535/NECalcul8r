@@ -39,7 +39,7 @@ export const NEC_CATEGORIES = [
   { id: "hvac_load", label: "HVAC / A/C Load", article: "NEC 440.32 / 440.33", description: "A/C & refrigeration circuit sizing", color: "cyan", emoji: "❄️" },
   { id: "welding_receptacle", label: "Welder / Arc Welder", article: "NEC 630.11", description: "Arc welder conductor and OCPD sizing", color: "gray", emoji: "🔥" },
   { id: "lighting_load", label: "Lighting Load", article: "NEC 220.12", description: "General lighting by occupancy type", color: "yellow", emoji: "💡" },
-  { id: "multiwire_branch", label: "Multiwire Branch Circuit", article: "NEC 210.4", description: "Shared neutral load & balance check", color: "purple", emoji: "〰️" },
+  { id: "multiwire_branch", label: "Multiwire Branch Circuit", article: "NEC 210.4(B)", description: "Shared neutral load & balance check", color: "purple", emoji: "〰️" },
   { id: "receptacle_load", label: "Receptacle Load", article: "NEC 220.14", description: "Commercial receptacle load calculation", color: "blue", emoji: "🔌" },
   { id: "short_circuit", label: "Short-Circuit / Fault Current", article: "NEC 110.9 / 110.10", description: "Available fault current at transformer secondary", color: "red", emoji: "⚠️" },
   { id: "power_factor", label: "Power Factor Correction", article: "IEEE / NEC 460", description: "Capacitor sizing to correct power factor", color: "green", emoji: "📐" },

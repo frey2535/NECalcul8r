@@ -411,7 +411,7 @@ export function PowerFactorPreview() {
 export function MultiWirePreview() {
   return (
     <div className="space-y-3">
-      <MockHeader article="NEC 210.4" label="Multiwire Branch Circuit" emoji="〰️" color="purple" />
+      <MockHeader article="NEC 210.4(B)" label="Multiwire Branch Circuit" emoji="〰️" color="purple" />
       <div className="grid grid-cols-2 gap-3">
         <MockField label="Voltage" unit="V" value="120/240" />
         <MockField label="Phase" value="Single-Phase" />

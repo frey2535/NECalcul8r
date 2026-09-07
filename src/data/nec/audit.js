@@ -893,9 +893,9 @@ export const CALCULATORS = [
     { ref: "110.10", desc: "Circuit impedance and short-circuit current ratings selected to withstand available fault current", changed: false, source: DEV },
   ], sourceNotes: "Engineering AFC math plus NEC 110.9/110.10 equipment-rating checks displayed in the UI. AIC standard rating list needs codebook/manufacturer verification." },
   { id: "multiwire_branch", name: "Multiwire Branch Circuits", category: "Others", usesGetNecData: false, yearSensitive: false, articles: [
-    { ref: "210.4", desc: "Multiwire branch-circuit simultaneous disconnect and grouping requirements", changed: false, source: DEV },
+    { ref: "210.4(B)", desc: "Multiwire branch-circuit simultaneous disconnect and grouping requirements", changed: false, source: DEV, yearRefs: { "2017": "210.4(B)", "2020": "210.4(B)", "2023": "210.4(B)", "2026": "210.4(B) (pending)" } },
     { ref: "210.12", desc: "Dwelling AFCI applicability note", changed: true, source: PEND, note: "Displayed in result section as a dwelling-condition note; not part of neutral-current math." },
-  ], sourceNotes: "Circuit-analysis math plus NEC 210.4 simultaneous disconnect display. AFCI note is conditional/display-only and needs per-year verification." },
+  ], sourceNotes: "Circuit-analysis math plus NEC 210.4(B) simultaneous disconnect display. AFCI note is conditional/display-only and needs per-year verification." },
 
   // ═══ PULL BOX SIZING ═══════════════════════════════════════════════════
   {
