@@ -1,0 +1,100 @@
+name: Build Android App Bundle
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-aab:
+    name: Build signed Android App Bundle
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify signing secrets
+        env:
+          ANDROID_UPLOAD_KEYSTORE_BASE64: ${{ secrets.ANDROID_UPLOAD_KEYSTORE_BASE64 }}
+          ANDROID_UPLOAD_STORE_PASSWORD: ${{ secrets.ANDROID_UPLOAD_STORE_PASSWORD }}
+          ANDROID_UPLOAD_KEY_ALIAS: ${{ secrets.ANDROID_UPLOAD_KEY_ALIAS }}
+          ANDROID_UPLOAD_KEY_PASSWORD: ${{ secrets.ANDROID_UPLOAD_KEY_PASSWORD }}
+        run: |
+          missing=0
+          for name in ANDROID_UPLOAD_KEYSTORE_BASE64 ANDROID_UPLOAD_STORE_PASSWORD ANDROID_UPLOAD_KEY_ALIAS ANDROID_UPLOAD_KEY_PASSWORD; do
+            if [ -z "${!name}" ]; then
+              echo "::error ::Missing GitHub secret: $name"
+              missing=1
+            fi
+          done
+          exit "$missing"
+
+      - name: Security audit
+        run: npm audit --audit-level=moderate
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Release verification
+        run: npm run verify:release
+
+      - name: Write build version
+        run: |
+          printf '{"sha":"%s","builtAt":"%s"}\n' "$GITHUB_SHA" "$(date -u +"%Y-%m-%dT%H:%M:%SZ")" > public/build-version.json
+
+      - name: Decode upload keystore
+        env:
+          ANDROID_UPLOAD_KEYSTORE_BASE64: ${{ secrets.ANDROID_UPLOAD_KEYSTORE_BASE64 }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/android-signing"
+          printf '%s' "$ANDROID_UPLOAD_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/android-signing/necalcul8r-upload.jks"
+
+      - name: Build signed release bundle
+        env:
+          ANDROID_UPLOAD_STORE_FILE: ${{ runner.temp }}/android-signing/necalcul8r-upload.jks
+          ANDROID_UPLOAD_STORE_PASSWORD: ${{ secrets.ANDROID_UPLOAD_STORE_PASSWORD }}
+          ANDROID_UPLOAD_KEY_ALIAS: ${{ secrets.ANDROID_UPLOAD_KEY_ALIAS }}
+          ANDROID_UPLOAD_KEY_PASSWORD: ${{ secrets.ANDROID_UPLOAD_KEY_PASSWORD }}
+          VITE_APP_BUILD_SHA: ${{ github.sha }}
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          VITE_STRIPE_INDIVIDUAL_PRICE_ID: ${{ secrets.VITE_STRIPE_INDIVIDUAL_PRICE_ID }}
+          VITE_STRIPE_COMPANY_PRICE_ID: ${{ secrets.VITE_STRIPE_COMPANY_PRICE_ID }}
+          VITE_STRIPE_PRICE_MATRIX_JSON: ${{ secrets.VITE_STRIPE_PRICE_MATRIX_JSON }}
+        run: npm run android:bundle:release
+
+      - name: Write checksum
+        run: sha256sum release/NECalcul8r-1.0.0.aab | tee release/NECalcul8r-1.0.0.aab.sha256
+
+      - name: Upload AAB artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: NECalcul8r-1.0.0-aab
+          path: |
+            release/NECalcul8r-1.0.0.aab
+            release/NECalcul8r-1.0.0.aab.sha256
+          if-no-files-found: error
+          retention-days: 30
