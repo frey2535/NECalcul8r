@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -6,17 +6,23 @@ import {
   Calendar,
   ChevronDown,
   ChevronRight,
+  FileDown,
   FolderOpen,
+  Loader2,
   Pencil,
+  Printer,
   Trash2,
   Calculator,
 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
-import { flattenSnapshot } from "@/lib/calcSnapshot";
 import { toast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { jsPDF } from "jspdf";
+import html2canvas from "html2canvas";
+import CalculatorPanel from "@/components/calculator/CalculatorPanel";
+import { NEC_CATEGORIES } from "@/pages/NECCalculator";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -37,7 +43,6 @@ import {
 } from "@/components/ui/dialog";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import PullToRefreshIndicator from "@/components/ui/PullToRefreshIndicator";
-import { cn } from "@/lib/utils";
 
 export default function Projects() {
   const queryClient = useQueryClient();
@@ -47,6 +52,8 @@ export default function Projects() {
   const [renameValue, setRenameValue] = useState("");
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [activeCalc, setActiveCalc] = useState(null);
+  const [exportingPdf, setExportingPdf] = useState(false);
+  const printRef = useRef(null);
 
   const { data: projects = [], refetch: refetchProjects } = useQuery({
     queryKey: ["projects"],
@@ -116,6 +123,106 @@ export default function Projects() {
   const openCalculator = (calc) => {
     if (!calc.calculator_id) return;
     navigate(`/calculator/${calc.calculator_id}?saved=${encodeURIComponent(calc.id)}`);
+  };
+
+  const activeCategory = useMemo(() => {
+    if (!activeCalc?.calculator_id) return null;
+    const existing = NEC_CATEGORIES.find((cat) => cat.id === activeCalc.calculator_id);
+    if (existing) return existing;
+    return {
+      id: activeCalc.calculator_id,
+      label: activeCalc.calculator_label || activeCalc.title || "Saved Calculation",
+      article: activeCalc.calculator_article || "NEC",
+      description: "Saved calculation",
+      color: "blue",
+      emoji: "⚡",
+    };
+  }, [activeCalc]);
+
+  const savedFileName = (calc) => {
+    const raw = `${calc?.project_name || "Project"}_${calc?.title || calc?.calculator_label || "Calculation"}_${calc?.nec_year || "NEC"}`;
+    return raw.replace(/[^a-z0-9]+/gi, "_").replace(/^_+|_+$/g, "") || "NECalcul8r_saved_calculation";
+  };
+
+  const escapeHtml = (value) => String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+
+  const handlePrint = () => {
+    const node = printRef.current;
+    if (!node) return;
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) {
+      toast({ title: "Print blocked", description: "Allow popups to print this saved calculation.", variant: "destructive" });
+      return;
+    }
+    printWindow.opener = null;
+    const styles = Array.from(document.querySelectorAll('link[rel="stylesheet"], style'))
+      .map((el) => el.outerHTML)
+      .join("\n");
+    printWindow.document.write(`
+      <!doctype html>
+      <html>
+        <head>
+          <title>${escapeHtml(activeCalc?.title || activeCalc?.calculator_label || "Saved Calculation")}</title>
+          ${styles}
+          <style>
+            body { margin: 24px; background: white; }
+            @media print { body { margin: 12px; } .no-print { display: none !important; } }
+          </style>
+        </head>
+        <body>${node.outerHTML}</body>
+      </html>
+    `);
+    printWindow.document.close();
+    printWindow.focus();
+    window.setTimeout(() => {
+      printWindow.print();
+      printWindow.close();
+    }, 300);
+  };
+
+  const handlePdf = async () => {
+    const node = printRef.current;
+    if (!node || !activeCalc) return;
+    setExportingPdf(true);
+    try {
+      const canvas = await html2canvas(node, {
+        backgroundColor: "#ffffff",
+        scale: Math.min(2, window.devicePixelRatio || 1.5),
+        useCORS: true,
+        windowWidth: node.scrollWidth,
+        windowHeight: node.scrollHeight,
+      });
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF({ orientation: "portrait", unit: "pt", format: "a4" });
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const margin = 24;
+      const printableHeight = pageHeight - margin * 2;
+      const imgWidth = pageWidth - margin * 2;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      let renderedHeight = 0;
+
+      pdf.addImage(imgData, "PNG", margin, margin, imgWidth, imgHeight);
+      renderedHeight += printableHeight;
+      while (renderedHeight < imgHeight) {
+        pdf.addPage();
+        pdf.addImage(imgData, "PNG", margin, margin - renderedHeight, imgWidth, imgHeight);
+        renderedHeight += printableHeight;
+      }
+      pdf.save(`${savedFileName(activeCalc)}.pdf`);
+    } catch (error) {
+      toast({
+        title: "PDF export failed",
+        description: error?.message || "Try printing this saved calculation instead.",
+        variant: "destructive",
+      });
+    } finally {
+      setExportingPdf(false);
+    }
   };
 
   const totalCalcs = saved.length;
@@ -267,22 +374,41 @@ export default function Projects() {
       </Dialog>
 
       <Dialog open={!!activeCalc} onOpenChange={(open) => { if (!open) setActiveCalc(null); }}>
-        <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-y-auto">
-          {activeCalc && (
+        <DialogContent className="sm:max-w-6xl max-h-[92vh] overflow-y-auto">
+          {activeCalc && activeCategory && (
             <>
               <DialogHeader>
-                <DialogTitle>{activeCalc.title || activeCalc.calculator_label}</DialogTitle>
-                <DialogDescription className="flex flex-wrap items-center gap-2">
-                  <span>{activeCalc.project_name}</span>
-                  <Badge variant="outline">NEC {activeCalc.nec_year}</Badge>
-                  <span className="inline-flex items-center gap-1">
-                    <Calendar className="w-3 h-3" />
-                    {new Date(activeCalc.updated_date || activeCalc.created_date).toLocaleDateString()}
-                  </span>
-                </DialogDescription>
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <DialogTitle>{activeCalc.title || activeCalc.calculator_label}</DialogTitle>
+                    <DialogDescription className="flex flex-wrap items-center gap-2 mt-1">
+                      <span>{activeCalc.project_name}</span>
+                      <Badge variant="outline">NEC {activeCalc.nec_year}</Badge>
+                      <span className="inline-flex items-center gap-1">
+                        <Calendar className="w-3 h-3" />
+                        {new Date(activeCalc.updated_date || activeCalc.created_date).toLocaleDateString()}
+                      </span>
+                    </DialogDescription>
+                  </div>
+                  <div className="no-print flex flex-wrap gap-2">
+                    <Button variant="outline" size="sm" className="gap-1.5" onClick={handlePrint}>
+                      <Printer className="w-4 h-4" />
+                      Print
+                    </Button>
+                    <Button size="sm" className="gap-1.5" onClick={handlePdf} disabled={exportingPdf}>
+                      {exportingPdf ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileDown className="w-4 h-4" />}
+                      Download PDF
+                    </Button>
+                  </div>
+                </div>
               </DialogHeader>
-              <SnapshotBlock title="Results" data={activeCalc.outputs} />
-              <SnapshotBlock title="Inputs" data={activeCalc.inputs} />
+              <div ref={printRef} className="saved-calculation-print bg-background p-1 sm:p-2">
+                <CalculatorPanel
+                  category={activeCategory}
+                  savedCalculation={activeCalc}
+                  necYearOverride={activeCalc.nec_year}
+                />
+              </div>
               <DialogFooter className="gap-2 sm:justify-between">
                 <Button
                   variant="ghost"
@@ -291,7 +417,7 @@ export default function Projects() {
                 >
                   Delete
                 </Button>
-                <div className="flex gap-2">
+                <div className="no-print flex gap-2">
                   <Button variant="outline" onClick={() => setActiveCalc(null)}>Close</Button>
                   <Button onClick={() => openCalculator(activeCalc)}>Open in calculator</Button>
                 </div>
@@ -327,24 +453,6 @@ export default function Projects() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
-  );
-}
-
-function SnapshotBlock({ title, data }) {
-  const rows = flattenSnapshot(data).slice(0, 24);
-  if (rows.length === 0) return null;
-  return (
-    <div className="space-y-1.5">
-      <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{title}</p>
-      <div className="rounded-xl border border-border/60 divide-y divide-border/50 overflow-hidden">
-        {rows.map((row, i) => (
-          <div key={`${row.label}-${i}`} className="flex items-start justify-between gap-3 px-3 py-2 text-xs">
-            <span className={cn("text-muted-foreground min-w-0")}>{row.label}</span>
-            <span className="font-semibold tabular-nums text-right flex-shrink-0">{row.value}</span>
-          </div>
-        ))}
-      </div>
     </div>
   );
 }
