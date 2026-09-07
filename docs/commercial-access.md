@@ -92,6 +92,12 @@ Important tables:
 
 ### Android Play Store purchase
 
+The Android build includes the Google Play Billing Library so Google Play Console can unlock subscription
+product setup. The in-app purchase UI, native purchase bridge, and server-side Google Play Developer API
+verification must still be completed before Android users can buy digital access inside the app.
+
+Target flow:
+
 1. User buys inside the Android app with Google Play Billing.
 2. Android app sends the purchase token to a Supabase Edge Function.
 3. Edge Function verifies the purchase with the Google Play Developer API.
@@ -193,7 +199,7 @@ Input:
 
 ```json
 {
-  "productId": "necalcul8r_monthly",
+  "productId": "necalcul8r_pro",
   "purchaseToken": "token-from-google-play",
   "source": "google_play"
 }
@@ -231,7 +237,7 @@ Allowed flows:
 
 - Company users sign in with accounts purchased outside the app stores.
 - Individual users can subscribe on the website with Stripe.
-- Android users can subscribe in-app through Google Play Billing.
+- Android users can subscribe in-app through Google Play Billing after the native purchase flow and Google Play verification function are completed.
 - iOS users can subscribe in-app through Apple In-App Purchase.
 
 Avoid:
