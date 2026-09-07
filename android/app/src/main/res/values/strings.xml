@@ -2,6 +2,4 @@
 <resources>
     <string name="app_name">NECalcul8r</string>
     <string name="title_activity_main">NECalcul8r</string>
-    <string name="package_name">com.currentflow.necalcul8r</string>
-    <string name="custom_url_scheme">com.currentflow.necalcul8r</string>
 </resources>
