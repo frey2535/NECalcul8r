@@ -46,7 +46,7 @@ const TEST_VD_EX1 = {
   source: "Electrician Prep — Example 1",
   calculatorId: "voltage_drop",
   necEdition: "2017",
-  sourceVerification: "Worked example verified against NEC Ch.9 Table 8 formula",
+  sourceVerification: "Worked example uses NEC Ch.9 Table 8 conductor CM values with engineering K resistivity constants",
   inputs: { voltage: 120, current: 20, length: 150, material: "copper", phases: "single", selectedAWG: "10" },
   expected: {
     VD: 7.46,       // (2 × 12.9 × 20 × 150) / 10380 = 7.46V
@@ -66,7 +66,7 @@ const TEST_VD_EX3 = {
   source: "Electrician Prep — Example 3",
   calculatorId: "voltage_drop",
   necEdition: "2017",
-  sourceVerification: "Worked example verified against NEC Ch.9 Table 8 formula",
+  sourceVerification: "Worked example uses NEC Ch.9 Table 8 conductor CM values with engineering K resistivity constants",
   inputs: { voltage: 480, current: 60, length: 200, material: "copper", phases: "three", selectedAWG: "6" },
   expected: {
     VD: 10.22,      // (1.732 × 12.9 × 60 × 200) / 26240 = 10.22V
@@ -86,7 +86,7 @@ const TEST_VD_EX5 = {
   source: "Electrician Prep — Example 5",
   calculatorId: "voltage_drop",
   necEdition: "2017",
-  sourceVerification: "Worked example verified against NEC Ch.9 Table 8 formula",
+  sourceVerification: "Worked example uses NEC Ch.9 Table 8 conductor CM values with engineering K resistivity constants",
   inputs: { voltage: 240, current: 40, length: 175, material: "aluminum", phases: "single", selectedAWG: "4" },
   expected: {
     VD: 7.11,       // (2 × 21.2 × 40 × 175) / 41740 = 7.11V

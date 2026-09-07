@@ -8,7 +8,7 @@ import { getNecData } from "@/data/nec";
 import { calcVoltageDrop } from "./logic/voltageDropCalc";
 
 const FORMULAS = [
-  { label: "Single-Phase Voltage Drop", formula: "VD = (2 × K × I × D) / CM", description: "K = resistivity constant (12.9 Cu / 21.2 Al), I = amps, D = one-way distance (ft), CM = circular mils of conductor" },
+  { label: "Single-Phase Voltage Drop", formula: "VD = (2 × K × I × D) / CM", description: "K = engineering resistivity constant (12.9 Cu / 21.2 Al); NEC Chapter 9 Table 8 supplies conductor circular-mil area (CM)." },
   { label: "Three-Phase Voltage Drop", formula: "VD = (1.732 × K × I × D) / CM", description: "1.732 = √3 factor for 3-phase circuits" },
   { label: "VD Percent", formula: "VD% = (VD / V_source) × 100", description: "Compare to 3% branch, 3% feeder, 5% combined limit" },
   { label: "Min CM for 3% limit", formula: "CM_min = (2 × K × I × D) / (V × 0.03)", description: "Rearranged to find minimum wire size" },
@@ -68,7 +68,7 @@ export default function VoltageDrop({ category, necYear = "2023" }) {
         <FormulaBox steps={steps} formulas={FORMULAS} />
         {TABLES.map(t => <NECTableDisplay key={t.id} title={t.article} headers={t.headers} rows={t.rows} note={t.note} compact />)}
         <NoteBox>
-          NEC {necYear} 210.19 & 215.2 recommend ≤3% voltage drop on branch circuits and ≤5% total (feeder+branch). Formula: VD = (K × I × D × 2) / CM for single-phase. K = {K} for {v.material}.
+          NEC {necYear} 210.19 and 215.2 informational notes point users to voltage-drop design guidance, and NEC Chapter 9 Table 8 provides conductor circular-mil area (CM). The K values used here ({K} for {v.material}) are engineering resistivity constants, not values specifically listed in the NEC.
           {isAcDc && (
             <>
               <br /><br />
@@ -130,7 +130,7 @@ export default function VoltageDrop({ category, necYear = "2023" }) {
           { value: "single", label: "Single-Phase" }, { value: "three", label: "Three-Phase" },
         ]} />
       </Field>
-      <Field label="Conductor Material" unit="">
+      <Field label="Conductor Material" unit="" hint="K is an engineering resistivity constant; NEC Chapter 9 Table 8 supplies conductor CM">
         <Select value={v.material} onChange={set("material")} options={[
           { value: "copper", label: "Copper (K=12.9)" }, { value: "aluminum", label: "Aluminum (K=21.2)" },
         ]} />
