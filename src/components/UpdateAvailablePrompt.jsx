@@ -9,6 +9,9 @@ export default function UpdateAvailablePrompt() {
     const onUpdateAvailable = (event) => {
       setUpdate(event.detail || { applyUpdate: () => window.location.reload() });
     };
+    if (window.__necalcul8rPendingUpdate) {
+      setUpdate(window.__necalcul8rPendingUpdate);
+    }
     window.addEventListener("necalcul8r-update-available", onUpdateAvailable);
     return () => window.removeEventListener("necalcul8r-update-available", onUpdateAvailable);
   }, []);
