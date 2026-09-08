@@ -6,12 +6,19 @@ function stripeStatusToAccess(status: string) {
   return status === "active" || status === "trialing" ? "active" : "expired";
 }
 
-const CALCULATOR_LIMITS: Record<string, number | null> = {
-  calc_0_5_free: 5,
-  calc_6_15: 15,
-  calc_16_25: 25,
-  calc_26_35: 35,
-  calc_35_plus: null,
+const PLAN_ACCESS: Record<string, {
+  calculatorLimit: number | null;
+  hasNecTables: boolean;
+  canExportCompleteReports: boolean;
+  companySeatLimit: number | null;
+}> = {
+  individual_6_15: { calculatorLimit: 15, hasNecTables: true, canExportCompleteReports: true, companySeatLimit: null },
+  individual_16_25: { calculatorLimit: 25, hasNecTables: true, canExportCompleteReports: true, companySeatLimit: null },
+  individual_26_35: { calculatorLimit: 35, hasNecTables: true, canExportCompleteReports: true, companySeatLimit: null },
+  individual_36_plus: { calculatorLimit: null, hasNecTables: true, canExportCompleteReports: true, companySeatLimit: null },
+  company_0_10: { calculatorLimit: null, hasNecTables: true, canExportCompleteReports: true, companySeatLimit: 10 },
+  company_11_20: { calculatorLimit: null, hasNecTables: true, canExportCompleteReports: true, companySeatLimit: 20 },
+  company_unlimited: { calculatorLimit: null, hasNecTables: true, canExportCompleteReports: true, companySeatLimit: null },
 };
 
 function numberOrFallback(value: unknown, fallback: number) {
@@ -20,15 +27,21 @@ function numberOrFallback(value: unknown, fallback: number) {
 }
 
 function normalizeEntitlementMetadata(metadata: Record<string, string>, subscription: Record<string, unknown>, itemQuantity: number) {
-  const calculatorTierId = metadata.calculator_tier_id || "calc_35_plus";
-  const calculatorLimit = calculatorTierId in CALCULATOR_LIMITS ? CALCULATOR_LIMITS[calculatorTierId] : null;
-  const seatLimit = numberOrFallback(metadata.seat_limit, itemQuantity || 1);
+  const planKey = metadata.plan_key || metadata.calculator_tier_id || "individual_36_plus";
+  const plan = PLAN_ACCESS[planKey] || PLAN_ACCESS.individual_36_plus;
+  const seatLimit = metadata.seat_limit === "" || metadata.seat_limit == null
+    ? plan.companySeatLimit
+    : numberOrFallback(metadata.seat_limit, itemQuantity || 1);
 
   return {
     ...metadata,
+    plan_key: planKey,
     customer_tier_id: metadata.customer_tier_id || "individual",
-    calculator_tier_id: calculatorTierId,
-    calculator_limit: calculatorLimit,
+    calculator_tier_id: planKey,
+    calculator_limit: plan.calculatorLimit,
+    has_nec_tables: plan.hasNecTables,
+    can_export_complete_reports: plan.canExportCompleteReports,
+    company_seat_limit: plan.companySeatLimit,
     seat_limit: seatLimit,
     billing_quantity: numberOrFallback(metadata.billing_quantity, itemQuantity || 1),
     stripe_subscription_id: subscription.id,
@@ -93,7 +106,7 @@ async function replaceActiveEntitlement(client: ReturnType<typeof serviceClient>
     access_type: "paid",
     status: "active",
     subscription_status: data.subscription_status,
-    seats: Number(data.metadata.seat_limit) || Number(data.metadata.quantity) || 1,
+    seats: Number(data.metadata.seat_limit) || Number(data.metadata.company_seat_limit) || 0,
     metadata: data.metadata,
   });
   if (error) throw error;
@@ -121,7 +134,7 @@ async function syncSubscription(subscription: Record<string, unknown>) {
     provider_product_id: price.product || null,
     provider_price_id: price.id || null,
     status,
-    seats: Number(entitlementMetadata.seat_limit) || itemQuantity,
+    seats: Number(entitlementMetadata.seat_limit) || Number(entitlementMetadata.company_seat_limit) || 0,
     current_period_end: subscription.current_period_end
       ? new Date(Number(subscription.current_period_end) * 1000).toISOString()
       : null,
@@ -156,7 +169,7 @@ async function syncSubscription(subscription: Record<string, unknown>) {
         access_status: accessStatus,
         purchase_source: "stripe",
         stripe_customer_id: subscription.customer,
-        seat_limit: Number(entitlementMetadata.seat_limit) || itemQuantity,
+        seat_limit: Number(entitlementMetadata.seat_limit) || Number(entitlementMetadata.company_seat_limit) || 0,
         updated_at: new Date().toISOString(),
       })
       .eq("id", orgId);

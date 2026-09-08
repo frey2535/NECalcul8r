@@ -104,9 +104,13 @@ function mapProfile(profile, org) {
     trial_end_date: profile.trial_end_date,
     purchase_source: profile.purchase_source || "manual",
     subscription_status: profile.subscription_status || null,
+    plan_key: profile.plan_key || null,
     customer_tier_id: profile.customer_tier_id || null,
     calculator_tier_id: profile.calculator_tier_id || null,
     calculator_limit: positiveNumber(profile.calculator_limit),
+    has_nec_tables: Boolean(profile.has_nec_tables),
+    can_export_complete_reports: Boolean(profile.can_export_complete_reports),
+    company_seat_limit: positiveNumber(profile.company_seat_limit),
     seat_limit: positiveNumber(profile.seat_limit),
     is_platform_admin: Boolean(profile.is_platform_admin),
     created_date: profile.created_date || profile.created_at,
@@ -130,13 +134,57 @@ function positiveNumber(value) {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
 }
 
+const PLAN_LIMITS = {
+  free: 5,
+  individual_6_15: 15,
+  individual_16_25: 25,
+  individual_26_35: 35,
+  individual_36_plus: null,
+  company_0_10: null,
+  company_11_20: null,
+  company_unlimited: null,
+  owner_full_access: null,
+};
+
+const PLAN_TABLES = {
+  free: false,
+};
+const KNOWN_PLAN_KEYS = new Set(Object.keys(PLAN_LIMITS));
+
+function planKeyForEntitlement(entitlement) {
+  const metadata = entitlementMetadata(entitlement);
+  if (KNOWN_PLAN_KEYS.has(metadata.plan_key)) return metadata.plan_key;
+  if (KNOWN_PLAN_KEYS.has(metadata.calculator_tier_id)) return metadata.calculator_tier_id;
+  if (entitlement.source === "owner_grant" || entitlement.access_type === "permanent") return "owner_full_access";
+  if (entitlement.org_id || String(metadata.customer_tier_id || "").startsWith("company")) return "company_unlimited";
+  return "individual_36_plus";
+}
+
+function entitlementScore(entitlement) {
+  const planKey = planKeyForEntitlement(entitlement);
+  const limit = PLAN_LIMITS[planKey];
+  if (limit == null) return 1000;
+  return Number(limit) || 0;
+}
+
+function mostPermissiveEntitlement(entitlements) {
+  return [...entitlements]
+    .filter(activeEntitlement)
+    .sort((a, b) => {
+      const scoreDiff = entitlementScore(b) - entitlementScore(a);
+      if (scoreDiff) return scoreDiff;
+      return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
+    })[0];
+}
+
 function applyEntitlement(profile, entitlements = []) {
   if (profile.access_status === "disabled") return profile;
-  const entitlement = [...entitlements]
-    .sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime())
-    .find(activeEntitlement);
+  const entitlement = mostPermissiveEntitlement(entitlements);
   if (!entitlement) return profile;
   const metadata = entitlementMetadata(entitlement);
+  const planKey = planKeyForEntitlement(entitlement);
+  const calculatorLimit = PLAN_LIMITS[planKey];
+  const hasNecTables = PLAN_TABLES[planKey] ?? true;
   return {
     ...profile,
     access_type: entitlement.access_type || profile.access_type,
@@ -144,9 +192,13 @@ function applyEntitlement(profile, entitlements = []) {
     subscription_status: entitlement.subscription_status || profile.subscription_status || "active",
     purchase_source: entitlement.source || profile.purchase_source,
     trial_end_date: entitlement.expires_at ? entitlement.expires_at.slice(0, 10) : profile.trial_end_date,
+    plan_key: planKey,
     customer_tier_id: metadata.customer_tier_id || profile.customer_tier_id || null,
-    calculator_tier_id: metadata.calculator_tier_id || profile.calculator_tier_id || null,
-    calculator_limit: positiveNumber(metadata.calculator_limit) ?? positiveNumber(profile.calculator_limit),
+    calculator_tier_id: metadata.calculator_tier_id || planKey,
+    calculator_limit: calculatorLimit == null ? null : positiveNumber(metadata.calculator_limit) ?? calculatorLimit,
+    has_nec_tables: Boolean(metadata.has_nec_tables ?? hasNecTables),
+    can_export_complete_reports: Boolean(metadata.can_export_complete_reports ?? hasNecTables),
+    company_seat_limit: positiveNumber(metadata.company_seat_limit),
     seat_limit: positiveNumber(metadata.seat_limit) ?? positiveNumber(entitlement.seats) ?? positiveNumber(profile.seat_limit),
   };
 }

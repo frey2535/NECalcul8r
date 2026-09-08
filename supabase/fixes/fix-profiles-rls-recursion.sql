@@ -52,10 +52,12 @@ create policy "profiles read own org"
 create policy "profiles update platform admin"
   on public.profiles for update
   using (
-    public.current_is_platform_admin()
+    id = auth.uid()
+    or public.current_is_platform_admin()
   )
   with check (
-    public.current_is_platform_admin()
+    id = auth.uid()
+    or public.current_is_platform_admin()
   );
 
 create policy "organizations read own"

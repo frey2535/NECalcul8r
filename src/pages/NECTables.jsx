@@ -1,11 +1,14 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { Search, BookOpen, ChevronDown, ChevronUp, FlaskConical } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Search, BookOpen, ChevronDown, ChevronUp, FlaskConical, Lock, ShoppingCart } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { NEC_TABLES, resolveNecTable } from "@/lib/necTables";
 import NECTableDisplay from "@/components/calculator/NECTableDisplay";
 import { cn } from "@/lib/utils";
 import { useNECYear } from "@/context/NECYearContext";
+import { useAuth } from "@/lib/AuthContext";
+import { getResolvedEntitlement } from "@/lib/pricing";
 
 const GROUPS = [
   { label: "Branch & Feeder Circuits", sub: "Article 210 / 215", prefix: "210", emoji: "🔌" },
@@ -93,6 +96,31 @@ function TableRow({ t, year }) {
 export default function NECTables() {
   const [search, setSearch] = useState("");
   const { year } = useNECYear();
+  const { user } = useAuth();
+  const entitlement = getResolvedEntitlement(user);
+
+  if (!entitlement.hasNecTables) {
+    return (
+      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="max-w-3xl mx-auto">
+        <div className="rounded-3xl border border-border bg-card p-6 shadow-xl text-center">
+          <div className="mx-auto w-14 h-14 rounded-2xl bg-amber-100 dark:bg-amber-950/40 flex items-center justify-center">
+            <Lock className="w-7 h-7 text-amber-600" />
+          </div>
+          <h1 className="mt-4 text-2xl font-extrabold text-foreground">NEC Tables require a paid plan</h1>
+          <p className="mt-2 text-sm text-muted-foreground max-w-xl mx-auto">
+            The free tier includes up to 5 calculators. Upgrade to any paid individual plan, company plan, or owner-granted full access to unlock NEC Tables and complete report export/printing.
+          </p>
+          <Link
+            to="/purchase"
+            className="mt-5 inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold px-5 py-3 transition-colors"
+          >
+            <ShoppingCart className="w-4 h-4" />
+            View plans
+          </Link>
+        </div>
+      </motion.div>
+    );
+  }
 
   const filtered = search.trim()
     ? NEC_TABLES.filter(t => {

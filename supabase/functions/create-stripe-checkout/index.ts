@@ -5,16 +5,24 @@ import { stripeRequest } from "../_shared/stripe.ts";
 const CUSTOMER_TIERS: Record<string, { accountType: "individual" | "company"; seatLimit: number }> = {
   individual: { accountType: "individual", seatLimit: 1 },
   company_0_10: { accountType: "company", seatLimit: 10 },
-  company_10_30: { accountType: "company", seatLimit: 30 },
-  company_30_plus: { accountType: "company", seatLimit: 31 },
+  company_11_20: { accountType: "company", seatLimit: 20 },
+  company_unlimited: { accountType: "company", seatLimit: 1 },
 };
 
-const CALCULATOR_TIERS: Record<string, { calculatorLimit: number | null }> = {
-  calc_0_5_free: { calculatorLimit: 5 },
-  calc_6_15: { calculatorLimit: 15 },
-  calc_16_25: { calculatorLimit: 25 },
-  calc_26_35: { calculatorLimit: 35 },
-  calc_35_plus: { calculatorLimit: null },
+const PLANS: Record<string, {
+  accountType: "individual" | "company";
+  calculatorLimit: number | null;
+  hasNecTables: boolean;
+  canExportCompleteReports: boolean;
+  companySeatLimit: number | null;
+}> = {
+  individual_6_15: { accountType: "individual", calculatorLimit: 15, hasNecTables: true, canExportCompleteReports: true, companySeatLimit: null },
+  individual_16_25: { accountType: "individual", calculatorLimit: 25, hasNecTables: true, canExportCompleteReports: true, companySeatLimit: null },
+  individual_26_35: { accountType: "individual", calculatorLimit: 35, hasNecTables: true, canExportCompleteReports: true, companySeatLimit: null },
+  individual_36_plus: { accountType: "individual", calculatorLimit: null, hasNecTables: true, canExportCompleteReports: true, companySeatLimit: null },
+  company_0_10: { accountType: "company", calculatorLimit: null, hasNecTables: true, canExportCompleteReports: true, companySeatLimit: 10 },
+  company_11_20: { accountType: "company", calculatorLimit: null, hasNecTables: true, canExportCompleteReports: true, companySeatLimit: 20 },
+  company_unlimited: { accountType: "company", calculatorLimit: null, hasNecTables: true, canExportCompleteReports: true, companySeatLimit: null },
 };
 
 function metadataValue(value: unknown) {
@@ -31,15 +39,16 @@ Deno.serve(async (req) => {
     const priceId = String(payload.priceId || "").trim();
     if (!priceId) return jsonResponse({ error: "Missing Stripe price ID." }, 400);
 
-    const customerTierId = String(payload.customerTierId || "individual");
-    const calculatorTierId = String(payload.calculatorTierId || "calc_35_plus");
-    const customerTier = CUSTOMER_TIERS[customerTierId];
-    const calculatorTier = CALCULATOR_TIERS[calculatorTierId];
-    if (!customerTier) return jsonResponse({ error: "Invalid customer tier." }, 400);
-    if (!calculatorTier) return jsonResponse({ error: "Invalid calculator tier." }, 400);
+    const planKey = String(payload.planKey || payload.calculatorTierId || "individual_36_plus");
+    const plan = PLANS[planKey];
+    if (!plan) return jsonResponse({ error: "Invalid plan." }, 400);
 
-    const accountType = String(payload.accountType || customerTier.accountType);
-    if (accountType !== customerTier.accountType) {
+    const customerTierId = String(payload.customerTierId || (plan.accountType === "company" ? planKey : "individual"));
+    const customerTier = CUSTOMER_TIERS[customerTierId];
+    if (!customerTier) return jsonResponse({ error: "Invalid customer tier." }, 400);
+
+    const accountType = String(payload.accountType || plan.accountType);
+    if (accountType !== plan.accountType || accountType !== customerTier.accountType) {
       return jsonResponse({ error: "Account type does not match customer tier." }, 400);
     }
     if (accountType === "company" && !profile.org_id) {
@@ -47,18 +56,23 @@ Deno.serve(async (req) => {
     }
 
     const quantity = Math.max(1, Number(payload.quantity) || 1);
-    const seats = Math.max(1, Number(payload.seats) || customerTier.seatLimit || 1);
+    const seats = plan.accountType === "company" && plan.companySeatLimit == null
+      ? 0
+      : Math.max(1, Number(payload.seats) || plan.companySeatLimit || customerTier.seatLimit || 1);
     const successUrl = String(payload.successUrl || new URL("/", req.url).toString());
     const cancelUrl = String(payload.cancelUrl || new URL("/purchase", req.url).toString());
-    const calculatorLimit = calculatorTier.calculatorLimit;
     const metadata = {
       profile_id: user.id,
       org_id: profile.org_id || "",
       account_type: accountType,
+      plan_key: planKey,
       customer_tier_id: customerTierId,
-      calculator_tier_id: calculatorTierId,
-      calculator_limit: metadataValue(calculatorLimit),
-      seat_limit: String(seats),
+      calculator_tier_id: planKey,
+      calculator_limit: metadataValue(plan.calculatorLimit),
+      has_nec_tables: String(plan.hasNecTables),
+      can_export_complete_reports: String(plan.canExportCompleteReports),
+      company_seat_limit: metadataValue(plan.companySeatLimit),
+      seat_limit: metadataValue(seats || plan.companySeatLimit),
       billing_quantity: String(quantity),
     };
 
@@ -73,17 +87,25 @@ Deno.serve(async (req) => {
       "metadata[profile_id]": metadata.profile_id,
       "metadata[org_id]": metadata.org_id,
       "metadata[account_type]": metadata.account_type,
+      "metadata[plan_key]": metadata.plan_key,
       "metadata[customer_tier_id]": metadata.customer_tier_id,
       "metadata[calculator_tier_id]": metadata.calculator_tier_id,
       "metadata[calculator_limit]": metadata.calculator_limit,
+      "metadata[has_nec_tables]": metadata.has_nec_tables,
+      "metadata[can_export_complete_reports]": metadata.can_export_complete_reports,
+      "metadata[company_seat_limit]": metadata.company_seat_limit,
       "metadata[seat_limit]": metadata.seat_limit,
       "metadata[billing_quantity]": metadata.billing_quantity,
       "subscription_data[metadata][profile_id]": metadata.profile_id,
       "subscription_data[metadata][org_id]": metadata.org_id,
       "subscription_data[metadata][account_type]": metadata.account_type,
+      "subscription_data[metadata][plan_key]": metadata.plan_key,
       "subscription_data[metadata][customer_tier_id]": metadata.customer_tier_id,
       "subscription_data[metadata][calculator_tier_id]": metadata.calculator_tier_id,
       "subscription_data[metadata][calculator_limit]": metadata.calculator_limit,
+      "subscription_data[metadata][has_nec_tables]": metadata.has_nec_tables,
+      "subscription_data[metadata][can_export_complete_reports]": metadata.can_export_complete_reports,
+      "subscription_data[metadata][company_seat_limit]": metadata.company_seat_limit,
       "subscription_data[metadata][seat_limit]": metadata.seat_limit,
       "subscription_data[metadata][billing_quantity]": metadata.billing_quantity,
     });

@@ -70,7 +70,7 @@ create table if not exists public.entitlements (
   profile_id uuid references public.profiles(id) on delete cascade,
   org_id uuid references public.organizations(id) on delete cascade,
   subscription_id uuid references public.subscriptions(id) on delete set null,
-  source text not null check (source in ('manual', 'admin', 'stripe', 'company_external', 'buildrpro', 'google_play', 'apple_app_store', 'app_store')),
+  source text not null check (source in ('manual', 'admin', 'stripe', 'company_external', 'buildrpro', 'google_play', 'apple_app_store', 'app_store', 'owner_grant')),
   access_type text not null check (
     access_type in ('permanent', 'paid', 'external_company', 'company_seat', 'buildrpro_included', 'app_store', 'google_play', 'apple_app_store')
   ),
@@ -96,6 +96,40 @@ create table if not exists public.purchase_events (
   created_at timestamptz not null default now()
 );
 
+create table if not exists public.google_play_purchases (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references public.profiles(id) on delete cascade,
+  package_name text not null,
+  product_id text not null,
+  base_plan_id text not null,
+  purchase_token text not null,
+  purchase_state text not null,
+  acknowledgement_state text,
+  auto_renewing boolean,
+  started_at timestamptz,
+  expires_at timestamptz,
+  last_verified_at timestamptz,
+  raw_status jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (package_name, purchase_token)
+);
+
+create table if not exists public.access_grants (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references public.profiles(id) on delete cascade,
+  grant_type text not null check (grant_type in ('owner_full_access')),
+  active boolean not null default true,
+  starts_at timestamptz not null default now(),
+  expires_at timestamptz,
+  reason text not null,
+  granted_by_user_id uuid not null references public.profiles(id) on delete restrict,
+  revoked_at timestamptz,
+  revoked_by_user_id uuid references public.profiles(id) on delete set null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
 create table if not exists public.app_records (
   id uuid primary key default gen_random_uuid(),
   entity_type text not null,
@@ -110,6 +144,10 @@ create table if not exists public.app_records (
 create index if not exists profiles_org_id_idx on public.profiles(org_id);
 create index if not exists entitlements_profile_id_idx on public.entitlements(profile_id);
 create index if not exists entitlements_org_id_idx on public.entitlements(org_id);
+create index if not exists google_play_purchases_user_id_idx on public.google_play_purchases(user_id);
+create index if not exists google_play_purchases_product_id_idx on public.google_play_purchases(product_id);
+create index if not exists access_grants_user_id_idx on public.access_grants(user_id);
+create index if not exists access_grants_active_idx on public.access_grants(active);
 create index if not exists app_records_entity_type_idx on public.app_records(entity_type);
 create index if not exists app_records_created_by_id_idx on public.app_records(created_by_id);
 
@@ -119,6 +157,8 @@ alter table public.organization_memberships enable row level security;
 alter table public.subscriptions enable row level security;
 alter table public.entitlements enable row level security;
 alter table public.purchase_events enable row level security;
+alter table public.google_play_purchases enable row level security;
+alter table public.access_grants enable row level security;
 alter table public.app_records enable row level security;
 
 create or replace function public.current_profile()
@@ -297,16 +337,38 @@ begin
     where profile_id = target_profile_id
       and status = 'active';
 
-    v_entitlement_source := case v_purchase_source
-      when 'stripe' then 'stripe'
-      when 'company_external' then 'company_external'
-      when 'buildrpro' then 'buildrpro'
-      when 'google_play' then 'google_play'
-      when 'apple_app_store' then 'apple_app_store'
-      when 'app_store' then 'app_store'
-      when 'manual' then 'manual'
+    v_entitlement_source := case
+      when v_access_type = 'permanent' then 'owner_grant'
+      when v_purchase_source = 'stripe' then 'stripe'
+      when v_purchase_source = 'company_external' then 'company_external'
+      when v_purchase_source = 'buildrpro' then 'buildrpro'
+      when v_purchase_source = 'google_play' then 'google_play'
+      when v_purchase_source = 'apple_app_store' then 'apple_app_store'
+      when v_purchase_source = 'app_store' then 'app_store'
+      when v_purchase_source = 'manual' then 'manual'
       else 'admin'
     end;
+
+    if v_entitlement_source = 'owner_grant' then
+      insert into public.access_grants (
+        user_id,
+        grant_type,
+        active,
+        starts_at,
+        expires_at,
+        reason,
+        granted_by_user_id
+      )
+      values (
+        target_profile_id,
+        'owner_full_access',
+        true,
+        now(),
+        null,
+        coalesce(nullif(access_updates->>'reason', ''), nullif(access_updates->>'note', ''), 'Platform owner full-access grant.'),
+        actor.id
+      );
+    end if;
 
     insert into public.entitlements (
       profile_id,
@@ -328,7 +390,15 @@ begin
       1,
       now(),
       null,
-      jsonb_build_object('granted_by', actor.id, 'grant_source', grant_source)
+      jsonb_build_object(
+        'granted_by', actor.id,
+        'grant_source', grant_source,
+        'plan_key', case when v_access_type = 'permanent' then 'owner_full_access' else 'individual_36_plus' end,
+        'calculator_tier_id', case when v_access_type = 'permanent' then 'owner_full_access' else 'individual_36_plus' end,
+        'calculator_limit', null,
+        'has_nec_tables', true,
+        'can_export_complete_reports', true
+      )
     );
   else
     v_entitlement_status := case when v_access_status = 'disabled' then 'disabled' else 'expired' end;
@@ -366,10 +436,12 @@ drop policy if exists "profiles update platform admin" on public.profiles;
 create policy "profiles update platform admin"
   on public.profiles for update
   using (
-    public.current_is_platform_admin()
+    id = auth.uid()
+    or public.current_is_platform_admin()
   )
   with check (
-    public.current_is_platform_admin()
+    id = auth.uid()
+    or public.current_is_platform_admin()
   );
 
 drop policy if exists "organizations read own" on public.organizations;
@@ -412,6 +484,22 @@ create policy "subscriptions read assigned"
     public.current_is_platform_admin()
     or profile_id = auth.uid()
     or org_id = public.current_profile_org_id()
+  );
+
+drop policy if exists "access grants read platform admin or own" on public.access_grants;
+create policy "access grants read platform admin or own"
+  on public.access_grants for select
+  using (
+    public.current_is_platform_admin()
+    or user_id = auth.uid()
+  );
+
+drop policy if exists "google play purchases read platform admin or own" on public.google_play_purchases;
+create policy "google play purchases read platform admin or own"
+  on public.google_play_purchases for select
+  using (
+    public.current_is_platform_admin()
+    or user_id = auth.uid()
   );
 
 drop policy if exists "memberships read own org" on public.organization_memberships;
@@ -515,6 +603,8 @@ grant select on public.organization_memberships to authenticated;
 grant select on public.subscriptions to authenticated;
 grant select on public.entitlements to authenticated;
 grant select, insert on public.purchase_events to authenticated;
+grant select on public.google_play_purchases to authenticated;
+grant select on public.access_grants to authenticated;
 grant select, insert, update, delete on public.app_records to authenticated;
 
 grant execute on function public.current_is_platform_admin() to authenticated;

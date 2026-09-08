@@ -61,6 +61,19 @@ export const AuthProvider = ({ children }) => {
     base44.auth.redirectToLogin();
   };
 
+  useEffect(() => {
+    const refreshOnResume = () => {
+      if (document.visibilityState && document.visibilityState !== "visible") return;
+      checkAppState();
+    };
+    window.addEventListener("focus", refreshOnResume);
+    document.addEventListener("visibilitychange", refreshOnResume);
+    return () => {
+      window.removeEventListener("focus", refreshOnResume);
+      document.removeEventListener("visibilitychange", refreshOnResume);
+    };
+  }, []);
+
   return (
     <AuthContext.Provider
       value={{

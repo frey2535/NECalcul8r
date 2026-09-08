@@ -179,7 +179,7 @@ export default function NECCalculator() {
               </div>
               <h1 className="mt-4 text-2xl font-extrabold text-foreground">{selectedCat.label} requires an upgrade</h1>
               <p className="mt-2 text-sm text-muted-foreground max-w-xl mx-auto">
-                Your current calculator package is {calculatorAccess.calculatorTier.label}, which includes {calculatorAccess.includedCount} of {calculatorAccess.totalCount} calculators.
+                Your current plan is {calculatorAccess.entitlement.label}, which includes {calculatorAccess.includedCount} of {calculatorAccess.totalCount} calculators.
                 Upgrade to unlock this calculator and any higher-tier tools.
               </p>
               <button
@@ -341,7 +341,7 @@ export default function NECCalculator() {
         <p className="text-center text-xs text-muted-foreground pb-2">
           {calculatorAccess.isFullAccess
             ? `${NEC_CATEGORIES.length} calculations available`
-            : `${calculatorAccess.includedCount} calculations included in ${calculatorAccess.calculatorTier.label}`}
+            : `${calculatorAccess.includedCount} calculations included in ${calculatorAccess.entitlement.label}`}
         </p>
       </motion.div>
       </div>

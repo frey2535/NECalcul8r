@@ -19,47 +19,41 @@ Commercial mode uses Supabase as the source of truth for users, companies, subsc
 ```bash
 VITE_SUPABASE_URL=
 VITE_SUPABASE_ANON_KEY=
-VITE_STRIPE_INDIVIDUAL_PRICE_ID=
-VITE_STRIPE_COMPANY_PRICE_ID=
+VITE_GOOGLE_PLAY_BASE_PLAN_ID=monthly
+VITE_STRIPE_PRICE_INDIVIDUAL_6_15=
+VITE_STRIPE_PRICE_INDIVIDUAL_16_25=
+VITE_STRIPE_PRICE_INDIVIDUAL_26_35=
+VITE_STRIPE_PRICE_INDIVIDUAL_36_PLUS=
+VITE_STRIPE_PRICE_COMPANY_0_10=
+VITE_STRIPE_PRICE_COMPANY_11_20=
+VITE_STRIPE_PRICE_COMPANY_UNLIMITED=
 VITE_STRIPE_PRICE_MATRIX_JSON=
 ```
 
 Do not expose Stripe secret keys, Supabase service-role keys, Google service-account credentials, or Apple shared secrets in Vite env vars. Those belong only in Supabase Edge Function secrets.
 
-`VITE_STRIPE_PRICE_MATRIX_JSON` maps every visible purchase package to a Stripe price ID. Each price should be the full package price shown to the customer. Use `seatLimit` for the number of users granted by the entitlement and keep `billingQuantity` at `1` unless you intentionally configure the Stripe price as a per-seat price:
+Stripe price IDs can be supplied either with the individual variables above or with `VITE_STRIPE_PRICE_MATRIX_JSON`. The JSON maps each final plan key to a Stripe recurring price ID. Free access does not need a Stripe price:
 
 ```json
 {
-  "individual:calc_0_5_free": { "priceId": "", "priceLabel": "Free", "seatLimit": 1, "billingQuantity": 1 },
-  "individual:calc_6_15": { "priceId": "price_...", "priceLabel": "$10/mo", "seatLimit": 1, "billingQuantity": 1 },
-  "individual:calc_16_25": { "priceId": "price_...", "priceLabel": "$20/mo", "seatLimit": 1, "billingQuantity": 1 },
-  "individual:calc_26_35": { "priceId": "price_...", "priceLabel": "$40/mo", "seatLimit": 1, "billingQuantity": 1 },
-  "individual:calc_35_plus": { "priceId": "price_...", "priceLabel": "$50/mo", "seatLimit": 1, "billingQuantity": 1 },
-  "company_0_10:calc_0_5_free": { "priceId": "", "priceLabel": "Free", "seatLimit": 10, "billingQuantity": 1 },
-  "company_0_10:calc_6_15": { "priceId": "price_...", "priceLabel": "$10/mo", "seatLimit": 10, "billingQuantity": 1 },
-  "company_0_10:calc_16_25": { "priceId": "price_...", "priceLabel": "$20/mo", "seatLimit": 10, "billingQuantity": 1 },
-  "company_0_10:calc_26_35": { "priceId": "price_...", "priceLabel": "$40/mo", "seatLimit": 10, "billingQuantity": 1 },
-  "company_0_10:calc_35_plus": { "priceId": "price_...", "priceLabel": "$50/mo", "seatLimit": 10, "billingQuantity": 1 },
-  "company_10_30:calc_0_5_free": { "priceId": "", "priceLabel": "Free", "seatLimit": 30, "billingQuantity": 1 },
-  "company_10_30:calc_6_15": { "priceId": "price_...", "priceLabel": "$10/mo", "seatLimit": 30, "billingQuantity": 1 },
-  "company_10_30:calc_16_25": { "priceId": "price_...", "priceLabel": "$20/mo", "seatLimit": 30, "billingQuantity": 1 },
-  "company_10_30:calc_26_35": { "priceId": "price_...", "priceLabel": "$40/mo", "seatLimit": 30, "billingQuantity": 1 },
-  "company_10_30:calc_35_plus": { "priceId": "price_...", "priceLabel": "$50/mo", "seatLimit": 30, "billingQuantity": 1 },
-  "company_30_plus:calc_0_5_free": { "priceId": "", "priceLabel": "Free", "seatLimit": 31, "billingQuantity": 1 },
-  "company_30_plus:calc_6_15": { "priceId": "price_...", "priceLabel": "$10/mo", "seatLimit": 31, "billingQuantity": 1 },
-  "company_30_plus:calc_16_25": { "priceId": "price_...", "priceLabel": "$20/mo", "seatLimit": 31, "billingQuantity": 1 },
-  "company_30_plus:calc_26_35": { "priceId": "price_...", "priceLabel": "$40/mo", "seatLimit": 31, "billingQuantity": 1 },
-  "company_30_plus:calc_35_plus": { "priceId": "price_...", "priceLabel": "$50/mo", "seatLimit": 31, "billingQuantity": 1 }
+  "individual_6_15": { "priceId": "price_...", "priceLabel": "$10/mo" },
+  "individual_16_25": { "priceId": "price_...", "priceLabel": "$20/mo" },
+  "individual_26_35": { "priceId": "price_...", "priceLabel": "$35/mo" },
+  "individual_36_plus": { "priceId": "price_...", "priceLabel": "$50/mo" },
+  "company_0_10": { "priceId": "price_...", "priceLabel": "$400/mo" },
+  "company_11_20": { "priceId": "price_...", "priceLabel": "$800/mo" },
+  "company_unlimited": { "priceId": "price_...", "priceLabel": "$1,500/mo" }
 }
 ```
 
-Calculator package IDs:
+Final plan keys:
 
-- `calc_0_5_free`: unlocks the first 5 calculators in the app suite for free.
-- `calc_6_15`: unlocks the first 15 calculators in the app suite for $10/month.
-- `calc_16_25`: unlocks the first 25 calculators in the app suite for $20/month.
-- `calc_26_35`: unlocks the first 35 calculators in the app suite for $40/month.
-- `calc_35_plus`: unlocks the full suite for $50/month, including new calculators as they are developed.
+- `free`: unlocks the first 5 calculators. NEC Tables and complete export/printing remain locked.
+- `individual_6_15`: unlocks up to 15 calculators, NEC Tables, and complete export/printing.
+- `individual_16_25`: unlocks up to 25 calculators, NEC Tables, and complete export/printing.
+- `individual_26_35`: unlocks up to 35 calculators, NEC Tables, and complete export/printing.
+- `individual_36_plus`: unlocks all calculators, including new calculators as they are developed.
+- `company_0_10`, `company_11_20`, `company_unlimited`: full-access company plans for all seats in the plan.
 
 ## Supabase database
 
@@ -121,10 +115,20 @@ Target flow:
 2. Android app sends the purchase token to a Supabase Edge Function.
 3. Edge Function verifies the purchase with the Google Play Developer API.
 4. Edge Function writes:
-   - `subscriptions.provider = 'google_play'`
    - `entitlements.source = 'google_play'`
    - `entitlements.access_type = 'google_play'`
    - `entitlements.status = 'active'`
+   - `entitlements.metadata.plan_key`
+   - `google_play_purchases` audit record
+
+Active Google Play product IDs:
+
+- `individual_6_15`
+- `individual_16_25`
+- `individual_26_35`
+- `individual_36_plus`
+
+All use base plan ID `monthly`. The legacy product ID `necalcul8r` has no active base plan and must not be referenced in new purchase flows.
 
 Do not route Android in-app digital purchases through Stripe.
 
@@ -153,8 +157,7 @@ Input:
 {
   "mode": "subscription",
   "accountType": "individual",
-  "customerTierId": "individual",
-  "calculatorTierId": "calc_35_plus",
+  "planKey": "individual_36_plus",
   "priceId": "price_...",
   "quantity": 1,
   "seats": 1,
@@ -185,10 +188,9 @@ Output:
 
 ### `grant_profile_access` RPC / `grant-access`
 
-Manual admin grants use the `grant_profile_access` Supabase RPC when it is installed from
+Manual owner grants use the `grant_profile_access` Supabase RPC when it is installed from
 `supabase/schema.sql` or `supabase/fixes/fix-admin-access-grants.sql`. The RPC verifies that the
-caller is a platform admin or an owner of the target user's organization, updates the profile access
-fields, and records the active entitlement. Existing deployments may also provide the equivalent
+caller is a platform admin, updates the profile access fields, records the active entitlement, and writes an `access_grants` audit record. Existing deployments may also provide the equivalent
 `grant-access` Edge Function; the app falls back to that function only when the RPC is not installed.
 
 Input:
@@ -199,15 +201,16 @@ Input:
   "profileId": "uuid",
   "seats": 10,
   "customerTierId": "company_0_10",
-  "calculatorTierId": "calc_35_plus",
+  "planKey": "owner_full_access",
   "expiresAt": null,
-  "accessType": "external_company",
-  "source": "company_external",
+  "accessType": "permanent",
+  "source": "owner_grant",
+  "reason": "Owner-approved full access",
   "updates": {
     "access_status": "active",
-    "access_type": "external_company"
+    "access_type": "permanent"
   },
-  "note": "Invoice paid outside app store"
+  "note": "Owner-approved full access"
 }
 ```
 
@@ -223,7 +226,8 @@ Input:
 
 ```json
 {
-  "productId": "necalcul8r_pro",
+  "productId": "individual_36_plus",
+  "basePlanId": "monthly",
   "purchaseToken": "token-from-google-play",
   "source": "google_play"
 }
@@ -261,7 +265,7 @@ Allowed flows:
 
 - Company users sign in with accounts purchased outside the app stores.
 - Individual users can subscribe on the website with Stripe.
-- Android users can subscribe in-app through Google Play Billing after the native purchase flow and Google Play verification function are completed.
+- Android users can subscribe in-app through Google Play Billing for the four active individual products.
 - iOS users can subscribe in-app through Apple In-App Purchase.
 
 Avoid:

@@ -12,12 +12,20 @@ const ACTIVE_TYPES = new Set([
   "apple_app_store",
 ]);
 
-const CALCULATOR_LIMITS: Record<string, number | null> = {
-  calc_0_5_free: 5,
-  calc_6_15: 15,
-  calc_16_25: 25,
-  calc_26_35: 35,
-  calc_35_plus: null,
+const PLAN_ACCESS: Record<string, {
+  calculatorLimit: number | null;
+  hasNecTables: boolean;
+  canExportCompleteReports: boolean;
+  companySeatLimit: number | null;
+}> = {
+  individual_6_15: { calculatorLimit: 15, hasNecTables: true, canExportCompleteReports: true, companySeatLimit: null },
+  individual_16_25: { calculatorLimit: 25, hasNecTables: true, canExportCompleteReports: true, companySeatLimit: null },
+  individual_26_35: { calculatorLimit: 35, hasNecTables: true, canExportCompleteReports: true, companySeatLimit: null },
+  individual_36_plus: { calculatorLimit: null, hasNecTables: true, canExportCompleteReports: true, companySeatLimit: null },
+  company_0_10: { calculatorLimit: null, hasNecTables: true, canExportCompleteReports: true, companySeatLimit: 10 },
+  company_11_20: { calculatorLimit: null, hasNecTables: true, canExportCompleteReports: true, companySeatLimit: 20 },
+  company_unlimited: { calculatorLimit: null, hasNecTables: true, canExportCompleteReports: true, companySeatLimit: null },
+  owner_full_access: { calculatorLimit: null, hasNecTables: true, canExportCompleteReports: true, companySeatLimit: null },
 };
 
 function positiveNumber(value: unknown) {
@@ -26,16 +34,21 @@ function positiveNumber(value: unknown) {
 }
 
 function entitlementMetadata(payload: Record<string, unknown>, actorId: string) {
-  const calculatorTierId = String(payload.calculatorTierId || payload.calculator_tier_id || "calc_35_plus");
+  const planKey = String(payload.planKey || payload.plan_key || payload.calculatorTierId || payload.calculator_tier_id || "owner_full_access");
+  const plan = PLAN_ACCESS[planKey] || PLAN_ACCESS.owner_full_access;
   const customerTierId = String(payload.customerTierId || payload.customer_tier_id || "");
   const seats = positiveNumber(payload.seats);
 
   return {
     note: payload.note || null,
     granted_by: actorId,
+    plan_key: planKey,
     customer_tier_id: customerTierId || null,
-    calculator_tier_id: calculatorTierId,
-    calculator_limit: calculatorTierId in CALCULATOR_LIMITS ? CALCULATOR_LIMITS[calculatorTierId] : null,
+    calculator_tier_id: planKey,
+    calculator_limit: plan.calculatorLimit,
+    has_nec_tables: plan.hasNecTables,
+    can_export_complete_reports: plan.canExportCompleteReports,
+    company_seat_limit: plan.companySeatLimit,
     seat_limit: seats,
   };
 }
@@ -112,9 +125,23 @@ Deno.serve(async (req) => {
       .eq("status", "active");
 
     if (accessStatus === "active" && accessType !== "trial") {
+      const entitlementSource = accessType === "permanent" ? "owner_grant" : purchaseSource;
+      if (entitlementSource === "owner_grant") {
+        const { error: grantError } = await client.from("access_grants").insert({
+          user_id: targetProfileId,
+          grant_type: "owner_full_access",
+          active: true,
+          starts_at: new Date().toISOString(),
+          expires_at: payload.expiresAt || null,
+          reason: String(payload.reason || payload.note || "Platform owner full-access grant."),
+          granted_by_user_id: actor.id,
+        });
+        if (grantError) throw grantError;
+      }
+
       const { error: entitlementError } = await client.from("entitlements").insert({
         profile_id: targetProfileId,
-        source: purchaseSource,
+        source: entitlementSource,
         access_type: accessType,
         status: "active",
         subscription_status: subscriptionStatus || "active",

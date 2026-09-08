@@ -1,7 +1,11 @@
 import { isSupabaseConfigured, requireSupabase } from "./supabaseClient";
 
-const individualPriceId = import.meta.env?.VITE_STRIPE_INDIVIDUAL_PRICE_ID || "";
-const companyPriceId = import.meta.env?.VITE_STRIPE_COMPANY_PRICE_ID || "";
+const individualPriceId = import.meta.env?.VITE_STRIPE_PRICE_INDIVIDUAL_36_PLUS
+  || import.meta.env?.VITE_STRIPE_INDIVIDUAL_PRICE_ID
+  || "";
+const companyPriceId = import.meta.env?.VITE_STRIPE_PRICE_COMPANY_0_10
+  || import.meta.env?.VITE_STRIPE_COMPANY_PRICE_ID
+  || "";
 
 async function invokeCommerceFunction(functionName, payload) {
   const client = requireSupabase();
@@ -19,8 +23,8 @@ async function redirectToCheckout(payload) {
 function companyTierForSeats(seats) {
   const count = Math.max(1, Number(seats) || 1);
   if (count <= 10) return "company_0_10";
-  if (count <= 30) return "company_10_30";
-  return "company_30_plus";
+  if (count <= 20) return "company_11_20";
+  return "company_unlimited";
 }
 
 export const commerce = {
@@ -31,6 +35,7 @@ export const commerce = {
   /**
    * @param {{
    *   accountType?: string,
+ *   planKey?: string,
    *   customerTierId?: string,
    *   calculatorTierId?: string,
    *   priceId?: string,
@@ -43,6 +48,7 @@ export const commerce = {
   async startCheckout(options = {}) {
     const {
       accountType = "individual",
+      planKey,
       customerTierId,
       calculatorTierId,
       priceId,
@@ -54,6 +60,7 @@ export const commerce = {
     return redirectToCheckout({
       mode: "subscription",
       accountType,
+      planKey,
       customerTierId,
       calculatorTierId,
       priceId,
@@ -71,6 +78,7 @@ export const commerce = {
     const { successUrl, cancelUrl } = options;
     return this.startCheckout({
       accountType: "individual",
+      planKey: "individual_36_plus",
       priceId: individualPriceId,
       successUrl: successUrl || `${window.location.origin}/`,
       cancelUrl: cancelUrl || window.location.href,
@@ -85,7 +93,7 @@ export const commerce = {
     return this.startCheckout({
       accountType: "company",
       customerTierId: companyTierForSeats(seats),
-      calculatorTierId: "calc_35_plus",
+      planKey: companyTierForSeats(seats),
       priceId: companyPriceId,
       quantity: 1,
       seats,
@@ -107,15 +115,16 @@ export const commerce = {
   },
 
   /**
- * @param {{ orgId?: string, seats?: number, expiresAt?: string, accessType?: string, customerTierId?: string, calculatorTierId?: string, note?: string }} options
+ * @param {{ orgId?: string, seats?: number, expiresAt?: string, accessType?: string, planKey?: string, customerTierId?: string, calculatorTierId?: string, note?: string }} options
    */
   async grantExternalCompanyAccess(options = {}) {
-  const { orgId, seats, expiresAt, accessType = "external_company", customerTierId, calculatorTierId, note } = options;
+  const { orgId, seats, expiresAt, accessType = "external_company", planKey, customerTierId, calculatorTierId, note } = options;
     return invokeCommerceFunction("grant-access", {
       orgId,
       seats,
       expiresAt,
       accessType,
+    planKey,
     customerTierId,
     calculatorTierId,
       source: "company_external",
@@ -124,13 +133,14 @@ export const commerce = {
   },
 
   /**
-   * @param {{ productId?: string, purchaseToken?: string }} options
+ * @param {{ productId?: string, purchaseToken?: string, basePlanId?: string }} options
    */
   async verifyGooglePlayPurchase(options = {}) {
-    const { productId, purchaseToken } = options;
+  const { productId, purchaseToken, basePlanId } = options;
     return invokeCommerceFunction("verify-google-play-purchase", {
       productId,
       purchaseToken,
+    basePlanId,
       source: "google_play",
     });
   },

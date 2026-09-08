@@ -1,8 +1,9 @@
-import React, { useMemo, useState } from "react";
-import { Check, CreditCard, Loader2, ShoppingCart, Users } from "lucide-react";
+import React, { useEffect, useMemo, useState } from "react";
+import { Check, CreditCard, Loader2, RefreshCw, ShoppingCart, Users } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/lib/AuthContext";
-import { CALCULATOR_TIERS, CUSTOMER_TIERS, getPricingOption } from "@/lib/pricing";
+import { COMPANY_PLANS, DEFAULT_PAID_PLAN_KEY, INDIVIDUAL_PLANS, getPlanOption } from "@/lib/pricing";
+import { isAndroidNativeApp, purchaseGooglePlayPlan, queryGooglePlayProducts, restoreGooglePlayPurchases } from "@/lib/googlePlayBilling";
 import { cn } from "@/lib/utils";
 
 function TierButton({ active, title, subtitle, onClick }) {
@@ -34,17 +35,43 @@ function TierButton({ active, title, subtitle, onClick }) {
 
 export default function Purchase() {
   const { user } = useAuth();
-  const [customerTierId, setCustomerTierId] = useState("individual");
-  const [calculatorTierId, setCalculatorTierId] = useState("calc_35_plus");
+  const [selectedPlanKey, setSelectedPlanKey] = useState(DEFAULT_PAID_PLAN_KEY);
   const [loading, setLoading] = useState(false);
+  const [restoring, setRestoring] = useState(false);
   const [error, setError] = useState("");
+  const [playProducts, setPlayProducts] = useState({});
+  const isAndroidNative = isAndroidNativeApp();
 
   const selected = useMemo(
-    () => getPricingOption(customerTierId, calculatorTierId),
-    [customerTierId, calculatorTierId]
+    () => getPlanOption(selectedPlanKey),
+    [selectedPlanKey]
   );
-  const selectedRequiresCompany = selected.customerTier.accountType === "company" && !user?.org_id;
-  const checkoutReady = selected.isFree || (base44.commerce?.isConfigured && selected.priceId && !selectedRequiresCompany);
+  const selectedRequiresCompany = selected.accountType === "company" && !user?.org_id;
+  const usesGooglePlay = isAndroidNative && selected.accountType === "individual" && !selected.isFree;
+  const checkoutReady = selected.isFree
+    || (usesGooglePlay && Boolean(playProducts[selected.googlePlayProductId]))
+    || (base44.commerce?.isConfigured && selected.priceId && !selectedRequiresCompany);
+
+  useEffect(() => {
+    if (!isAndroidNative) return undefined;
+    let cancelled = false;
+    queryGooglePlayProducts()
+      .then((products) => {
+        if (cancelled) return;
+        setPlayProducts(Object.fromEntries(products.map((product) => [product.productId, product])));
+      })
+      .catch((playError) => {
+        if (!cancelled) setError(playError.message || "Could not load Google Play products.");
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [isAndroidNative]);
+
+  const displayPrice = (plan) => {
+    const option = getPlanOption(plan.planKey);
+    return playProducts[plan.googlePlayProductId]?.formattedPrice || option.priceLabel;
+  };
 
   const handlePurchase = async () => {
     setError("");
@@ -62,19 +89,35 @@ export default function Purchase() {
     }
     setLoading(true);
     try {
-      await base44.commerce.startCheckout({
-        accountType: selected.customerTier.accountType,
-        customerTierId: selected.customerTier.id,
-        calculatorTierId: selected.calculatorTier.id,
-        priceId: selected.priceId,
-        quantity: selected.billingQuantity,
-        seats: selected.seatLimit,
-        successUrl: `${window.location.origin}/`,
-        cancelUrl: `${window.location.origin}/purchase`,
-      });
+      if (usesGooglePlay) {
+        await purchaseGooglePlayPlan(selected);
+        window.location.assign("/");
+      } else {
+        await base44.commerce.startCheckout({
+          accountType: selected.accountType,
+          planKey: selected.planKey,
+          priceId: selected.priceId,
+          quantity: selected.billingQuantity,
+          seats: selected.seatLimit,
+          successUrl: `${window.location.origin}/`,
+          cancelUrl: `${window.location.origin}/purchase`,
+        });
+      }
     } catch (purchaseError) {
       setError(purchaseError.message || "Could not start checkout.");
       setLoading(false);
+    }
+  };
+
+  const handleRestore = async () => {
+    setError("");
+    setRestoring(true);
+    try {
+      await restoreGooglePlayPurchases();
+      window.location.assign("/");
+    } catch (restoreError) {
+      setError(restoreError.message || "Could not restore Google Play purchases for this account.");
+      setRestoring(false);
     }
   };
 
@@ -88,7 +131,7 @@ export default function Purchase() {
           <div>
             <h1 className="text-2xl font-extrabold">Purchase NECalcul8r</h1>
             <p className="text-sm text-blue-100 mt-1 max-w-2xl">
-              Choose individual or company access, select how many calculator groups you need, and purchase instantly.
+              Choose free starter access, an individual subscription, or a full-access company plan.
             </p>
           </div>
         </div>
@@ -97,36 +140,38 @@ export default function Purchase() {
       <section className="space-y-3">
         <div className="flex items-center gap-2">
           <Users className="w-4 h-4 text-blue-600" />
-          <h2 className="text-lg font-extrabold text-foreground">Who is buying?</h2>
+          <h2 className="text-lg font-extrabold text-foreground">Individual access</h2>
         </div>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {CUSTOMER_TIERS.map((tier) => (
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+          {INDIVIDUAL_PLANS.map((plan) => {
+            return (
             <TierButton
-              key={tier.id}
-              active={customerTierId === tier.id}
-              title={tier.label}
-              subtitle={tier.description}
-              onClick={() => setCustomerTierId(tier.id)}
+              key={plan.planKey}
+              active={selectedPlanKey === plan.planKey}
+              title={`${plan.label} · ${displayPrice(plan)}`}
+              subtitle={plan.description}
+              onClick={() => setSelectedPlanKey(plan.planKey)}
             />
-          ))}
+            );
+          })}
         </div>
       </section>
 
       <section className="space-y-3">
         <div className="flex items-center gap-2">
           <CreditCard className="w-4 h-4 text-blue-600" />
-          <h2 className="text-lg font-extrabold text-foreground">Calculator access tier</h2>
+          <h2 className="text-lg font-extrabold text-foreground">Company full-access plans</h2>
         </div>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {CALCULATOR_TIERS.map((tier) => {
-            const option = getPricingOption(customerTierId, tier.id);
+        <div className="grid gap-3 sm:grid-cols-3">
+          {COMPANY_PLANS.map((plan) => {
+            const option = getPlanOption(plan.planKey);
             return (
               <TierButton
-                key={tier.id}
-                active={calculatorTierId === tier.id}
-                title={`${tier.label} · ${option.priceLabel}`}
-                subtitle={tier.description}
-                onClick={() => setCalculatorTierId(tier.id)}
+                key={plan.planKey}
+                active={selectedPlanKey === plan.planKey}
+                title={`${plan.label} · ${option.priceLabel}`}
+                subtitle={plan.description}
+                onClick={() => setSelectedPlanKey(plan.planKey)}
               />
             );
           })}
@@ -138,15 +183,26 @@ export default function Purchase() {
           <div>
             <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Selected package</p>
             <h2 className="text-xl font-extrabold text-foreground mt-1">{selected.description}</h2>
-            <p className="text-3xl font-black text-foreground mt-2">{selected.priceLabel}</p>
+            <p className="text-3xl font-black text-foreground mt-2">{displayPrice(selected)}</p>
             <p className="text-xs text-muted-foreground mt-2">
-              Includes up to {selected.seatLimit} user{selected.seatLimit === 1 ? "" : "s"} and {selected.calculatorTier.label}.
+              Includes {selected.calculatorLimit == null ? "all calculators" : `up to ${selected.calculatorLimit} calculators`}
+              {selected.hasNecTables ? ", NEC Tables" : ""}{selected.canExportCompleteReports ? ", and complete export/printing" : ""}.
+              {selected.accountType === "company" && (
+                <> Seat limit: {selected.companySeatLimit == null ? "unlimited" : selected.companySeatLimit}.</>
+              )}
             </p>
             {!checkoutReady && (
               <p className="text-xs text-amber-600 mt-2">
                 {selectedRequiresCompany
                   ? "Company packages require an account connected to a company."
-                  : "Stripe price ID needed for this exact package before checkout can open."}
+                  : usesGooglePlay
+                    ? "Google Play product details are still loading or unavailable."
+                    : "Stripe price ID needed for this exact package before checkout can open."}
+              </p>
+            )}
+            {usesGooglePlay && (
+              <p className="text-xs text-muted-foreground mt-2">
+                Android purchases use Google Play Billing and server-side purchase verification.
               </p>
             )}
           </div>
@@ -160,6 +216,17 @@ export default function Purchase() {
             {loading ? "Opening checkout..." : selected.isFree ? "Continue with free tier" : "Purchase now"}
           </button>
         </div>
+        {isAndroidNative && (
+          <button
+            type="button"
+            onClick={handleRestore}
+            disabled={restoring}
+            className="mt-4 inline-flex items-center justify-center gap-2 rounded-xl border border-border px-4 py-2 text-sm font-bold text-foreground hover:bg-muted disabled:opacity-60 transition-colors"
+          >
+            {restoring ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+            Restore purchases
+          </button>
+        )}
         {error && (
           <div className="mt-4 rounded-xl bg-destructive/10 text-destructive text-sm px-4 py-3">
             {error}

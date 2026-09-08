@@ -43,6 +43,8 @@ import {
 } from "@/components/ui/dialog";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import PullToRefreshIndicator from "@/components/ui/PullToRefreshIndicator";
+import { useAuth } from "@/lib/AuthContext";
+import { getResolvedEntitlement } from "@/lib/pricing";
 
 const MAX_PDF_PAGE_HEIGHT_PX = 14000;
 
@@ -100,6 +102,8 @@ function syncFormControlValues(sourceRoot, clonedRoot) {
 export default function Projects() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const entitlement = getResolvedEntitlement(user);
   const [expanded, setExpanded] = useState({});
   const [renameProject, setRenameProject] = useState(null);
   const [renameValue, setRenameValue] = useState("");
@@ -204,6 +208,10 @@ export default function Projects() {
     .replace(/"/g, "&quot;");
 
   const handlePrint = () => {
+    if (!entitlement.canExportCompleteReports) {
+      toast({ title: "Upgrade required", description: "Complete report printing is included with paid plans.", variant: "destructive" });
+      return;
+    }
     const node = printRef.current;
     if (!node) return;
     const printWindow = window.open("", "_blank");
@@ -238,6 +246,10 @@ export default function Projects() {
   };
 
   const handlePdf = async () => {
+    if (!entitlement.canExportCompleteReports) {
+      toast({ title: "Upgrade required", description: "Complete PDF export is included with paid plans.", variant: "destructive" });
+      return;
+    }
     const node = printRef.current;
     if (!node || !activeCalc) return;
     setExportingPdf(true);
