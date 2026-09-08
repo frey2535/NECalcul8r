@@ -283,7 +283,7 @@ export const supabaseAuth = {
     }
 
     const profile = await buildProfilePayload(client, data.user, { organizationName, inviteCode });
-    const { error: profileError } = await client.from("profiles").upsert(profile);
+    const { error: profileError } = await client.from("profiles").insert(profile);
     if (profileError) throw profileError;
 
     return {
