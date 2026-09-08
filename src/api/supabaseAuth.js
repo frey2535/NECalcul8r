@@ -284,7 +284,7 @@ export const supabaseAuth = {
 
     const profile = await buildProfilePayload(client, data.user, { organizationName, inviteCode });
     const { error: profileError } = await client.from("profiles").insert(profile);
-    if (profileError) throw profileError;
+    if (profileError && profileError.code !== "23505") throw profileError;
 
     return {
       access_token: data.session?.access_token || null,
