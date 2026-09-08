@@ -280,7 +280,9 @@ export function getResolvedEntitlement(user) {
     return normalizedEntitlement(OWNER_FULL_ACCESS_PLAN, { source: "owner_grant" });
   }
 
-  const planKey = user.plan_key || user.calculator_tier_id || FREE_PLAN_KEY;
+  const planKey = user.plan_key
+    || user.calculator_tier_id
+    || (user.access_status === "active" && PAID_ACCESS_TYPES.has(user.access_type) ? DEFAULT_PAID_PLAN_KEY : FREE_PLAN_KEY);
   const plan = getPlan(planKey);
   if (user.access_status === "active" && PAID_ACCESS_TYPES.has(user.access_type)) {
     return normalizedEntitlement(plan, {
