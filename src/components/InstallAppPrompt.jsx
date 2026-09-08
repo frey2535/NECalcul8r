@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Download, Share, PlusSquare, MoreVertical, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getInstallPlatform, isStandaloneDisplay } from "@/lib/pwa";
@@ -29,6 +29,8 @@ export default function InstallAppPrompt() {
   const [open, setOpen] = useState(false);
   const [deferred, setDeferred] = useState(null);
   const [installing, setInstalling] = useState(false);
+  const closeButtonRef = useRef(null);
+  const previousFocusRef = useRef(null);
   const platform = getInstallPlatform();
 
   useEffect(() => {
@@ -55,10 +57,27 @@ export default function InstallAppPrompt() {
     };
   }, []);
 
-  const close = () => {
+  const close = useCallback(() => {
     dismiss();
     setOpen(false);
-  };
+  }, []);
+
+  useEffect(() => {
+    if (!open) return undefined;
+    previousFocusRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKeyDown = (event) => {
+      if (event.key === "Escape") close();
+    };
+    document.addEventListener("keydown", onKeyDown);
+    window.requestAnimationFrame(() => closeButtonRef.current?.focus());
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener("keydown", onKeyDown);
+      previousFocusRef.current?.focus?.();
+    };
+  }, [close, open]);
 
   const install = async () => {
     if (!deferred) return;
@@ -88,6 +107,7 @@ export default function InstallAppPrompt() {
       />
       <div
         role="dialog"
+        aria-modal="true"
         aria-labelledby="install-app-title"
         className="relative w-full max-w-md rounded-2xl bg-card border border-border shadow-2xl overflow-hidden"
         style={{ marginBottom: "env(safe-area-inset-bottom)" }}
@@ -95,6 +115,7 @@ export default function InstallAppPrompt() {
         <div className="bg-gradient-to-br from-blue-600 to-violet-600 px-5 pt-5 pb-4 text-white">
           <button
             type="button"
+            ref={closeButtonRef}
             onClick={close}
             className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/15 flex items-center justify-center"
             aria-label="Close"

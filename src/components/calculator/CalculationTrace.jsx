@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { AlertTriangle, CheckCircle2, Clock, Database, BookOpen, ChevronDown, ChevronRight, X, Info } from "lucide-react";
 import { FIELD_META, ARTICLE_META } from "@/lib/calculatorTrace";
 
@@ -103,10 +103,31 @@ function RefRow({ necRef, necYear, getStatus }) {
 function FieldChip({ fieldKey, necYear, activeField, setActiveField }) {
   const meta = FIELD_META[fieldKey];
   const isActive = activeField === fieldKey;
+  const popoverRef = useRef(null);
+
+  useEffect(() => {
+    if (!isActive) return undefined;
+    const closeOnOutside = (event) => {
+      if (popoverRef.current?.contains(event.target)) return;
+      setActiveField(null);
+    };
+    const closeOnEscape = (event) => {
+      if (event.key === "Escape") setActiveField(null);
+    };
+    document.addEventListener("mousedown", closeOnOutside);
+    document.addEventListener("touchstart", closeOnOutside);
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.removeEventListener("mousedown", closeOnOutside);
+      document.removeEventListener("touchstart", closeOnOutside);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [isActive, setActiveField]);
 
   return (
-    <div className="relative">
+    <div className="relative" ref={popoverRef}>
       <button
+        type="button"
         onClick={() => setActiveField(isActive ? null : fieldKey)}
         className={`px-2 py-0.5 rounded text-[10px] font-mono font-medium transition-all border ${
           isActive
@@ -117,10 +138,10 @@ function FieldChip({ fieldKey, necYear, activeField, setActiveField }) {
         {fieldKey}
       </button>
       {isActive && (
-        <div className="absolute z-50 bottom-full left-0 mb-2 w-64 rounded-xl bg-card border border-border shadow-xl p-3 space-y-2">
+        <div role="dialog" aria-label={`${fieldKey} details`} className="absolute z-50 bottom-full left-0 mb-2 w-64 rounded-xl bg-card border border-border shadow-xl p-3 space-y-2">
           <div className="flex items-start justify-between gap-2">
             <code className="text-[11px] font-mono font-bold text-foreground leading-tight">{fieldKey}</code>
-            <button onClick={() => setActiveField(null)} className="text-muted-foreground hover:text-foreground shrink-0">
+            <button type="button" aria-label="Close field details" onClick={() => setActiveField(null)} className="text-muted-foreground hover:text-foreground shrink-0">
               <X className="w-3 h-3" />
             </button>
           </div>
