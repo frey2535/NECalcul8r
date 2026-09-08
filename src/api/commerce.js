@@ -1,7 +1,7 @@
 import { isSupabaseConfigured, requireSupabase } from "./supabaseClient";
 
-const individualPriceId = import.meta.env.VITE_STRIPE_INDIVIDUAL_PRICE_ID || "";
-const companyPriceId = import.meta.env.VITE_STRIPE_COMPANY_PRICE_ID || "";
+const individualPriceId = import.meta.env?.VITE_STRIPE_INDIVIDUAL_PRICE_ID || "";
+const companyPriceId = import.meta.env?.VITE_STRIPE_COMPANY_PRICE_ID || "";
 
 async function invokeCommerceFunction(functionName, payload) {
   const client = requireSupabase();
@@ -16,6 +16,13 @@ async function redirectToCheckout(payload) {
   window.location.assign(data.url);
 }
 
+function companyTierForSeats(seats) {
+  const count = Math.max(1, Number(seats) || 1);
+  if (count <= 10) return "company_0_10";
+  if (count <= 30) return "company_10_30";
+  return "company_30_plus";
+}
+
 export const commerce = {
   isConfigured: isSupabaseConfigured,
   hasIndividualCheckout: isSupabaseConfigured && Boolean(individualPriceId),
@@ -28,6 +35,7 @@ export const commerce = {
    *   calculatorTierId?: string,
    *   priceId?: string,
    *   quantity?: number,
+ *   seats?: number,
    *   successUrl?: string,
    *   cancelUrl?: string
    * }} options
@@ -39,6 +47,7 @@ export const commerce = {
       calculatorTierId,
       priceId,
       quantity = 1,
+      seats = 1,
       successUrl,
       cancelUrl,
     } = options;
@@ -49,6 +58,7 @@ export const commerce = {
       calculatorTierId,
       priceId,
       quantity,
+      seats,
       successUrl: successUrl || `${window.location.origin}/`,
       cancelUrl: cancelUrl || `${window.location.origin}/purchase`,
     });
@@ -74,8 +84,11 @@ export const commerce = {
     const { seats = 1, successUrl, cancelUrl } = options;
     return this.startCheckout({
       accountType: "company",
+      customerTierId: companyTierForSeats(seats),
+      calculatorTierId: "calc_31_plus",
       priceId: companyPriceId,
-      quantity: seats,
+      quantity: 1,
+      seats,
       successUrl: successUrl || `${window.location.origin}/admin/users`,
       cancelUrl: cancelUrl || window.location.href,
     });
@@ -94,15 +107,17 @@ export const commerce = {
   },
 
   /**
-   * @param {{ orgId?: string, seats?: number, expiresAt?: string, accessType?: string, note?: string }} options
+ * @param {{ orgId?: string, seats?: number, expiresAt?: string, accessType?: string, customerTierId?: string, calculatorTierId?: string, note?: string }} options
    */
   async grantExternalCompanyAccess(options = {}) {
-    const { orgId, seats, expiresAt, accessType = "external_company", note } = options;
+  const { orgId, seats, expiresAt, accessType = "external_company", customerTierId, calculatorTierId, note } = options;
     return invokeCommerceFunction("grant-access", {
       orgId,
       seats,
       expiresAt,
       accessType,
+    customerTierId,
+    calculatorTierId,
       source: "company_external",
       note,
     });

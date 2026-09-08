@@ -207,20 +207,19 @@ function resolveOrg(db, { organizationName, inviteCode }) {
 }
 
 async function buildUser(db, { email, passwordHash, passwordSalt, organizationName, inviteCode }) {
-  const { org, org_role, role } = resolveOrg(db, { organizationName, inviteCode });
-  const isOrgOwner = org_role === "owner";
+  const { org, org_role } = resolveOrg(db, { organizationName, inviteCode });
   return {
     id: newId("user"),
     email,
     full_name: email.split("@")[0],
     org_id: org?.id || null,
     org_role,
-    role,
-    access_type: isOrgOwner ? "permanent" : "trial",
-    access_status: isOrgOwner ? "active" : "trial",
+    role: "user",
+    access_type: "trial",
+    access_status: "trial",
     trial_start_date: todayISODate(),
     trial_end_date: daysFromNow(30),
-    purchase_source: isOrgOwner ? "admin" : "manual",
+    purchase_source: "manual",
     subscription_status: null,
     created_date: new Date().toISOString(),
     passwordHash,

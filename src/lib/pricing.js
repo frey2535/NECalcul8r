@@ -1,8 +1,8 @@
 export const CUSTOMER_TIERS = [
-  { id: "individual", label: "Individual", description: "One user account", accountType: "individual", quantity: 1 },
-  { id: "company_0_10", label: "Company: 0-10 employees", description: "Small team access", accountType: "company", quantity: 10 },
-  { id: "company_10_30", label: "Company: 10-30 employees", description: "Growing company access", accountType: "company", quantity: 30 },
-  { id: "company_30_plus", label: "Company: 30+ employees", description: "Large company access", accountType: "company", quantity: 31 },
+  { id: "individual", label: "Individual", description: "One user account", accountType: "individual", seatLimit: 1 },
+  { id: "company_0_10", label: "Company: 0-10 employees", description: "Small team access", accountType: "company", seatLimit: 10 },
+  { id: "company_10_30", label: "Company: 10-30 employees", description: "Growing company access", accountType: "company", seatLimit: 30 },
+  { id: "company_30_plus", label: "Company: 30+ employees", description: "Large company access", accountType: "company", seatLimit: 31 },
 ];
 
 export const CALCULATOR_TIERS = [
@@ -11,6 +11,9 @@ export const CALCULATOR_TIERS = [
   { id: "calc_21_30", label: "21-30 calculators", description: "Advanced calculator access", calculatorLimit: 30 },
   { id: "calc_31_plus", label: "31+ calculators", description: "Complete calculator access", calculatorLimit: null },
 ];
+
+export const DEFAULT_CUSTOMER_TIER_ID = "individual";
+export const DEFAULT_CALCULATOR_TIER_ID = "calc_31_plus";
 
 const DEFAULT_PRICE_LABELS = {
   individual: {
@@ -40,7 +43,7 @@ const DEFAULT_PRICE_LABELS = {
 };
 
 function parseConfiguredMatrix() {
-  const raw = import.meta.env.VITE_STRIPE_PRICE_MATRIX_JSON;
+  const raw = import.meta.env?.VITE_STRIPE_PRICE_MATRIX_JSON;
   if (!raw) return {};
   try {
     return JSON.parse(raw);
@@ -52,11 +55,21 @@ function parseConfiguredMatrix() {
 
 const configuredMatrix = parseConfiguredMatrix();
 
+export function getCustomerTier(customerTierId) {
+  return CUSTOMER_TIERS.find((tier) => tier.id === customerTierId) || CUSTOMER_TIERS[0];
+}
+
+export function getCalculatorTier(calculatorTierId) {
+  return CALCULATOR_TIERS.find((tier) => tier.id === calculatorTierId) || CALCULATOR_TIERS.find((tier) => tier.id === DEFAULT_CALCULATOR_TIER_ID) || CALCULATOR_TIERS[0];
+}
+
 export function getPricingOption(customerTierId, calculatorTierId) {
-  const customerTier = CUSTOMER_TIERS.find((tier) => tier.id === customerTierId) || CUSTOMER_TIERS[0];
-  const calculatorTier = CALCULATOR_TIERS.find((tier) => tier.id === calculatorTierId) || CALCULATOR_TIERS[0];
+  const customerTier = getCustomerTier(customerTierId);
+  const calculatorTier = getCalculatorTier(calculatorTierId);
   const key = `${customerTier.id}:${calculatorTier.id}`;
   const configured = configuredMatrix[key] || configuredMatrix[customerTier.id]?.[calculatorTier.id] || {};
+  const seatLimit = Math.max(1, Number(configured.seatLimit) || customerTier.seatLimit || 1);
+  const billingQuantity = Math.max(1, Number(configured.billingQuantity) || 1);
 
   return {
     key,
@@ -65,6 +78,8 @@ export function getPricingOption(customerTierId, calculatorTierId) {
     priceId: configured.priceId || "",
     priceLabel: configured.priceLabel || DEFAULT_PRICE_LABELS[customerTier.id]?.[calculatorTier.id] || "Price configured in Stripe",
     description: configured.description || `${customerTier.label} with ${calculatorTier.label}`,
+    seatLimit,
+    billingQuantity,
   };
 }
 
@@ -73,4 +88,32 @@ export function getPricingMatrixRows() {
     customerTier,
     prices: CALCULATOR_TIERS.map((calculatorTier) => getPricingOption(customerTier.id, calculatorTier.id)),
   }));
+}
+
+function hasFullCalculatorAccess(user) {
+  if (!user) return false;
+  if (user.is_platform_admin) return true;
+  if (user.access_type === "trial" && user.access_status !== "expired" && user.access_status !== "disabled") return true;
+  return user.access_type === "permanent" || user.access_type === "buildrpro_included";
+}
+
+export function getEffectiveCalculatorTierId(user) {
+  if (hasFullCalculatorAccess(user)) return DEFAULT_CALCULATOR_TIER_ID;
+  return user?.calculator_tier_id || DEFAULT_CALCULATOR_TIER_ID;
+}
+
+export function getCalculatorAccess(categories = [], user = null) {
+  const calculatorTier = getCalculatorTier(getEffectiveCalculatorTierId(user));
+  const limit = calculatorTier.calculatorLimit;
+  const includedCategories = limit == null ? categories : categories.slice(0, limit);
+  const includedIds = new Set(includedCategories.map((category) => category.id));
+
+  return {
+    calculatorTier,
+    limit,
+    includedCount: includedCategories.length,
+    totalCount: categories.length,
+    isFullAccess: limit == null || includedCategories.length >= categories.length,
+    isAllowed: (calculatorId) => includedIds.has(calculatorId),
+  };
 }

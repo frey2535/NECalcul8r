@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { Check, CreditCard, Loader2, ShoppingCart, Users } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import { useAuth } from "@/lib/AuthContext";
 import { CALCULATOR_TIERS, CUSTOMER_TIERS, getPricingOption } from "@/lib/pricing";
 import { cn } from "@/lib/utils";
 
@@ -32,6 +33,7 @@ function TierButton({ active, title, subtitle, onClick }) {
 }
 
 export default function Purchase() {
+  const { user } = useAuth();
   const [customerTierId, setCustomerTierId] = useState("individual");
   const [calculatorTierId, setCalculatorTierId] = useState("calc_31_plus");
   const [loading, setLoading] = useState(false);
@@ -41,10 +43,15 @@ export default function Purchase() {
     () => getPricingOption(customerTierId, calculatorTierId),
     [customerTierId, calculatorTierId]
   );
-  const checkoutReady = base44.commerce?.isConfigured && selected.priceId;
+  const selectedRequiresCompany = selected.customerTier.accountType === "company" && !user?.org_id;
+  const checkoutReady = base44.commerce?.isConfigured && selected.priceId && !selectedRequiresCompany;
 
   const handlePurchase = async () => {
     setError("");
+    if (selectedRequiresCompany) {
+      setError("Company packages require an account connected to a company. Register with a company name or join a company invite before buying a company package.");
+      return;
+    }
     if (!checkoutReady) {
       setError("Checkout is not configured for this package yet. Add its Stripe price ID to VITE_STRIPE_PRICE_MATRIX_JSON.");
       return;
@@ -56,7 +63,8 @@ export default function Purchase() {
         customerTierId: selected.customerTier.id,
         calculatorTierId: selected.calculatorTier.id,
         priceId: selected.priceId,
-        quantity: selected.customerTier.quantity,
+        quantity: selected.billingQuantity,
+        seats: selected.seatLimit,
         successUrl: `${window.location.origin}/`,
         cancelUrl: `${window.location.origin}/purchase`,
       });
@@ -127,9 +135,14 @@ export default function Purchase() {
             <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Selected package</p>
             <h2 className="text-xl font-extrabold text-foreground mt-1">{selected.description}</h2>
             <p className="text-3xl font-black text-foreground mt-2">{selected.priceLabel}</p>
+            <p className="text-xs text-muted-foreground mt-2">
+              Includes up to {selected.seatLimit} user{selected.seatLimit === 1 ? "" : "s"} and {selected.calculatorTier.label}.
+            </p>
             {!checkoutReady && (
               <p className="text-xs text-amber-600 mt-2">
-                Stripe price ID needed for this exact package before checkout can open.
+                {selectedRequiresCompany
+                  ? "Company packages require an account connected to a company."
+                  : "Stripe price ID needed for this exact package before checkout can open."}
               </p>
             )}
           </div>

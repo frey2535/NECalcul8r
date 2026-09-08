@@ -2,6 +2,14 @@ import { requireUser } from "./localAuth";
 import { httpError, loadDb, newId, publicUser, saveDb } from "./localDb";
 
 const ENTITY_NAMES = ["Analysis", "DiscrepancyReport", "ArticleVerification", "Project", "SavedCalculation", "User"];
+const USER_ACCESS_FIELDS = new Set([
+  "access_type",
+  "access_status",
+  "trial_start_date",
+  "trial_end_date",
+  "purchase_source",
+  "subscription_status",
+]);
 
 function matchesQuery(record, query) {
   if (!query || typeof query !== "object") return true;
@@ -96,6 +104,10 @@ function createEntityApi(name) {
         const target = db.users.find((u) => u.id === id);
         if (!target) throw httpError("User not found", 404);
         if (user.id !== id && target.org_id !== user.org_id) throw httpError("Forbidden", 403);
+        const accessUpdateRequested = Object.keys(patch || {}).some((key) => USER_ACCESS_FIELDS.has(key));
+        if (accessUpdateRequested && !user.is_platform_admin) {
+          throw httpError("Access changes must be granted by a platform administrator.", 403);
+        }
         Object.assign(target, patch, { updated_date: new Date().toISOString() });
         saveDb(db);
         return publicUser(target, db);

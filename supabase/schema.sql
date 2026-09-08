@@ -237,10 +237,7 @@ begin
     raise exception 'Target profile not found' using errcode = 'P0002';
   end if;
 
-  if not (
-    actor.is_platform_admin
-    or (actor.org_role = 'owner' and actor.org_id is not null and actor.org_id = target.org_id)
-  ) then
+  if not actor.is_platform_admin then
     raise exception 'Forbidden' using errcode = '42501';
   end if;
 
@@ -365,17 +362,14 @@ create policy "profiles insert own"
   with check (id = auth.uid());
 
 drop policy if exists "profiles update own or org owner" on public.profiles;
-create policy "profiles update own or org owner"
+drop policy if exists "profiles update platform admin" on public.profiles;
+create policy "profiles update platform admin"
   on public.profiles for update
   using (
-    id = auth.uid()
-    or public.current_is_platform_admin()
-    or (public.current_profile_org_role() = 'owner' and org_id = public.current_profile_org_id())
+    public.current_is_platform_admin()
   )
   with check (
-    id = auth.uid()
-    or public.current_is_platform_admin()
-    or (public.current_profile_org_role() = 'owner' and org_id = public.current_profile_org_id())
+    public.current_is_platform_admin()
   );
 
 drop policy if exists "organizations read own" on public.organizations;
@@ -392,11 +386,14 @@ create policy "organizations create"
   with check (auth.uid() is not null);
 
 drop policy if exists "organizations update owner" on public.organizations;
-create policy "organizations update owner"
+drop policy if exists "organizations update platform admin" on public.organizations;
+create policy "organizations update platform admin"
   on public.organizations for update
   using (
     public.current_is_platform_admin()
-    or (public.current_profile_org_role() = 'owner' and id = public.current_profile_org_id())
+  )
+  with check (
+    public.current_is_platform_admin()
   );
 
 drop policy if exists "entitlements read assigned" on public.entitlements;

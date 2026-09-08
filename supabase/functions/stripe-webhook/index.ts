@@ -6,6 +6,36 @@ function stripeStatusToAccess(status: string) {
   return status === "active" || status === "trialing" ? "active" : "expired";
 }
 
+const CALCULATOR_LIMITS: Record<string, number | null> = {
+  calc_0_10: 10,
+  calc_11_20: 20,
+  calc_21_30: 30,
+  calc_31_plus: null,
+};
+
+function numberOrFallback(value: unknown, fallback: number) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+}
+
+function normalizeEntitlementMetadata(metadata: Record<string, string>, subscription: Record<string, unknown>, itemQuantity: number) {
+  const calculatorTierId = metadata.calculator_tier_id || "calc_31_plus";
+  const calculatorLimit = calculatorTierId in CALCULATOR_LIMITS ? CALCULATOR_LIMITS[calculatorTierId] : null;
+  const seatLimit = numberOrFallback(metadata.seat_limit, itemQuantity || 1);
+
+  return {
+    ...metadata,
+    customer_tier_id: metadata.customer_tier_id || "individual",
+    calculator_tier_id: calculatorTierId,
+    calculator_limit: calculatorLimit,
+    seat_limit: seatLimit,
+    billing_quantity: numberOrFallback(metadata.billing_quantity, itemQuantity || 1),
+    stripe_subscription_id: subscription.id,
+    stripe_customer_id: subscription.customer,
+    quantity: itemQuantity || 1,
+  };
+}
+
 async function upsertSubscription(client: ReturnType<typeof serviceClient>, data: Record<string, unknown>) {
   const providerSubscriptionId = String(data.provider_subscription_id || "");
   if (!providerSubscriptionId) return;
@@ -62,7 +92,7 @@ async function replaceActiveEntitlement(client: ReturnType<typeof serviceClient>
     access_type: "paid",
     status: "active",
     subscription_status: data.subscription_status,
-    seats: Number(data.metadata.quantity) || 1,
+    seats: Number(data.metadata.seat_limit) || Number(data.metadata.quantity) || 1,
     metadata: data.metadata,
   });
   if (error) throw error;
@@ -79,6 +109,8 @@ async function syncSubscription(subscription: Record<string, unknown>) {
     ? ((subscription.items as { data: Array<Record<string, unknown>> }).data[0] || {})
     : {};
   const price = (item.price || {}) as Record<string, unknown>;
+  const itemQuantity = Number(item.quantity) || 1;
+  const entitlementMetadata = normalizeEntitlementMetadata(metadata, subscription, itemQuantity);
 
   await upsertSubscription(client, {
     profile_id: profileId,
@@ -88,11 +120,11 @@ async function syncSubscription(subscription: Record<string, unknown>) {
     provider_product_id: price.product || null,
     provider_price_id: price.id || null,
     status,
-    seats: Number(item.quantity) || 1,
+    seats: Number(entitlementMetadata.seat_limit) || itemQuantity,
     current_period_end: subscription.current_period_end
       ? new Date(Number(subscription.current_period_end) * 1000).toISOString()
       : null,
-    metadata,
+    metadata: entitlementMetadata,
   });
 
   const { data: storedSubscription } = await client
@@ -116,18 +148,27 @@ async function syncSubscription(subscription: Record<string, unknown>) {
     if (error) throw error;
   }
 
+  if (orgId) {
+    const { error } = await client
+      .from("organizations")
+      .update({
+        access_status: accessStatus,
+        purchase_source: "stripe",
+        stripe_customer_id: subscription.customer,
+        seat_limit: Number(entitlementMetadata.seat_limit) || itemQuantity,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", orgId);
+    if (error) throw error;
+  }
+
   await replaceActiveEntitlement(client, {
     profile_id: profileId,
     org_id: orgId,
     status: accessStatus,
     subscription_status: status,
     subscription_id: storedSubscription?.id || null,
-    metadata: {
-      ...metadata,
-      stripe_subscription_id: subscription.id,
-      stripe_customer_id: subscription.customer,
-      quantity: Number(item.quantity) || 1,
-    },
+    metadata: entitlementMetadata,
   });
 }
 

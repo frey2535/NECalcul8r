@@ -36,7 +36,7 @@ const SUB_STATUS_OPTIONS     = ["active", "trialing", "cancelled", "past_due", "
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 function getEffectiveStatus(user) {
-  if (user.role === 'admin') return 'active';
+  if (user.is_platform_admin) return 'active';
   const s = user.access_status || 'trial';
   if (s === 'disabled') return 'disabled';
   if (user.access_type === 'permanent') return 'active';
@@ -115,7 +115,7 @@ function TextField({ label, value, onChange, placeholder, type = "text" }) {
   );
 }
 
-function UserCard({ user, onQuickAction, onSaveEdits, extendDays, isSaving }) {
+function UserCard({ user, onQuickAction, onSaveEdits, extendDays, isSaving, canGrantAccess }) {
   const [expanded, setExpanded] = useState(false);
   const [edits, setEdits] = useState({});
   const set = k => v => setEdits(p => ({ ...p, [k]: v }));
@@ -138,7 +138,7 @@ function UserCard({ user, onQuickAction, onSaveEdits, extendDays, isSaving }) {
   const StatusIcon = statusCfg.icon;
   const typeCfg = TYPE_CFG[user.access_type || 'trial'] || TYPE_CFG.trial;
   const daysLeft = getDaysLeft(user);
-  const isAdmin = user.role === 'admin';
+  const isAdmin = user.is_platform_admin;
   const isDirty = Object.keys(edits).length > 0;
 
   const handleSave = () => { onSaveEdits(user.id, normalizeManualEdits(user, edits)); setEdits({}); };
@@ -201,7 +201,7 @@ function UserCard({ user, onQuickAction, onSaveEdits, extendDays, isSaving }) {
         )}
 
         {/* Quick action buttons */}
-        {!isAdmin && (
+        {canGrantAccess && !isAdmin && (
           <div className="mt-3 flex flex-wrap gap-1.5">
             <Button size="sm" variant="outline" className="h-7 text-xs gap-1 text-green-700 border-green-200 hover:bg-green-50 dark:border-green-800 dark:hover:bg-green-950/30"
               onClick={() => onQuickAction(user, 'permanent')}>
@@ -235,7 +235,7 @@ function UserCard({ user, onQuickAction, onSaveEdits, extendDays, isSaving }) {
         )}
 
         {/* Expand toggle */}
-        {!isAdmin && (
+        {canGrantAccess && !isAdmin && (
           <button onClick={() => setExpanded(p => !p)} className="mt-3 flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground transition-colors">
             {expanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
             {expanded ? "Hide details" : "Edit details"}
@@ -244,7 +244,7 @@ function UserCard({ user, onQuickAction, onSaveEdits, extendDays, isSaving }) {
       </div>
 
       {/* Expanded edit panel */}
-      {expanded && !isAdmin && (
+      {canGrantAccess && expanded && !isAdmin && (
         <div className="border-t border-border/60 bg-muted/30 p-4 space-y-3">
           <div className="grid grid-cols-2 gap-3">
             <SelectField label="Access Status" value={edits.access_status ?? user.access_status} onChange={setAccessStatus} options={ACCESS_STATUS_OPTIONS} />
@@ -302,8 +302,9 @@ export default function UserManagement() {
     },
   });
 
-  if (currentUser?.role !== 'admin') {
-    return <div className="min-h-screen flex items-center justify-center"><p className="text-muted-foreground">Access denied — admins only.</p></div>;
+  const canManageUsers = currentUser?.is_platform_admin || currentUser?.org_role === 'owner';
+  if (!canManageUsers) {
+    return <div className="min-h-screen flex items-center justify-center"><p className="text-muted-foreground">Access denied — company owner or platform admin access required.</p></div>;
   }
 
   const handleQuickAction = (user, type) => setPendingAction({ user, type });
@@ -375,13 +376,15 @@ export default function UserManagement() {
       </div>
 
       {/* Extend days config */}
-      <div className="rounded-xl bg-card border border-border/60 p-3 flex items-center gap-3">
-        <span className="text-sm font-semibold text-foreground whitespace-nowrap">Extend trial by:</span>
-        <Input type="number" min={1} max={365} value={extendDays}
-          onChange={e => setExtendDays(Math.max(1, parseInt(e.target.value) || 30))}
-          className="w-20 h-8 text-sm" />
-        <span className="text-xs text-muted-foreground">days per click</span>
-      </div>
+      {currentUser?.is_platform_admin && (
+        <div className="rounded-xl bg-card border border-border/60 p-3 flex items-center gap-3">
+          <span className="text-sm font-semibold text-foreground whitespace-nowrap">Extend trial by:</span>
+          <Input type="number" min={1} max={365} value={extendDays}
+            onChange={e => setExtendDays(Math.max(1, parseInt(e.target.value) || 30))}
+            className="w-20 h-8 text-sm" />
+          <span className="text-xs text-muted-foreground">days per click</span>
+        </div>
+      )}
 
       {mutationError && (
         <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-200 flex items-start gap-2">
@@ -402,6 +405,7 @@ export default function UserManagement() {
                 onQuickAction={handleQuickAction}
                 onSaveEdits={handleSaveEdits}
                 isSaving={mutation.isPending}
+                canGrantAccess={Boolean(currentUser?.is_platform_admin)}
               />
             ))}
           </div>

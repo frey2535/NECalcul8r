@@ -7,12 +7,13 @@ const DefaultFallback = () => (
   </div>
 );
 
-export default function AdminRoute({ fallback = <DefaultFallback /> }) {
+export default function AdminRoute({ fallback = <DefaultFallback />, allowOrgOwner = false }) {
   const { isAuthenticated, isLoadingAuth, user } = useAuth();
 
   if (isLoadingAuth) return fallback;
   if (!isAuthenticated) return <Navigate to="/login" replace />;
-  if (user?.role !== 'admin') {
+  const allowed = user?.is_platform_admin || (allowOrgOwner && user?.org_role === 'owner');
+  if (!allowed) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 text-center px-4">
         <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center text-3xl">🚫</div>

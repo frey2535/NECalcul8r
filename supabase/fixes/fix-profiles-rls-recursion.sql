@@ -33,8 +33,10 @@ $$;
 
 drop policy if exists "profiles read own org" on public.profiles;
 drop policy if exists "profiles update own or org owner" on public.profiles;
+drop policy if exists "profiles update platform admin" on public.profiles;
 drop policy if exists "organizations read own" on public.organizations;
 drop policy if exists "organizations update owner" on public.organizations;
+drop policy if exists "organizations update platform admin" on public.organizations;
 drop policy if exists "entitlements read assigned" on public.entitlements;
 drop policy if exists "subscriptions read assigned" on public.subscriptions;
 drop policy if exists "memberships read own org" on public.organization_memberships;
@@ -47,17 +49,13 @@ create policy "profiles read own org"
     or (public.current_profile_org_role() = 'owner' and org_id = public.current_profile_org_id())
   );
 
-create policy "profiles update own or org owner"
+create policy "profiles update platform admin"
   on public.profiles for update
   using (
-    id = auth.uid()
-    or public.current_is_platform_admin()
-    or (public.current_profile_org_role() = 'owner' and org_id = public.current_profile_org_id())
+    public.current_is_platform_admin()
   )
   with check (
-    id = auth.uid()
-    or public.current_is_platform_admin()
-    or (public.current_profile_org_role() = 'owner' and org_id = public.current_profile_org_id())
+    public.current_is_platform_admin()
   );
 
 create policy "organizations read own"
@@ -67,11 +65,13 @@ create policy "organizations read own"
     or id = public.current_profile_org_id()
   );
 
-create policy "organizations update owner"
+create policy "organizations update platform admin"
   on public.organizations for update
   using (
     public.current_is_platform_admin()
-    or (public.current_profile_org_role() = 'owner' and id = public.current_profile_org_id())
+  )
+  with check (
+    public.current_is_platform_admin()
   );
 
 create policy "entitlements read assigned"

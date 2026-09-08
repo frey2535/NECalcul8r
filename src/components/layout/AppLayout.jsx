@@ -25,7 +25,8 @@ const TABS = [
 
 export default function AppLayout({ trialStatus }) {
   const { user } = useAuth();
-  const isAdmin = user?.role === 'admin';
+  const isPlatformAdmin = Boolean(user?.is_platform_admin);
+  const canManageUsers = isPlatformAdmin || user?.org_role === 'owner';
   const { year, setYear, years } = useNECYear();
   const { theme, toggleTheme } = useTheme();
   const location = useLocation();
@@ -55,7 +56,7 @@ export default function AppLayout({ trialStatus }) {
   const isTabActive = (tab) => getActiveTabKey() === tab.key;
 
   const refreshOpenReportCount = useCallback(async () => {
-    if (!isAdmin) {
+    if (!isPlatformAdmin) {
       setOpenReportCount(0);
       return;
     }
@@ -65,14 +66,14 @@ export default function AppLayout({ trialStatus }) {
     } catch {
       setOpenReportCount(0);
     }
-  }, [isAdmin]);
+  }, [isPlatformAdmin]);
 
   useEffect(() => {
     refreshOpenReportCount();
   }, [location.pathname, refreshOpenReportCount]);
 
   useEffect(() => {
-    if (!isAdmin) return undefined;
+    if (!isPlatformAdmin) return undefined;
     window.addEventListener("focus", refreshOpenReportCount);
     window.addEventListener("necalcul8r-reports-updated", refreshOpenReportCount);
     const interval = window.setInterval(refreshOpenReportCount, 60 * 1000);
@@ -81,7 +82,7 @@ export default function AppLayout({ trialStatus }) {
       window.removeEventListener("necalcul8r-reports-updated", refreshOpenReportCount);
       window.clearInterval(interval);
     };
-  }, [isAdmin, refreshOpenReportCount]);
+  }, [isPlatformAdmin, refreshOpenReportCount]);
 
   const reportBadge = openReportCount > 0
     ? (
@@ -134,14 +135,18 @@ export default function AppLayout({ trialStatus }) {
               </nav>
 
               {/* Admin links — desktop only */}
-              {isAdmin && (
+              {(canManageUsers || isPlatformAdmin) && (
                 <>
+                  {canManageUsers && (
                   <Link to="/admin/users">
                     <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-muted transition-all">
                       <Users className="w-3.5 h-3.5" />
                       Users
                     </div>
                   </Link>
+                  )}
+                  {isPlatformAdmin && (
+                    <>
                   <Link to="/admin/codebook">
                     <div className={cn(
                       "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all",
@@ -176,6 +181,8 @@ export default function AppLayout({ trialStatus }) {
                       {reportBadge}
                     </div>
                   </Link>
+                    </>
+                  )}
                 </>
               )}
 
@@ -225,35 +232,39 @@ export default function AppLayout({ trialStatus }) {
       {/* Mobile Bottom Nav */}
       <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-50 bg-background/90 backdrop-blur-xl border-t border-border/60 shadow-[0_-4px_24px_rgba(0,0,0,0.08)]" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
         <div className="flex items-center justify-around py-1.5 px-2">
-          {isAdmin && (
+          {(canManageUsers || isPlatformAdmin) && (
             <>
-              <Link to="/admin/users" className="flex-1">
-                <div className={cn(
-                  "flex flex-col items-center gap-1 py-1.5 rounded-xl mx-1 transition-all",
-                  location.pathname === "/admin/users" ? "text-blue-600" : "text-muted-foreground"
-                )}>
-                  <div className={cn("w-10 h-6 rounded-full flex items-center justify-center transition-all", location.pathname === "/admin/users" ? "bg-blue-100" : "")}>
-                    <Users className="w-5 h-5" />
+              {canManageUsers && (
+                <Link to="/admin/users" className="flex-1">
+                  <div className={cn(
+                    "flex flex-col items-center gap-1 py-1.5 rounded-xl mx-1 transition-all",
+                    location.pathname === "/admin/users" ? "text-blue-600" : "text-muted-foreground"
+                  )}>
+                    <div className={cn("w-10 h-6 rounded-full flex items-center justify-center transition-all", location.pathname === "/admin/users" ? "bg-blue-100" : "")}>
+                      <Users className="w-5 h-5" />
+                    </div>
+                    <span className={cn("text-[10px] font-semibold", location.pathname === "/admin/users" ? "text-blue-600" : "text-muted-foreground")}>Users</span>
                   </div>
-                  <span className={cn("text-[10px] font-semibold", location.pathname === "/admin/users" ? "text-blue-600" : "text-muted-foreground")}>Users</span>
-                </div>
-              </Link>
-              <Link to="/admin/reports" className="flex-1">
-                <div className={cn(
-                  "flex flex-col items-center gap-1 py-1.5 rounded-xl mx-1 transition-all",
-                  location.pathname === "/admin/reports" ? "text-blue-600" : "text-muted-foreground"
-                )}>
-                  <div className={cn("relative w-10 h-6 rounded-full flex items-center justify-center transition-all", location.pathname === "/admin/reports" ? "bg-blue-100" : "")}>
-                    <Flag className="w-5 h-5" />
-                    {openReportCount > 0 && (
-                      <span className="absolute -top-1 -right-0.5 min-w-4 h-4 rounded-full bg-rose-500 px-1 text-[9px] leading-4 text-white font-extrabold text-center shadow-sm">
-                        {openReportCount > 99 ? "99+" : openReportCount}
-                      </span>
-                    )}
+                </Link>
+              )}
+              {isPlatformAdmin && (
+                <Link to="/admin/reports" className="flex-1">
+                  <div className={cn(
+                    "flex flex-col items-center gap-1 py-1.5 rounded-xl mx-1 transition-all",
+                    location.pathname === "/admin/reports" ? "text-blue-600" : "text-muted-foreground"
+                  )}>
+                    <div className={cn("relative w-10 h-6 rounded-full flex items-center justify-center transition-all", location.pathname === "/admin/reports" ? "bg-blue-100" : "")}>
+                      <Flag className="w-5 h-5" />
+                      {openReportCount > 0 && (
+                        <span className="absolute -top-1 -right-0.5 min-w-4 h-4 rounded-full bg-rose-500 px-1 text-[9px] leading-4 text-white font-extrabold text-center shadow-sm">
+                          {openReportCount > 99 ? "99+" : openReportCount}
+                        </span>
+                      )}
+                    </div>
+                    <span className={cn("text-[10px] font-semibold", location.pathname === "/admin/reports" ? "text-blue-600" : "text-muted-foreground")}>Reports</span>
                   </div>
-                  <span className={cn("text-[10px] font-semibold", location.pathname === "/admin/reports" ? "text-blue-600" : "text-muted-foreground")}>Reports</span>
-                </div>
-              </Link>
+                </Link>
+              )}
             </>
           )}
           {TABS.map((tab) => {

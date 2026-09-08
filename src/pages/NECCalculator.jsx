@@ -1,12 +1,14 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, ArrowLeft, Zap, ChevronRight } from "lucide-react";
+import { Search, ArrowLeft, Zap, ChevronRight, Lock, ShoppingCart } from "lucide-react";
 import { useParams, useNavigate } from "react-router-dom";
 import CalculatorPanel from "@/components/calculator/CalculatorPanel";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import PullToRefreshIndicator from "@/components/ui/PullToRefreshIndicator";
+import { useAuth } from "@/lib/AuthContext";
+import { getCalculatorAccess } from "@/lib/pricing";
 
 export const NEC_CATEGORIES = [
   { id: "voltage_drop", label: "Voltage Drop", article: "NEC 210.19 / 215.2", description: "Branch circuit & feeder voltage drop", color: "blue", emoji: "⚡" },
@@ -119,11 +121,13 @@ const CATEGORY_GROUPS = [
 export default function NECCalculator() {
   const { calcId } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [search, setSearch] = useState("");
   const [activeGroup, setActiveGroup] = useState("all");
   const { pullDistance, isRefreshing, containerRef } = usePullToRefresh(() => Promise.resolve());
 
   const selectedCat = calcId ? NEC_CATEGORIES.find(c => c.id === calcId) : null;
+  const calculatorAccess = useMemo(() => getCalculatorAccess(NEC_CATEGORIES, user), [user]);
 
   const filtered = NEC_CATEGORIES.filter(c =>
     (activeGroup === "all" || c.color === activeGroup) &&
@@ -133,6 +137,11 @@ export default function NECCalculator() {
   );
 
   const handleSelect = (id) => {
+    if (!calculatorAccess.isAllowed(id)) {
+      navigate("/purchase");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
     navigate(`/calculator/${id}`);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -144,6 +153,7 @@ export default function NECCalculator() {
 
   // Calculator detail view
   if (selectedCat) {
+    const selectedLocked = !calculatorAccess.isAllowed(selectedCat.id);
     return (
       <AnimatePresence mode="wait">
         <motion.div
@@ -162,7 +172,28 @@ export default function NECCalculator() {
             All Calculators
           </button>
 
-          <CalculatorPanel category={selectedCat} />
+          {selectedLocked ? (
+            <div className="rounded-3xl border border-border bg-card p-6 shadow-xl text-center">
+              <div className="mx-auto w-14 h-14 rounded-2xl bg-amber-100 dark:bg-amber-950/40 flex items-center justify-center">
+                <Lock className="w-7 h-7 text-amber-600" />
+              </div>
+              <h1 className="mt-4 text-2xl font-extrabold text-foreground">{selectedCat.label} requires an upgrade</h1>
+              <p className="mt-2 text-sm text-muted-foreground max-w-xl mx-auto">
+                Your current calculator package is {calculatorAccess.calculatorTier.label}, which includes {calculatorAccess.includedCount} of {calculatorAccess.totalCount} calculators.
+                Upgrade to unlock this calculator and any higher-tier tools.
+              </p>
+              <button
+                type="button"
+                onClick={() => navigate("/purchase")}
+                className="mt-5 inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold px-5 py-3 transition-colors"
+              >
+                <ShoppingCart className="w-4 h-4" />
+                View purchase options
+              </button>
+            </div>
+          ) : (
+            <CalculatorPanel category={selectedCat} />
+          )}
         </motion.div>
       </AnimatePresence>
     );
@@ -192,7 +223,11 @@ export default function NECCalculator() {
               <span className="text-xs font-bold uppercase tracking-widest text-blue-200">NEC Reference</span>
             </div>
             <h1 className="text-2xl font-extrabold leading-tight">Calculation Suite</h1>
-            <p className="text-sm text-blue-100 mt-1">{NEC_CATEGORIES.length} calculators · Tap to start</p>
+            <p className="text-sm text-blue-100 mt-1">
+              {calculatorAccess.isFullAccess
+                ? `${NEC_CATEGORIES.length} calculators · Tap to start`
+                : `${calculatorAccess.includedCount} of ${NEC_CATEGORIES.length} calculators included · Upgrade anytime`}
+            </p>
           </div>
         </div>
 
@@ -247,47 +282,67 @@ export default function NECCalculator() {
 
         {/* Category grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          {filtered.map((cat, i) => (
-            <motion.button
-              key={cat.id}
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.025, duration: 0.2 }}
-              onClick={() => handleSelect(cat.id)}
-              className={cn(
-                "group relative text-left w-full rounded-2xl border border-border p-4 pl-5 bg-white shadow-md",
-                "hover:shadow-xl hover:shadow-blue-100/60 hover:-translate-y-1 hover:border-blue-200 active:scale-[0.98] transition-all duration-300 ease-out",
-                "focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500",
-                "border-l-4",
-                accentMap[cat.color]
-              )}
-            >
-              <div className="flex items-start gap-3">
-                {/* Icon bubble */}
-                <div className={cn(
-                  "w-12 h-12 rounded-2xl flex items-center justify-center text-xl flex-shrink-0",
-                  "bg-gradient-to-br shadow-sm ring-1 ring-black/5 group-hover:scale-105 transition-all duration-300",
-                  gradientMap[cat.color]
-                )}>
-                  <span>{cat.emoji}</span>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-bold text-foreground leading-snug">{cat.label}</p>
-                  <p className="text-[11px] text-muted-foreground mt-0.5 leading-snug">{cat.description}</p>
-                  <span className={cn(
-                    "inline-block mt-2 text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm",
-                    bgMap[cat.color]
+          {filtered.map((cat, i) => {
+            const locked = !calculatorAccess.isAllowed(cat.id);
+            return (
+              <motion.button
+                key={cat.id}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.025, duration: 0.2 }}
+                onClick={() => handleSelect(cat.id)}
+                className={cn(
+                  "group relative text-left w-full rounded-2xl border border-border p-4 pl-5 bg-white shadow-md",
+                  "hover:shadow-xl hover:shadow-blue-100/60 hover:-translate-y-1 hover:border-blue-200 active:scale-[0.98] transition-all duration-300 ease-out",
+                  "focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500",
+                  "border-l-4",
+                  locked && "opacity-75",
+                  accentMap[cat.color]
+                )}
+              >
+                <div className="flex items-start gap-3">
+                  {/* Icon bubble */}
+                  <div className={cn(
+                    "w-12 h-12 rounded-2xl flex items-center justify-center text-xl flex-shrink-0",
+                    "bg-gradient-to-br shadow-sm ring-1 ring-black/5 group-hover:scale-105 transition-all duration-300",
+                    gradientMap[cat.color]
                   )}>
-                    {cat.article}
-                  </span>
+                    <span>{cat.emoji}</span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-bold text-foreground leading-snug">{cat.label}</p>
+                      {locked && (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 text-amber-700 px-2 py-0.5 text-[10px] font-black">
+                          <Lock className="w-3 h-3" />
+                          Upgrade
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-[11px] text-muted-foreground mt-0.5 leading-snug">{cat.description}</p>
+                    <span className={cn(
+                      "inline-block mt-2 text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm",
+                      bgMap[cat.color]
+                    )}>
+                      {cat.article}
+                    </span>
+                  </div>
+                  {locked ? (
+                    <Lock className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
+                  ) : (
+                    <ChevronRight className="w-4 h-4 text-muted-foreground/40 flex-shrink-0 mt-0.5 group-hover:text-blue-500 group-hover:translate-x-0.5 transition-all duration-300" />
+                  )}
                 </div>
-                <ChevronRight className="w-4 h-4 text-muted-foreground/40 flex-shrink-0 mt-0.5 group-hover:text-blue-500 group-hover:translate-x-0.5 transition-all duration-300" />
-              </div>
-            </motion.button>
-          ))}
+              </motion.button>
+            );
+          })}
         </div>
 
-        <p className="text-center text-xs text-muted-foreground pb-2">{NEC_CATEGORIES.length} calculations available</p>
+        <p className="text-center text-xs text-muted-foreground pb-2">
+          {calculatorAccess.isFullAccess
+            ? `${NEC_CATEGORIES.length} calculations available`
+            : `${calculatorAccess.includedCount} calculations included in ${calculatorAccess.calculatorTier.label}`}
+        </p>
       </motion.div>
       </div>
     </AnimatePresence>

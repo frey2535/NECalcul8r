@@ -380,7 +380,7 @@ export default function CodebookMatrix() {
     status: 200, sourceType: 160, verifiedBy: 110, date: 100,
     notes: 240, amend: 40,
   });
-  const isAdmin = user?.role === "admin";
+  const isAdmin = Boolean(user?.is_platform_admin);
 
   const handleResizeStart = (e, colKey) => {
     e.preventDefault();
