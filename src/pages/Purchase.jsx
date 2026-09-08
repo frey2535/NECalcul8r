@@ -35,7 +35,7 @@ function TierButton({ active, title, subtitle, onClick }) {
 export default function Purchase() {
   const { user } = useAuth();
   const [customerTierId, setCustomerTierId] = useState("individual");
-  const [calculatorTierId, setCalculatorTierId] = useState("calc_31_plus");
+  const [calculatorTierId, setCalculatorTierId] = useState("calc_35_plus");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -44,12 +44,16 @@ export default function Purchase() {
     [customerTierId, calculatorTierId]
   );
   const selectedRequiresCompany = selected.customerTier.accountType === "company" && !user?.org_id;
-  const checkoutReady = base44.commerce?.isConfigured && selected.priceId && !selectedRequiresCompany;
+  const checkoutReady = selected.isFree || (base44.commerce?.isConfigured && selected.priceId && !selectedRequiresCompany);
 
   const handlePurchase = async () => {
     setError("");
     if (selectedRequiresCompany) {
       setError("Company packages require an account connected to a company. Register with a company name or join a company invite before buying a company package.");
+      return;
+    }
+    if (selected.isFree) {
+      window.location.assign("/");
       return;
     }
     if (!checkoutReady) {
@@ -153,7 +157,7 @@ export default function Purchase() {
             className="inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white font-extrabold px-6 py-3 transition-colors"
           >
             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShoppingCart className="w-4 h-4" />}
-            {loading ? "Opening checkout..." : "Purchase now"}
+            {loading ? "Opening checkout..." : selected.isFree ? "Continue with free tier" : "Purchase now"}
           </button>
         </div>
         {error && (

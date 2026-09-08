@@ -7,10 +7,11 @@ function stripeStatusToAccess(status: string) {
 }
 
 const CALCULATOR_LIMITS: Record<string, number | null> = {
-  calc_0_10: 10,
-  calc_11_20: 20,
-  calc_21_30: 30,
-  calc_31_plus: null,
+  calc_0_5_free: 5,
+  calc_6_15: 15,
+  calc_16_25: 25,
+  calc_26_35: 35,
+  calc_35_plus: null,
 };
 
 function numberOrFallback(value: unknown, fallback: number) {
@@ -19,7 +20,7 @@ function numberOrFallback(value: unknown, fallback: number) {
 }
 
 function normalizeEntitlementMetadata(metadata: Record<string, string>, subscription: Record<string, unknown>, itemQuantity: number) {
-  const calculatorTierId = metadata.calculator_tier_id || "calc_31_plus";
+  const calculatorTierId = metadata.calculator_tier_id || "calc_35_plus";
   const calculatorLimit = calculatorTierId in CALCULATOR_LIMITS ? CALCULATOR_LIMITS[calculatorTierId] : null;
   const seatLimit = numberOrFallback(metadata.seat_limit, itemQuantity || 1);
 

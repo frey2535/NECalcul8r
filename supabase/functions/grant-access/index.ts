@@ -13,10 +13,11 @@ const ACTIVE_TYPES = new Set([
 ]);
 
 const CALCULATOR_LIMITS: Record<string, number | null> = {
-  calc_0_10: 10,
-  calc_11_20: 20,
-  calc_21_30: 30,
-  calc_31_plus: null,
+  calc_0_5_free: 5,
+  calc_6_15: 15,
+  calc_16_25: 25,
+  calc_26_35: 35,
+  calc_35_plus: null,
 };
 
 function positiveNumber(value: unknown) {
@@ -25,7 +26,7 @@ function positiveNumber(value: unknown) {
 }
 
 function entitlementMetadata(payload: Record<string, unknown>, actorId: string) {
-  const calculatorTierId = String(payload.calculatorTierId || payload.calculator_tier_id || "calc_31_plus");
+  const calculatorTierId = String(payload.calculatorTierId || payload.calculator_tier_id || "calc_35_plus");
   const customerTierId = String(payload.customerTierId || payload.customer_tier_id || "");
   const seats = positiveNumber(payload.seats);
 

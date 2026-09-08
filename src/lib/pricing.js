@@ -6,39 +6,45 @@ export const CUSTOMER_TIERS = [
 ];
 
 export const CALCULATOR_TIERS = [
-  { id: "calc_0_10", label: "0-10 calculators", description: "Starter calculator access", calculatorLimit: 10 },
-  { id: "calc_11_20", label: "11-20 calculators", description: "Expanded calculator access", calculatorLimit: 20 },
-  { id: "calc_21_30", label: "21-30 calculators", description: "Advanced calculator access", calculatorLimit: 30 },
-  { id: "calc_31_plus", label: "31+ calculators", description: "Complete calculator access", calculatorLimit: null },
+  { id: "calc_0_5_free", label: "0-5 calculators", description: "Free starter access", calculatorLimit: 5, isFree: true },
+  { id: "calc_6_15", label: "6-15 calculators", description: "Starter paid calculator access", calculatorLimit: 15 },
+  { id: "calc_16_25", label: "16-25 calculators", description: "Expanded calculator access", calculatorLimit: 25 },
+  { id: "calc_26_35", label: "26-35 calculators", description: "Advanced calculator access", calculatorLimit: 35 },
+  { id: "calc_35_plus", label: "35+ calculators", description: "Complete suite access, including new calculators as they are added", calculatorLimit: null },
 ];
 
 export const DEFAULT_CUSTOMER_TIER_ID = "individual";
-export const DEFAULT_CALCULATOR_TIER_ID = "calc_31_plus";
+export const FREE_CALCULATOR_TIER_ID = "calc_0_5_free";
+export const DEFAULT_CALCULATOR_TIER_ID = "calc_35_plus";
 
 const DEFAULT_PRICE_LABELS = {
   individual: {
-    calc_0_10: "$9/mo",
-    calc_11_20: "$19/mo",
-    calc_21_30: "$29/mo",
-    calc_31_plus: "$39/mo",
+    calc_0_5_free: "Free",
+    calc_6_15: "$10/mo",
+    calc_16_25: "$20/mo",
+    calc_26_35: "$40/mo",
+    calc_35_plus: "$50/mo",
   },
   company_0_10: {
-    calc_0_10: "$49/mo",
-    calc_11_20: "$99/mo",
-    calc_21_30: "$149/mo",
-    calc_31_plus: "$199/mo",
+    calc_0_5_free: "Free",
+    calc_6_15: "$10/mo",
+    calc_16_25: "$20/mo",
+    calc_26_35: "$40/mo",
+    calc_35_plus: "$50/mo",
   },
   company_10_30: {
-    calc_0_10: "$129/mo",
-    calc_11_20: "$249/mo",
-    calc_21_30: "$369/mo",
-    calc_31_plus: "$499/mo",
+    calc_0_5_free: "Free",
+    calc_6_15: "$10/mo",
+    calc_16_25: "$20/mo",
+    calc_26_35: "$40/mo",
+    calc_35_plus: "$50/mo",
   },
   company_30_plus: {
-    calc_0_10: "$299/mo",
-    calc_11_20: "$549/mo",
-    calc_21_30: "$799/mo",
-    calc_31_plus: "$999/mo",
+    calc_0_5_free: "Free",
+    calc_6_15: "$10/mo",
+    calc_16_25: "$20/mo",
+    calc_26_35: "$40/mo",
+    calc_35_plus: "$50/mo",
   },
 };
 
@@ -80,6 +86,7 @@ export function getPricingOption(customerTierId, calculatorTierId) {
     description: configured.description || `${customerTier.label} with ${calculatorTier.label}`,
     seatLimit,
     billingQuantity,
+    isFree: Boolean(calculatorTier.isFree),
   };
 }
 
@@ -97,9 +104,21 @@ function hasFullCalculatorAccess(user) {
   return user.access_type === "permanent" || user.access_type === "buildrpro_included";
 }
 
+const PAID_ACCESS_TYPES = new Set([
+  "paid",
+  "external_company",
+  "company_seat",
+  "app_store",
+  "google_play",
+  "apple_app_store",
+]);
+
 export function getEffectiveCalculatorTierId(user) {
   if (hasFullCalculatorAccess(user)) return DEFAULT_CALCULATOR_TIER_ID;
-  return user?.calculator_tier_id || DEFAULT_CALCULATOR_TIER_ID;
+  if (user?.access_status === "active" && PAID_ACCESS_TYPES.has(user?.access_type)) {
+    return user?.calculator_tier_id || DEFAULT_CALCULATOR_TIER_ID;
+  }
+  return user?.calculator_tier_id || FREE_CALCULATOR_TIER_ID;
 }
 
 export function getCalculatorAccess(categories = [], user = null) {

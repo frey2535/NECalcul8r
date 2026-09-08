@@ -85,7 +85,7 @@ export const commerce = {
     return this.startCheckout({
       accountType: "company",
       customerTierId: companyTierForSeats(seats),
-      calculatorTierId: "calc_31_plus",
+      calculatorTierId: "calc_35_plus",
       priceId: companyPriceId,
       quantity: 1,
       seats,

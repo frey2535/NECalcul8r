@@ -10,10 +10,11 @@ const CUSTOMER_TIERS: Record<string, { accountType: "individual" | "company"; se
 };
 
 const CALCULATOR_TIERS: Record<string, { calculatorLimit: number | null }> = {
-  calc_0_10: { calculatorLimit: 10 },
-  calc_11_20: { calculatorLimit: 20 },
-  calc_21_30: { calculatorLimit: 30 },
-  calc_31_plus: { calculatorLimit: null },
+  calc_0_5_free: { calculatorLimit: 5 },
+  calc_6_15: { calculatorLimit: 15 },
+  calc_16_25: { calculatorLimit: 25 },
+  calc_26_35: { calculatorLimit: 35 },
+  calc_35_plus: { calculatorLimit: null },
 };
 
 function metadataValue(value: unknown) {
@@ -31,7 +32,7 @@ Deno.serve(async (req) => {
     if (!priceId) return jsonResponse({ error: "Missing Stripe price ID." }, 400);
 
     const customerTierId = String(payload.customerTierId || "individual");
-    const calculatorTierId = String(payload.calculatorTierId || "calc_31_plus");
+    const calculatorTierId = String(payload.calculatorTierId || "calc_35_plus");
     const customerTier = CUSTOMER_TIERS[customerTierId];
     const calculatorTier = CALCULATOR_TIERS[calculatorTierId];
     if (!customerTier) return jsonResponse({ error: "Invalid customer tier." }, 400);

@@ -30,31 +30,36 @@ Do not expose Stripe secret keys, Supabase service-role keys, Google service-acc
 
 ```json
 {
-  "individual:calc_0_10": { "priceId": "price_...", "priceLabel": "$9/mo", "seatLimit": 1, "billingQuantity": 1 },
-  "individual:calc_11_20": { "priceId": "price_...", "priceLabel": "$19/mo", "seatLimit": 1, "billingQuantity": 1 },
-  "individual:calc_21_30": { "priceId": "price_...", "priceLabel": "$29/mo", "seatLimit": 1, "billingQuantity": 1 },
-  "individual:calc_31_plus": { "priceId": "price_...", "priceLabel": "$39/mo", "seatLimit": 1, "billingQuantity": 1 },
-  "company_0_10:calc_0_10": { "priceId": "price_...", "priceLabel": "$49/mo", "seatLimit": 10, "billingQuantity": 1 },
-  "company_0_10:calc_11_20": { "priceId": "price_...", "priceLabel": "$99/mo", "seatLimit": 10, "billingQuantity": 1 },
-  "company_0_10:calc_21_30": { "priceId": "price_...", "priceLabel": "$149/mo", "seatLimit": 10, "billingQuantity": 1 },
-  "company_0_10:calc_31_plus": { "priceId": "price_...", "priceLabel": "$199/mo", "seatLimit": 10, "billingQuantity": 1 },
-  "company_10_30:calc_0_10": { "priceId": "price_...", "priceLabel": "$129/mo", "seatLimit": 30, "billingQuantity": 1 },
-  "company_10_30:calc_11_20": { "priceId": "price_...", "priceLabel": "$249/mo", "seatLimit": 30, "billingQuantity": 1 },
-  "company_10_30:calc_21_30": { "priceId": "price_...", "priceLabel": "$369/mo", "seatLimit": 30, "billingQuantity": 1 },
-  "company_10_30:calc_31_plus": { "priceId": "price_...", "priceLabel": "$499/mo", "seatLimit": 30, "billingQuantity": 1 },
-  "company_30_plus:calc_0_10": { "priceId": "price_...", "priceLabel": "$299/mo", "seatLimit": 31, "billingQuantity": 1 },
-  "company_30_plus:calc_11_20": { "priceId": "price_...", "priceLabel": "$549/mo", "seatLimit": 31, "billingQuantity": 1 },
-  "company_30_plus:calc_21_30": { "priceId": "price_...", "priceLabel": "$799/mo", "seatLimit": 31, "billingQuantity": 1 },
-  "company_30_plus:calc_31_plus": { "priceId": "price_...", "priceLabel": "$999/mo", "seatLimit": 31, "billingQuantity": 1 }
+  "individual:calc_0_5_free": { "priceId": "", "priceLabel": "Free", "seatLimit": 1, "billingQuantity": 1 },
+  "individual:calc_6_15": { "priceId": "price_...", "priceLabel": "$10/mo", "seatLimit": 1, "billingQuantity": 1 },
+  "individual:calc_16_25": { "priceId": "price_...", "priceLabel": "$20/mo", "seatLimit": 1, "billingQuantity": 1 },
+  "individual:calc_26_35": { "priceId": "price_...", "priceLabel": "$40/mo", "seatLimit": 1, "billingQuantity": 1 },
+  "individual:calc_35_plus": { "priceId": "price_...", "priceLabel": "$50/mo", "seatLimit": 1, "billingQuantity": 1 },
+  "company_0_10:calc_0_5_free": { "priceId": "", "priceLabel": "Free", "seatLimit": 10, "billingQuantity": 1 },
+  "company_0_10:calc_6_15": { "priceId": "price_...", "priceLabel": "$10/mo", "seatLimit": 10, "billingQuantity": 1 },
+  "company_0_10:calc_16_25": { "priceId": "price_...", "priceLabel": "$20/mo", "seatLimit": 10, "billingQuantity": 1 },
+  "company_0_10:calc_26_35": { "priceId": "price_...", "priceLabel": "$40/mo", "seatLimit": 10, "billingQuantity": 1 },
+  "company_0_10:calc_35_plus": { "priceId": "price_...", "priceLabel": "$50/mo", "seatLimit": 10, "billingQuantity": 1 },
+  "company_10_30:calc_0_5_free": { "priceId": "", "priceLabel": "Free", "seatLimit": 30, "billingQuantity": 1 },
+  "company_10_30:calc_6_15": { "priceId": "price_...", "priceLabel": "$10/mo", "seatLimit": 30, "billingQuantity": 1 },
+  "company_10_30:calc_16_25": { "priceId": "price_...", "priceLabel": "$20/mo", "seatLimit": 30, "billingQuantity": 1 },
+  "company_10_30:calc_26_35": { "priceId": "price_...", "priceLabel": "$40/mo", "seatLimit": 30, "billingQuantity": 1 },
+  "company_10_30:calc_35_plus": { "priceId": "price_...", "priceLabel": "$50/mo", "seatLimit": 30, "billingQuantity": 1 },
+  "company_30_plus:calc_0_5_free": { "priceId": "", "priceLabel": "Free", "seatLimit": 31, "billingQuantity": 1 },
+  "company_30_plus:calc_6_15": { "priceId": "price_...", "priceLabel": "$10/mo", "seatLimit": 31, "billingQuantity": 1 },
+  "company_30_plus:calc_16_25": { "priceId": "price_...", "priceLabel": "$20/mo", "seatLimit": 31, "billingQuantity": 1 },
+  "company_30_plus:calc_26_35": { "priceId": "price_...", "priceLabel": "$40/mo", "seatLimit": 31, "billingQuantity": 1 },
+  "company_30_plus:calc_35_plus": { "priceId": "price_...", "priceLabel": "$50/mo", "seatLimit": 31, "billingQuantity": 1 }
 }
 ```
 
 Calculator package IDs:
 
-- `calc_0_10`: unlocks the first 10 calculators in the app suite.
-- `calc_11_20`: unlocks the first 20 calculators in the app suite.
-- `calc_21_30`: unlocks the first 30 calculators in the app suite.
-- `calc_31_plus`: unlocks the full calculator suite.
+- `calc_0_5_free`: unlocks the first 5 calculators in the app suite for free.
+- `calc_6_15`: unlocks the first 15 calculators in the app suite for $10/month.
+- `calc_16_25`: unlocks the first 25 calculators in the app suite for $20/month.
+- `calc_26_35`: unlocks the first 35 calculators in the app suite for $40/month.
+- `calc_35_plus`: unlocks the full suite for $50/month, including new calculators as they are developed.
 
 ## Supabase database
 
@@ -149,7 +154,7 @@ Input:
   "mode": "subscription",
   "accountType": "individual",
   "customerTierId": "individual",
-  "calculatorTierId": "calc_31_plus",
+  "calculatorTierId": "calc_35_plus",
   "priceId": "price_...",
   "quantity": 1,
   "seats": 1,
@@ -194,7 +199,7 @@ Input:
   "profileId": "uuid",
   "seats": 10,
   "customerTierId": "company_0_10",
-  "calculatorTierId": "calc_31_plus",
+  "calculatorTierId": "calc_35_plus",
   "expiresAt": null,
   "accessType": "external_company",
   "source": "company_external",
