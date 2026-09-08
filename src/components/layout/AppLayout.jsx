@@ -1,6 +1,6 @@
 import React, { useState, useRef, useCallback, useEffect } from "react";
 import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
-import { Calculator, BookOpen, UserCircle, Users, Calendar, ShieldCheck, FileCheck, Sun, Moon, FolderOpen, Flag } from "lucide-react";
+import { Calculator, BookOpen, UserCircle, Users, Calendar, ShieldCheck, FileCheck, Sun, Moon, FolderOpen, Flag, Lock } from "lucide-react";
 import TrialBanner from "@/components/TrialBanner";
 import { useAuth } from "@/lib/AuthContext";
 import { base44 } from "@/api/base44Client";
@@ -15,6 +15,7 @@ import {
 import Profile from "@/pages/Profile";
 import { useNECYear } from "@/context/NECYearContext";
 import { useTheme } from "@/context/ThemeContext";
+import { getResolvedEntitlement } from "@/lib/pricing";
 
 // Each tab remembers its last visited path independently
 const TABS = [
@@ -27,6 +28,7 @@ export default function AppLayout({ trialStatus }) {
   const { user } = useAuth();
   const isPlatformAdmin = Boolean(user?.is_platform_admin);
   const canManageUsers = isPlatformAdmin || user?.org_role === 'owner';
+  const entitlement = getResolvedEntitlement(user);
   const { year, setYear, years } = useNECYear();
   const { theme, toggleTheme } = useTheme();
   const location = useLocation();
@@ -118,6 +120,7 @@ export default function AppLayout({ trialStatus }) {
                 {TABS.map((tab) => {
                   const active = isTabActive(tab);
                   const Icon = tab.icon;
+                  const locked = tab.key === "tables" && !entitlement.hasNecTables;
                   return (
                     <Link key={tab.key} to={tab.path}>
                       <div className={cn(
@@ -128,6 +131,7 @@ export default function AppLayout({ trialStatus }) {
                       )}>
                         <Icon className="w-3.5 h-3.5" />
                         {tab.label}
+                        {locked && <Lock className="w-3 h-3 text-amber-500" />}
                       </div>
                     </Link>
                   );
@@ -270,6 +274,7 @@ export default function AppLayout({ trialStatus }) {
           {TABS.map((tab) => {
             const active = isTabActive(tab);
             const Icon = tab.icon;
+            const locked = tab.key === "tables" && !entitlement.hasNecTables;
             return (
               <button
                 key={tab.key}
@@ -281,10 +286,11 @@ export default function AppLayout({ trialStatus }) {
                   active ? "text-blue-600" : "text-muted-foreground"
                 )}>
                   <div className={cn(
-                    "w-10 h-6 rounded-full flex items-center justify-center transition-all",
+                    "relative w-10 h-6 rounded-full flex items-center justify-center transition-all",
                     active ? "bg-blue-100" : ""
                   )}>
                     <Icon className={cn("w-5 h-5 transition-all", active && "scale-110")} />
+                    {locked && <Lock className="absolute mt-3 ml-5 w-3 h-3 text-amber-500" />}
                   </div>
                   <span className={cn("text-[10px] font-semibold", active ? "text-blue-600" : "text-muted-foreground")}>
                     {tab.label}

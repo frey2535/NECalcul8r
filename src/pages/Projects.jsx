@@ -43,6 +43,9 @@ import {
 } from "@/components/ui/dialog";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import PullToRefreshIndicator from "@/components/ui/PullToRefreshIndicator";
+import { useAuth } from "@/lib/AuthContext";
+import { getResolvedEntitlement } from "@/lib/pricing";
+import { flattenSnapshot } from "@/lib/calcSnapshot";
 
 const MAX_PDF_PAGE_HEIGHT_PX = 14000;
 
@@ -97,9 +100,73 @@ function syncFormControlValues(sourceRoot, clonedRoot) {
   });
 }
 
+function ReportRows({ title, rows, emptyLabel }) {
+  return (
+    <section className="break-inside-avoid">
+      <h3 className="text-sm font-extrabold text-foreground uppercase tracking-wide mb-2">{title}</h3>
+      {rows.length ? (
+        <div className="overflow-x-auto rounded-xl border border-border">
+          <table className="w-full text-sm border-collapse">
+            <tbody>
+              {rows.map((row, index) => (
+                <tr key={`${row.label}-${index}`} className="border-b border-border last:border-0">
+                  <th className="w-1/2 text-left align-top bg-muted/40 px-3 py-2 font-semibold text-foreground break-words">
+                    {row.label}
+                  </th>
+                  <td className="align-top px-3 py-2 text-foreground break-words">
+                    {row.value}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <p className="rounded-xl border border-dashed border-border px-3 py-2 text-sm text-muted-foreground">{emptyLabel}</p>
+      )}
+    </section>
+  );
+}
+
+function SavedCalculationReport({ calc }) {
+  const inputRows = flattenSnapshot(calc.inputs);
+  const resultRows = flattenSnapshot(calc.outputs);
+  const updatedAt = calc.updated_date || calc.created_date || new Date().toISOString();
+  const generatedAt = new Date().toLocaleString();
+
+  return (
+    <article className="saved-calculation-report bg-white text-slate-950 p-6 sm:p-8 rounded-2xl border border-border space-y-5">
+      <header className="border-b border-slate-200 pb-4">
+        <p className="text-xs font-black uppercase tracking-[0.2em] text-blue-700">NECalcul8r report</p>
+        <h1 className="mt-2 text-2xl font-black leading-tight">{calc.title || calc.calculator_label || "Saved Calculation"}</h1>
+        <div className="mt-3 grid gap-2 text-sm text-slate-700 sm:grid-cols-2">
+          <p><span className="font-semibold">Calculator:</span> {calc.calculator_label || "N/A"}</p>
+          <p><span className="font-semibold">NEC year:</span> {calc.nec_year || "N/A"}</p>
+          <p><span className="font-semibold">Project:</span> {calc.project_name || "N/A"}</p>
+          <p><span className="font-semibold">Article:</span> {calc.calculator_article || "NEC"}</p>
+          <p><span className="font-semibold">Last updated:</span> {new Date(updatedAt).toLocaleString()}</p>
+          <p><span className="font-semibold">Generated:</span> {generatedAt}</p>
+        </div>
+        {calc.summary && (
+          <p className="mt-3 rounded-xl bg-blue-50 border border-blue-100 px-3 py-2 text-sm font-semibold text-blue-900">
+            Summary: {calc.summary}
+          </p>
+        )}
+      </header>
+
+      <div className="grid gap-5 lg:grid-cols-2">
+        <ReportRows title="Inputs" rows={inputRows} emptyLabel="No stored inputs were found for this saved calculation." />
+        <ReportRows title="Results" rows={resultRows} emptyLabel="No stored results were found for this saved calculation." />
+      </div>
+    </article>
+  );
+}
+
 export default function Projects() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const entitlement = getResolvedEntitlement(user);
   const [expanded, setExpanded] = useState({});
   const [renameProject, setRenameProject] = useState(null);
   const [renameValue, setRenameValue] = useState("");
@@ -204,6 +271,10 @@ export default function Projects() {
     .replace(/"/g, "&quot;");
 
   const handlePrint = () => {
+    if (!entitlement.canExportCompleteReports) {
+      toast({ title: "Upgrade required", description: "Complete report printing is included with paid plans.", variant: "destructive" });
+      return;
+    }
     const node = printRef.current;
     if (!node) return;
     const printWindow = window.open("", "_blank");
@@ -222,8 +293,13 @@ export default function Projects() {
           <title>${escapeHtml(activeCalc?.title || activeCalc?.calculator_label || "Saved Calculation")}</title>
           ${styles}
           <style>
-            body { margin: 24px; background: white; }
-            @media print { body { margin: 12px; } .no-print { display: none !important; } }
+            @page { margin: 0.5in; }
+            body { margin: 0; background: white; color: #0f172a; font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+            .saved-calculation-report { box-shadow: none !important; border-color: #cbd5e1 !important; }
+            table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+            th, td { overflow-wrap: anywhere; word-break: break-word; }
+            tr, section { break-inside: avoid; page-break-inside: avoid; }
+            @media print { .no-print { display: none !important; } }
           </style>
         </head>
         <body>${node.outerHTML}</body>
@@ -238,6 +314,10 @@ export default function Projects() {
   };
 
   const handlePdf = async () => {
+    if (!entitlement.canExportCompleteReports) {
+      toast({ title: "Upgrade required", description: "Complete PDF export is included with paid plans.", variant: "destructive" });
+      return;
+    }
     const node = printRef.current;
     if (!node || !activeCalc) return;
     setExportingPdf(true);
@@ -497,7 +577,7 @@ export default function Projects() {
         <DialogContent className="sm:max-w-6xl max-h-[92vh] overflow-y-auto">
           {activeCalc && activeCategory && (
             <>
-              <div ref={printRef} data-saved-pdf-root className="saved-calculation-print bg-background p-1 sm:p-2 space-y-3">
+              <div className="bg-background p-1 sm:p-2 space-y-3">
                 <DialogHeader>
                   <DialogTitle className="sr-only">{activeCalc.title || activeCalc.calculator_label}</DialogTitle>
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -526,11 +606,19 @@ export default function Projects() {
                     </div>
                   </div>
                 </DialogHeader>
-                <CalculatorPanel
-                  category={activeCategory}
-                  savedCalculation={activeCalc}
-                  necYearOverride={activeCalc.nec_year}
-                />
+                <div ref={printRef} data-saved-pdf-root className="saved-calculation-print">
+                  <SavedCalculationReport calc={activeCalc} />
+                </div>
+                <div className="no-print rounded-2xl border border-border/60 bg-muted/30 p-2" data-html2canvas-ignore="true">
+                  <p className="px-2 pb-2 text-xs font-bold uppercase tracking-wide text-muted-foreground">
+                    Interactive saved calculator view
+                  </p>
+                  <CalculatorPanel
+                    category={activeCategory}
+                    savedCalculation={activeCalc}
+                    necYearOverride={activeCalc.nec_year}
+                  />
+                </div>
               </div>
               <DialogFooter className="gap-2 sm:justify-between">
                 <Button

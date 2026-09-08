@@ -192,7 +192,7 @@ export default function ReportDiscrepancy({ calculatorId, calculatorName, necYea
                       {files.map((f, i) => (
                         <div key={i} className="flex items-center justify-between text-xs bg-muted/50 rounded px-2 py-1">
                           <span className="truncate">{f.name}</span>
-                          <button onClick={() => removeFile(i)} className="text-muted-foreground hover:text-foreground"><X className="w-3 h-3" /></button>
+                          <button type="button" aria-label={`Remove ${f.name}`} onClick={() => removeFile(i)} className="text-muted-foreground hover:text-foreground"><X className="w-3 h-3" /></button>
                         </div>
                       ))}
                     </div>

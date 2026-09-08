@@ -1,5 +1,15 @@
 import { useMemo } from 'react';
 
+const FREE_ACCESS_STATE = {
+  canAccess: true,
+  status: 'free',
+  accessType: 'free',
+  daysLeft: 0,
+  isExpired: false,
+  isDisabled: false,
+  blockReason: null,
+};
+
 /**
  * Derives access state from user object based on access_type + access_status rules.
  * Returns: { canAccess, status, accessType, daysLeft, isExpired, isDisabled, blockReason }
@@ -31,7 +41,7 @@ export function useTrialStatus(user) {
     if (accessType === 'paid') {
       const subActive = user.subscription_status === 'active' || user.subscription_status === 'trialing';
       if (!subActive) {
-        return { canAccess: false, status: 'expired', accessType, daysLeft: 0, isExpired: true, isDisabled: false, blockReason: 'subscription_inactive' };
+        return FREE_ACCESS_STATE;
       }
       return { canAccess: true, status: 'active', accessType, daysLeft: Infinity, isExpired: false, isDisabled: false, blockReason: null };
     }
@@ -39,7 +49,7 @@ export function useTrialStatus(user) {
     // Rule 4: externally granted company access — allowed while the entitlement is active
     if (accessType === 'external_company' || accessType === 'company_seat') {
       if (accessStatus !== 'active') {
-        return { canAccess: false, status: 'expired', accessType, daysLeft: 0, isExpired: true, isDisabled: false, blockReason: 'company_access_inactive' };
+        return FREE_ACCESS_STATE;
       }
       return { canAccess: true, status: 'active', accessType, daysLeft: Infinity, isExpired: false, isDisabled: false, blockReason: null };
     }
@@ -47,7 +57,7 @@ export function useTrialStatus(user) {
     // Rule 5: buildrpro_included — allowed while company account is active (we trust access_status = active)
     if (accessType === 'buildrpro_included') {
       if (accessStatus !== 'active') {
-        return { canAccess: false, status: 'expired', accessType, daysLeft: 0, isExpired: true, isDisabled: false, blockReason: 'buildrpro_inactive' };
+        return FREE_ACCESS_STATE;
       }
       return { canAccess: true, status: 'active', accessType, daysLeft: Infinity, isExpired: false, isDisabled: false, blockReason: null };
     }
@@ -55,7 +65,7 @@ export function useTrialStatus(user) {
     // Rule 6: app-store access — allowed if a backend-verified entitlement is active
     if (accessType === 'app_store' || accessType === 'google_play' || accessType === 'apple_app_store') {
       if (accessStatus !== 'active') {
-        return { canAccess: false, status: 'expired', accessType, daysLeft: 0, isExpired: true, isDisabled: false, blockReason: 'app_store_inactive' };
+        return FREE_ACCESS_STATE;
       }
       return { canAccess: true, status: 'active', accessType, daysLeft: Infinity, isExpired: false, isDisabled: false, blockReason: null };
     }
@@ -71,7 +81,7 @@ export function useTrialStatus(user) {
     const daysLeft = Math.ceil((endDate - today) / (1000 * 60 * 60 * 24));
 
     if (daysLeft < 0 || accessStatus === 'expired') {
-      return { canAccess: false, status: 'expired', accessType: 'trial', daysLeft: 0, isExpired: true, isDisabled: false, blockReason: 'trial_expired' };
+      return FREE_ACCESS_STATE;
     }
 
     return { canAccess: true, status: 'trial', accessType: 'trial', daysLeft, isExpired: false, isDisabled: false, blockReason: null };
