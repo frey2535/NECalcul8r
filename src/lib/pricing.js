@@ -14,6 +14,7 @@ export const INDIVIDUAL_PLANS = [
     companySeatLimit: null,
     priceLabel: "Free",
     monthlyTarget: 0,
+    billingQuantity: 1,
     googlePlayProductId: null,
     googlePlayBasePlanId: null,
     googlePlayDisplayPrice: "Free",
@@ -30,6 +31,7 @@ export const INDIVIDUAL_PLANS = [
     companySeatLimit: null,
     priceLabel: "$10/mo",
     monthlyTarget: 10,
+    billingQuantity: 15,
     googlePlayProductId: "individual_6_15",
     googlePlayBasePlanId: "monthly",
     googlePlayDisplayPrice: "$9.99",
@@ -45,6 +47,7 @@ export const INDIVIDUAL_PLANS = [
     companySeatLimit: null,
     priceLabel: "$20/mo",
     monthlyTarget: 20,
+    billingQuantity: 25,
     googlePlayProductId: "individual_16_25",
     googlePlayBasePlanId: "monthly",
     googlePlayDisplayPrice: "$19.99",
@@ -60,6 +63,7 @@ export const INDIVIDUAL_PLANS = [
     companySeatLimit: null,
     priceLabel: "$35/mo",
     monthlyTarget: 35,
+    billingQuantity: 35,
     googlePlayProductId: "individual_26_35",
     googlePlayBasePlanId: "monthly",
     googlePlayDisplayPrice: "$34.99",
@@ -75,6 +79,7 @@ export const INDIVIDUAL_PLANS = [
     companySeatLimit: null,
     priceLabel: "$50/mo",
     monthlyTarget: 50,
+    billingQuantity: 36,
     googlePlayProductId: "individual_36_plus",
     googlePlayBasePlanId: "monthly",
     googlePlayDisplayPrice: "$49.99",
@@ -93,6 +98,7 @@ export const COMPANY_PLANS = [
     companySeatLimit: 10,
     priceLabel: "$400/mo",
     monthlyTarget: 400,
+    billingQuantity: 10,
   },
   {
     planKey: "company_11_20",
@@ -105,6 +111,7 @@ export const COMPANY_PLANS = [
     companySeatLimit: 20,
     priceLabel: "$800/mo",
     monthlyTarget: 800,
+    billingQuantity: 20,
   },
   {
     planKey: "company_unlimited",
@@ -117,6 +124,7 @@ export const COMPANY_PLANS = [
     companySeatLimit: null,
     priceLabel: "$1,500/mo",
     monthlyTarget: 1500,
+    billingQuantity: 1000,
   },
 ];
 
@@ -131,6 +139,7 @@ const OWNER_FULL_ACCESS_PLAN = {
   companySeatLimit: null,
   priceLabel: "Owner grant",
   monthlyTarget: 0,
+    billingQuantity: 1,
 };
 
 export const PLAN_CATALOG = [
@@ -183,7 +192,14 @@ function envPriceIdForPlan(planKey) {
     company_11_20: env.VITE_STRIPE_PRICE_COMPANY_11_20,
     company_unlimited: env.VITE_STRIPE_PRICE_COMPANY_UNLIMITED,
   };
-  return map[planKey] || "";
+  if (map[planKey]) return map[planKey];
+  if (planKey.startsWith("individual_")) {
+    return env.VITE_STRIPE_INDIVIDUAL_TIERED_PRICE_ID || env.VITE_STRIPE_TIERED_PRICE_ID || "";
+  }
+  if (planKey.startsWith("company_")) {
+    return env.VITE_STRIPE_COMPANY_TIERED_PRICE_ID || env.VITE_STRIPE_TIERED_PRICE_ID || "";
+  }
+  return env.VITE_STRIPE_TIERED_PRICE_ID || "";
 }
 
 function configuredPlan(planKey) {
@@ -197,7 +213,7 @@ export function getPlan(planKey) {
 export function getPlanOption(planKey) {
   const plan = getPlan(planKey);
   const configured = configuredPlan(plan.planKey);
-  const billingQuantity = Math.max(1, Number(configured.billingQuantity) || 1);
+  const billingQuantity = Math.max(1, Number(configured.billingQuantity) || plan.billingQuantity || 1);
   const configuredSeatLimit = configured.seatLimit === undefined || configured.seatLimit === null || configured.seatLimit === ""
     ? undefined
     : Number(configured.seatLimit);

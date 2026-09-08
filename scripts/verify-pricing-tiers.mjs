@@ -43,6 +43,7 @@ assert(advancedAccess.includedCount === 35, "individual_26_35 should include 35 
 assert(advancedAccess.isAllowed("calc_35"), "individual_26_35 should allow the thirty-fifth calculator");
 assert(!advancedAccess.isAllowed("calc_36"), "individual_26_35 should lock the thirty-sixth calculator");
 assert(getPlanOption("individual_26_35").priceLabel === "$35/mo", "individual_26_35 should default to $35/month");
+assert(getPlanOption("individual_26_35").billingQuantity === 35, "individual_26_35 should bill using quantity 35 for tiered Stripe prices");
 
 const fullPaid = {
   access_type: "paid",
@@ -64,9 +65,12 @@ assert(getCalculatorAccess(categories, legacyPaid).isFullAccess, "paid users wit
 
 const companyPackage = getPlanOption("company_0_10");
 assert(companyPackage.seatLimit === 10, "company_0_10 should grant 10 seats by default");
-assert(companyPackage.billingQuantity === 1, "company packages should bill once by default");
 assert(companyPackage.priceLabel === "$400/mo", "company_0_10 should default to $400/month");
 assert(companyPackage.calculatorLimit === null, "company plans should have full calculator access");
+assert(companyPackage.billingQuantity === 10, "company_0_10 should bill using quantity 10 for tiered Stripe prices");
+
+const unlimitedCompany = getPlanOption("company_unlimited");
+assert(unlimitedCompany.billingQuantity === 1000, "company_unlimited should have a high default billing quantity for the unlimited bracket");
 
 const freePackage = getPlanOption("free");
 assert(freePackage.isFree, "0-5 calculator package should be marked free");
