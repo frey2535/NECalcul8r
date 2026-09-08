@@ -192,7 +192,14 @@ function envPriceIdForPlan(planKey) {
     company_11_20: env.VITE_STRIPE_PRICE_COMPANY_11_20,
     company_unlimited: env.VITE_STRIPE_PRICE_COMPANY_UNLIMITED,
   };
-  return map[planKey] || env.VITE_STRIPE_TIERED_PRICE_ID || "";
+  if (map[planKey]) return map[planKey];
+  if (planKey.startsWith("individual_")) {
+    return env.VITE_STRIPE_INDIVIDUAL_TIERED_PRICE_ID || env.VITE_STRIPE_TIERED_PRICE_ID || "";
+  }
+  if (planKey.startsWith("company_")) {
+    return env.VITE_STRIPE_COMPANY_TIERED_PRICE_ID || env.VITE_STRIPE_TIERED_PRICE_ID || "";
+  }
+  return env.VITE_STRIPE_TIERED_PRICE_ID || "";
 }
 
 function configuredPlan(planKey) {
