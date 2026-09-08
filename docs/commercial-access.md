@@ -20,6 +20,7 @@ Commercial mode uses Supabase as the source of truth for users, companies, subsc
 VITE_SUPABASE_URL=
 VITE_SUPABASE_ANON_KEY=
 VITE_GOOGLE_PLAY_BASE_PLAN_ID=monthly
+VITE_STRIPE_TIERED_PRICE_ID=
 VITE_STRIPE_PRICE_INDIVIDUAL_6_15=
 VITE_STRIPE_PRICE_INDIVIDUAL_16_25=
 VITE_STRIPE_PRICE_INDIVIDUAL_26_35=
@@ -32,7 +33,29 @@ VITE_STRIPE_PRICE_MATRIX_JSON=
 
 Do not expose Stripe secret keys, Supabase service-role keys, Google service-account credentials, or Apple shared secrets in Vite env vars. Those belong only in Supabase Edge Function secrets.
 
-Stripe price IDs can be supplied either with the individual variables above or with `VITE_STRIPE_PRICE_MATRIX_JSON`. The JSON maps each final plan key to a Stripe recurring price ID. Free access does not need a Stripe price:
+Stripe can be configured in two supported ways.
+
+Preferred for the current setup: use one active monthly volume-tiered Stripe Price with quantity brackets and set:
+
+```bash
+VITE_STRIPE_TIERED_PRICE_ID=price_...
+```
+
+The app sends these subscription-item quantities to select the matching volume bracket:
+
+| Plan | Quantity sent to Stripe |
+| --- | ---: |
+| `individual_6_15` | 15 |
+| `individual_16_25` | 25 |
+| `individual_26_35` | 35 |
+| `individual_36_plus` | 36 |
+| `company_0_10` | 10 |
+| `company_11_20` | 20 |
+| `company_unlimited` | 1000 |
+
+Use Stripe **volume pricing** when the selected bracket should determine the single monthly total. Stripe **graduated pricing** calculates each bracket incrementally and should only be used if that is intentional.
+
+Alternative: if you later split plans into separate fixed Stripe Prices, provide per-plan variables above or use `VITE_STRIPE_PRICE_MATRIX_JSON`. The JSON maps each final plan key to a Stripe recurring price ID. Free access does not need a Stripe price:
 
 ```json
 {
