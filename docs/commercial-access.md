@@ -26,28 +26,35 @@ VITE_STRIPE_PRICE_MATRIX_JSON=
 
 Do not expose Stripe secret keys, Supabase service-role keys, Google service-account credentials, or Apple shared secrets in Vite env vars. Those belong only in Supabase Edge Function secrets.
 
-`VITE_STRIPE_PRICE_MATRIX_JSON` maps every visible purchase package to a Stripe price ID:
+`VITE_STRIPE_PRICE_MATRIX_JSON` maps every visible purchase package to a Stripe price ID. Each price should be the full package price shown to the customer. Use `seatLimit` for the number of users granted by the entitlement and keep `billingQuantity` at `1` unless you intentionally configure the Stripe price as a per-seat price:
 
 ```json
 {
-  "individual:calc_0_10": { "priceId": "price_...", "priceLabel": "$9/mo" },
-  "individual:calc_11_20": { "priceId": "price_...", "priceLabel": "$19/mo" },
-  "individual:calc_21_30": { "priceId": "price_...", "priceLabel": "$29/mo" },
-  "individual:calc_31_plus": { "priceId": "price_...", "priceLabel": "$39/mo" },
-  "company_0_10:calc_0_10": { "priceId": "price_...", "priceLabel": "$49/mo" },
-  "company_0_10:calc_11_20": { "priceId": "price_...", "priceLabel": "$99/mo" },
-  "company_0_10:calc_21_30": { "priceId": "price_...", "priceLabel": "$149/mo" },
-  "company_0_10:calc_31_plus": { "priceId": "price_...", "priceLabel": "$199/mo" },
-  "company_10_30:calc_0_10": { "priceId": "price_...", "priceLabel": "$129/mo" },
-  "company_10_30:calc_11_20": { "priceId": "price_...", "priceLabel": "$249/mo" },
-  "company_10_30:calc_21_30": { "priceId": "price_...", "priceLabel": "$369/mo" },
-  "company_10_30:calc_31_plus": { "priceId": "price_...", "priceLabel": "$499/mo" },
-  "company_30_plus:calc_0_10": { "priceId": "price_...", "priceLabel": "$299/mo" },
-  "company_30_plus:calc_11_20": { "priceId": "price_...", "priceLabel": "$549/mo" },
-  "company_30_plus:calc_21_30": { "priceId": "price_...", "priceLabel": "$799/mo" },
-  "company_30_plus:calc_31_plus": { "priceId": "price_...", "priceLabel": "$999/mo" }
+  "individual:calc_0_10": { "priceId": "price_...", "priceLabel": "$9/mo", "seatLimit": 1, "billingQuantity": 1 },
+  "individual:calc_11_20": { "priceId": "price_...", "priceLabel": "$19/mo", "seatLimit": 1, "billingQuantity": 1 },
+  "individual:calc_21_30": { "priceId": "price_...", "priceLabel": "$29/mo", "seatLimit": 1, "billingQuantity": 1 },
+  "individual:calc_31_plus": { "priceId": "price_...", "priceLabel": "$39/mo", "seatLimit": 1, "billingQuantity": 1 },
+  "company_0_10:calc_0_10": { "priceId": "price_...", "priceLabel": "$49/mo", "seatLimit": 10, "billingQuantity": 1 },
+  "company_0_10:calc_11_20": { "priceId": "price_...", "priceLabel": "$99/mo", "seatLimit": 10, "billingQuantity": 1 },
+  "company_0_10:calc_21_30": { "priceId": "price_...", "priceLabel": "$149/mo", "seatLimit": 10, "billingQuantity": 1 },
+  "company_0_10:calc_31_plus": { "priceId": "price_...", "priceLabel": "$199/mo", "seatLimit": 10, "billingQuantity": 1 },
+  "company_10_30:calc_0_10": { "priceId": "price_...", "priceLabel": "$129/mo", "seatLimit": 30, "billingQuantity": 1 },
+  "company_10_30:calc_11_20": { "priceId": "price_...", "priceLabel": "$249/mo", "seatLimit": 30, "billingQuantity": 1 },
+  "company_10_30:calc_21_30": { "priceId": "price_...", "priceLabel": "$369/mo", "seatLimit": 30, "billingQuantity": 1 },
+  "company_10_30:calc_31_plus": { "priceId": "price_...", "priceLabel": "$499/mo", "seatLimit": 30, "billingQuantity": 1 },
+  "company_30_plus:calc_0_10": { "priceId": "price_...", "priceLabel": "$299/mo", "seatLimit": 31, "billingQuantity": 1 },
+  "company_30_plus:calc_11_20": { "priceId": "price_...", "priceLabel": "$549/mo", "seatLimit": 31, "billingQuantity": 1 },
+  "company_30_plus:calc_21_30": { "priceId": "price_...", "priceLabel": "$799/mo", "seatLimit": 31, "billingQuantity": 1 },
+  "company_30_plus:calc_31_plus": { "priceId": "price_...", "priceLabel": "$999/mo", "seatLimit": 31, "billingQuantity": 1 }
 }
 ```
+
+Calculator package IDs:
+
+- `calc_0_10`: unlocks the first 10 calculators in the app suite.
+- `calc_11_20`: unlocks the first 20 calculators in the app suite.
+- `calc_21_30`: unlocks the first 30 calculators in the app suite.
+- `calc_31_plus`: unlocks the full calculator suite.
 
 ## Supabase database
 
@@ -75,20 +82,27 @@ Important tables:
    - `entitlements.source = 'stripe'`
    - `entitlements.access_type = 'paid'`
    - `entitlements.status = 'active'`
+   - `entitlements.metadata.customer_tier_id`
+   - `entitlements.metadata.calculator_tier_id`
+   - `entitlements.metadata.calculator_limit`
+   - `entitlements.metadata.seat_limit`
 5. The app reads the entitlement from Supabase and unlocks access.
 
 ### Company purchased outside app stores
 
 1. Company pays by invoice, Stripe, direct contract, or other outside sale.
-2. Platform admin/Edge Function creates or updates `organizations`.
-3. Grant access by writing an organization entitlement:
+2. The buyer must have an account connected to an organization. If they selected a company name at registration, NECalcul8r creates that organization and shows its invite code to the company owner.
+3. Platform admin/Edge Function creates or updates `organizations`.
+4. Grant access by writing an organization entitlement:
    - `entitlements.org_id = <company id>`
    - `entitlements.source = 'company_external'`
    - `entitlements.access_type = 'external_company'`
    - `entitlements.seats = <seat count>`
    - `entitlements.status = 'active'`
-4. Company users join with the company invite code.
-5. Members inherit access from the organization entitlement.
+   - `entitlements.metadata.customer_tier_id = <customer tier id>`
+   - `entitlements.metadata.calculator_tier_id = <calculator tier id>`
+5. Company users join with the company invite code.
+6. Members inherit access from the organization entitlement.
 
 ### Android Play Store purchase
 
@@ -134,8 +148,11 @@ Input:
 {
   "mode": "subscription",
   "accountType": "individual",
+  "customerTierId": "individual",
+  "calculatorTierId": "calc_31_plus",
   "priceId": "price_...",
   "quantity": 1,
+  "seats": 1,
   "successUrl": "https://necalcul8r.currentflowconsulting.org/",
   "cancelUrl": "https://necalcul8r.currentflowconsulting.org/"
 }
@@ -176,6 +193,8 @@ Input:
   "orgId": "uuid",
   "profileId": "uuid",
   "seats": 10,
+  "customerTierId": "company_0_10",
+  "calculatorTierId": "calc_31_plus",
   "expiresAt": null,
   "accessType": "external_company",
   "source": "company_external",

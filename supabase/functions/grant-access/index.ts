@@ -12,6 +12,33 @@ const ACTIVE_TYPES = new Set([
   "apple_app_store",
 ]);
 
+const CALCULATOR_LIMITS: Record<string, number | null> = {
+  calc_0_10: 10,
+  calc_11_20: 20,
+  calc_21_30: 30,
+  calc_31_plus: null,
+};
+
+function positiveNumber(value: unknown) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+}
+
+function entitlementMetadata(payload: Record<string, unknown>, actorId: string) {
+  const calculatorTierId = String(payload.calculatorTierId || payload.calculator_tier_id || "calc_31_plus");
+  const customerTierId = String(payload.customerTierId || payload.customer_tier_id || "");
+  const seats = positiveNumber(payload.seats);
+
+  return {
+    note: payload.note || null,
+    granted_by: actorId,
+    customer_tier_id: customerTierId || null,
+    calculator_tier_id: calculatorTierId,
+    calculator_limit: calculatorTierId in CALCULATOR_LIMITS ? CALCULATOR_LIMITS[calculatorTierId] : null,
+    seat_limit: seats,
+  };
+}
+
 Deno.serve(async (req) => {
   const options = handleOptions(req);
   if (options) return options;
@@ -24,7 +51,7 @@ Deno.serve(async (req) => {
       return jsonResponse({ error: "profileId or orgId is required." }, 400);
     }
 
-    if (!actor.is_platform_admin && actor.org_role !== "owner") {
+    if (!actor.is_platform_admin) {
       return jsonResponse({ error: "Forbidden" }, 403);
     }
 
@@ -37,7 +64,7 @@ Deno.serve(async (req) => {
         subscription_status: "active",
         seats: Math.max(1, Number(payload.seats) || 1),
         expires_at: payload.expiresAt || null,
-        metadata: { note: payload.note || null, granted_by: actor.id },
+        metadata: entitlementMetadata(payload, actor.id),
       });
       if (error) throw error;
       return jsonResponse({ ok: true, org_id: payload.orgId });
@@ -49,10 +76,6 @@ Deno.serve(async (req) => {
       .eq("id", targetProfileId)
       .single();
     if (targetError || !target) return jsonResponse({ error: "Target profile not found." }, 404);
-
-    if (!actor.is_platform_admin && actor.org_id !== target.org_id) {
-      return jsonResponse({ error: "Forbidden" }, 403);
-    }
 
     const updates = payload.updates || {};
     let accessType = updates.access_type || payload.accessType || target.access_type || "trial";
@@ -96,7 +119,7 @@ Deno.serve(async (req) => {
         subscription_status: subscriptionStatus || "active",
         seats: 1,
         expires_at: payload.expiresAt || null,
-        metadata: { note: payload.note || null, granted_by: actor.id },
+        metadata: entitlementMetadata(payload, actor.id),
       });
       if (entitlementError) throw entitlementError;
     }

@@ -8,8 +8,9 @@ export function useTrialStatus(user) {
   return useMemo(() => {
     if (!user) return { canAccess: false, status: 'unknown', accessType: null, daysLeft: 0, isExpired: false, isDisabled: false, blockReason: null };
 
-    // Admins always have full access
-    if (user.role === 'admin') {
+    // Platform admins always have full access. Company owners still follow normal
+    // trial/subscription rules for product usage.
+    if (user.is_platform_admin) {
       return { canAccess: true, status: 'active', accessType: 'permanent', daysLeft: Infinity, isExpired: false, isDisabled: false, blockReason: null };
     }
 

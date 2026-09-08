@@ -19,7 +19,10 @@ supabase secrets set STRIPE_WEBHOOK_SECRET=whsec_...
 ```
 
 The frontend also needs `VITE_STRIPE_PRICE_MATRIX_JSON` configured with Stripe
-price IDs for every purchase package shown in the app.
+price IDs for every purchase package shown in the app. Checkout sends the
+selected customer tier, calculator tier, seat limit, and billing quantity to
+Stripe metadata; `stripe-webhook` copies those values into Supabase
+entitlements.
 
 Apple and Google purchase verification functions are intentionally fail-closed
 until production store credentials and package/bundle IDs are configured.

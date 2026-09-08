@@ -37,10 +37,7 @@ begin
     raise exception 'Target profile not found' using errcode = 'P0002';
   end if;
 
-  if not (
-    actor.is_platform_admin
-    or (actor.org_role = 'owner' and actor.org_id is not null and actor.org_id = target.org_id)
-  ) then
+  if not actor.is_platform_admin then
     raise exception 'Forbidden' using errcode = '42501';
   end if;
 

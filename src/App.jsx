@@ -174,8 +174,10 @@ const AuthenticatedApp = () => {
             <Route path="/results" element={<Results />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/purchase" element={<Purchase />} />
-            <Route element={<AdminRoute />}>
+            <Route element={<AdminRoute allowOrgOwner />}>
               <Route path="/admin/users" element={<UserManagement />} />
+            </Route>
+            <Route element={<AdminRoute />}>
               <Route path="/admin/audit" element={<DeveloperAudit />} />
               <Route path="/admin/reports" element={<DiscrepancyReports />} />
               <Route path="/admin/coverage" element={<NECCoverageReport />} />

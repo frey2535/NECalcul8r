@@ -104,6 +104,10 @@ function mapProfile(profile, org) {
     trial_end_date: profile.trial_end_date,
     purchase_source: profile.purchase_source || "manual",
     subscription_status: profile.subscription_status || null,
+    customer_tier_id: profile.customer_tier_id || null,
+    calculator_tier_id: profile.calculator_tier_id || null,
+    calculator_limit: positiveNumber(profile.calculator_limit),
+    seat_limit: positiveNumber(profile.seat_limit),
     is_platform_admin: Boolean(profile.is_platform_admin),
     created_date: profile.created_date || profile.created_at,
     updated_date: profile.updated_date || profile.updated_at,
@@ -116,12 +120,23 @@ function activeEntitlement(entitlement) {
   return new Date(entitlement.expires_at).getTime() >= Date.now();
 }
 
+function entitlementMetadata(entitlement) {
+  const metadata = entitlement?.metadata;
+  return metadata && typeof metadata === "object" && !Array.isArray(metadata) ? metadata : {};
+}
+
+function positiveNumber(value) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+}
+
 function applyEntitlement(profile, entitlements = []) {
   if (profile.access_status === "disabled") return profile;
   const entitlement = [...entitlements]
     .sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime())
     .find(activeEntitlement);
   if (!entitlement) return profile;
+  const metadata = entitlementMetadata(entitlement);
   return {
     ...profile,
     access_type: entitlement.access_type || profile.access_type,
@@ -129,6 +144,10 @@ function applyEntitlement(profile, entitlements = []) {
     subscription_status: entitlement.subscription_status || profile.subscription_status || "active",
     purchase_source: entitlement.source || profile.purchase_source,
     trial_end_date: entitlement.expires_at ? entitlement.expires_at.slice(0, 10) : profile.trial_end_date,
+    customer_tier_id: metadata.customer_tier_id || profile.customer_tier_id || null,
+    calculator_tier_id: metadata.calculator_tier_id || profile.calculator_tier_id || null,
+    calculator_limit: positiveNumber(metadata.calculator_limit) ?? positiveNumber(profile.calculator_limit),
+    seat_limit: positiveNumber(metadata.seat_limit) ?? positiveNumber(entitlement.seats) ?? positiveNumber(profile.seat_limit),
   };
 }
 
@@ -293,8 +312,8 @@ async function updateUser(id, patch) {
 
   const requestedFields = Object.keys(normalizedUpdates).filter((key) => key !== "updated_date");
   const accessUpdateRequested = requestedFields.some((key) => !SELF_UPDATE_FIELDS.has(key));
-  if (currentUser.id === id && accessUpdateRequested && !currentUser.is_platform_admin) {
-    throw httpError("Access changes must be granted by an administrator.", 403);
+  if (accessUpdateRequested && !currentUser.is_platform_admin) {
+    throw httpError("Access changes must be granted by a platform administrator.", 403);
   }
 
   if (accessUpdateRequested) {

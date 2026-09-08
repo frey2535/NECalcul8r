@@ -21,6 +21,8 @@ export default function Profile() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [billingLoading, setBillingLoading] = useState(false);
   const [billingError, setBillingError] = useState("");
+  const isPlatformAdmin = Boolean(user?.is_platform_admin);
+  const canManageUsers = isPlatformAdmin || user?.org_role === "owner";
 
   useEffect(() => {
     base44.auth.me().then(setUser).catch(() => {});
@@ -127,20 +129,24 @@ export default function Profile() {
       </div>
 
       {/* Admin links */}
-      {user?.role === 'admin' && (
+      {(canManageUsers || isPlatformAdmin) && (
         <div className="rounded-2xl bg-card border border-border/60 shadow-sm overflow-hidden">
-          <Link to="/admin/users" className="block">
-            <div className="w-full flex items-center gap-3 px-5 py-4 text-sm font-semibold text-foreground hover:bg-muted active:bg-muted/80 transition-colors border-b border-border/40">
+          {canManageUsers && (
+            <Link to="/admin/users" className="block">
+              <div className="w-full flex items-center gap-3 px-5 py-4 text-sm font-semibold text-foreground hover:bg-muted active:bg-muted/80 transition-colors border-b border-border/40">
                 <Users className="w-4 h-4 text-muted-foreground" />
                 User Management
-            </div>
-          </Link>
-          <Link to="/admin/reports" className="block">
-            <div className="w-full flex items-center gap-3 px-5 py-4 text-sm font-semibold text-foreground hover:bg-muted active:bg-muted/80 transition-colors">
-              <Flag className="w-4 h-4 text-muted-foreground" />
-              Discrepancy Reports
-            </div>
-          </Link>
+              </div>
+            </Link>
+          )}
+          {isPlatformAdmin && (
+            <Link to="/admin/reports" className="block">
+              <div className="w-full flex items-center gap-3 px-5 py-4 text-sm font-semibold text-foreground hover:bg-muted active:bg-muted/80 transition-colors">
+                <Flag className="w-4 h-4 text-muted-foreground" />
+                Discrepancy Reports
+              </div>
+            </Link>
+          )}
         </div>
       )}
 
