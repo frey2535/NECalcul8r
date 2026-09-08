@@ -65,7 +65,6 @@ assert(getCalculatorAccess(categories, legacyPaid).isFullAccess, "paid users wit
 
 const companyPackage = getPlanOption("company_0_10");
 assert(companyPackage.seatLimit === 10, "company_0_10 should grant 10 seats by default");
-assert(companyPackage.billingQuantity === 1, "company packages should bill once by default");
 assert(companyPackage.priceLabel === "$400/mo", "company_0_10 should default to $400/month");
 assert(companyPackage.calculatorLimit === null, "company plans should have full calculator access");
 assert(companyPackage.billingQuantity === 10, "company_0_10 should bill using quantity 10 for tiered Stripe prices");
