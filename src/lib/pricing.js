@@ -229,6 +229,19 @@ export function getPlanOption(planKey) {
   };
 }
 
+export function getPlanUpgradeRank(planKey) {
+  const plan = getPlan(planKey);
+  if (!plan || plan.isFree) return 0;
+  if (plan.accountType === "company") {
+    return 2000 + (plan.companySeatLimit == null ? 1000 : plan.companySeatLimit);
+  }
+  return plan.calculatorLimit == null ? 1000 : plan.calculatorLimit;
+}
+
+export function isPlanUpgrade(currentPlanKey, nextPlanKey) {
+  return getPlanUpgradeRank(nextPlanKey) > getPlanUpgradeRank(currentPlanKey);
+}
+
 export function getCustomerTier(customerTierId) {
   return CUSTOMER_TIERS.find((tier) => tier.id === customerTierId) || CUSTOMER_TIERS[0];
 }

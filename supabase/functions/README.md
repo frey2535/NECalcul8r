@@ -5,6 +5,7 @@ Deploy these functions before enabling paid production access:
 ```bash
 supabase functions deploy create-stripe-checkout
 supabase functions deploy sync-stripe-checkout-session
+supabase functions deploy update-stripe-subscription
 supabase functions deploy create-stripe-portal-session
 supabase functions deploy grant-access
 supabase functions deploy stripe-webhook
@@ -26,6 +27,12 @@ Stripe metadata. `stripe-webhook` copies those values into Supabase
 entitlements, and `sync-stripe-checkout-session` provides an authenticated
 return-from-Checkout reconciliation path if webhook delivery is delayed or needs
 to be resent.
+
+`update-stripe-subscription` updates the current active Stripe subscription item
+for prorated upgrades. It uses `proration_behavior=always_invoice` so the
+customer is charged the prorated upgrade difference immediately, then syncs the
+new entitlement. Same-tier, downgrade, and cancellation changes should remain in
+Stripe Billing Portal so paid access continues through the already-paid period.
 
 Apple and Google purchase verification functions are intentionally fail-closed
 until production store credentials and package/bundle IDs are configured.

@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Check, CreditCard, Loader2, RefreshCw, ShoppingCart, Users } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/lib/AuthContext";
-import { COMPANY_PLANS, DEFAULT_PAID_PLAN_KEY, INDIVIDUAL_PLANS, getPlanOption } from "@/lib/pricing";
+import { COMPANY_PLANS, DEFAULT_PAID_PLAN_KEY, INDIVIDUAL_PLANS, getPlanOption, isPlanUpgrade } from "@/lib/pricing";
 import { isAndroidNativeApp, purchaseGooglePlayPlan, queryGooglePlayProducts, restoreGooglePlayPurchases } from "@/lib/googlePlayBilling";
 import { cn } from "@/lib/utils";
 
@@ -46,11 +46,12 @@ function checkoutReturnUrl() {
 }
 
 export default function Purchase() {
-  const { user } = useAuth();
+  const { user, checkAppState } = useAuth();
   const [selectedPlanKey, setSelectedPlanKey] = useState(DEFAULT_PAID_PLAN_KEY);
   const [loading, setLoading] = useState(false);
   const [restoring, setRestoring] = useState(false);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [playProducts, setPlayProducts] = useState({});
   const isAndroidNative = isAndroidNativeApp();
 
@@ -60,6 +61,13 @@ export default function Purchase() {
   );
   const selectedRequiresCompany = selected.accountType === "company" && !user?.org_id;
   const usesGooglePlay = isAndroidNative && selected.accountType === "individual" && !selected.isFree;
+  const isActiveStripeSubscriber = user?.access_type === "paid"
+    && user?.purchase_source === "stripe"
+    && (user?.subscription_status === "active" || user?.subscription_status === "trialing")
+    && !selected.isFree;
+  const currentPlanKey = user?.plan_key || user?.calculator_tier_id || (isActiveStripeSubscriber ? DEFAULT_PAID_PLAN_KEY : "free");
+  const upgradesExistingSubscription = isActiveStripeSubscriber && isPlanUpgrade(currentPlanKey, selected.planKey);
+  const managesExistingSubscription = isActiveStripeSubscriber && !upgradesExistingSubscription;
   const checkoutReady = selected.isFree
     || (usesGooglePlay && Boolean(playProducts[selected.googlePlayProductId]))
     || (base44.commerce?.isConfigured && selected.priceId && !selectedRequiresCompany);
@@ -87,6 +95,7 @@ export default function Purchase() {
 
   const handlePurchase = async () => {
     setError("");
+    setSuccess("");
     if (selectedRequiresCompany) {
       setError("Company packages require an account connected to a company. Register with a company name or join a company invite before buying a company package.");
       return;
@@ -104,6 +113,19 @@ export default function Purchase() {
       if (usesGooglePlay) {
         await purchaseGooglePlayPlan(selected);
         window.location.assign("/");
+      } else if (upgradesExistingSubscription) {
+        await base44.commerce.updateStripeSubscription({
+          accountType: selected.accountType,
+          planKey: selected.planKey,
+          priceId: selected.priceId,
+          quantity: selected.billingQuantity,
+          seats: selected.seatLimit,
+        });
+        await checkAppState();
+        setSuccess(`Subscription upgraded to ${selected.label}. Stripe prorated the remaining billing period.`);
+        setLoading(false);
+      } else if (managesExistingSubscription) {
+        await base44.commerce.openBillingPortal({ returnUrl: window.location.href });
       } else {
         await base44.commerce.startCheckout({
           accountType: selected.accountType,
@@ -217,6 +239,16 @@ export default function Purchase() {
                 Android purchases use Google Play Billing and server-side purchase verification.
               </p>
             )}
+            {upgradesExistingSubscription && (
+              <p className="text-xs text-blue-600 mt-2">
+                This will upgrade your existing subscription and immediately invoice the prorated difference.
+              </p>
+            )}
+            {managesExistingSubscription && (
+              <p className="text-xs text-muted-foreground mt-2">
+                You already have an active Stripe subscription. Use Manage Billing for same-tier, downgrade, or cancellation changes.
+              </p>
+            )}
           </div>
           <button
             type="button"
@@ -225,7 +257,7 @@ export default function Purchase() {
             className="inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white font-extrabold px-6 py-3 transition-colors"
           >
             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShoppingCart className="w-4 h-4" />}
-            {loading ? "Opening checkout..." : selected.isFree ? "Continue with free tier" : "Purchase now"}
+            {loading ? (upgradesExistingSubscription ? "Upgrading..." : "Opening billing...") : selected.isFree ? "Continue with free tier" : upgradesExistingSubscription ? "Upgrade now" : managesExistingSubscription ? "Manage current plan" : "Purchase now"}
           </button>
         </div>
         {isAndroidNative && (
@@ -242,6 +274,11 @@ export default function Purchase() {
         {error && (
           <div className="mt-4 rounded-xl bg-destructive/10 text-destructive text-sm px-4 py-3">
             {error}
+          </div>
+        )}
+        {success && (
+          <div className="mt-4 rounded-xl bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300 text-sm px-4 py-3">
+            {success}
           </div>
         )}
       </section>
