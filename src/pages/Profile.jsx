@@ -15,6 +15,22 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
+const ORG_ROLE_LABELS = {
+  owner: "Company Owner",
+  member: "Company Member",
+  individual: "Individual",
+};
+
+function getProfileBadgeLabel(user) {
+  if (!user) return "user";
+  if (user.is_platform_admin) return "Platform Admin";
+  if (user.org_role && ORG_ROLE_LABELS[user.org_role]) {
+    return ORG_ROLE_LABELS[user.org_role];
+  }
+  if (user.role === "admin") return "Admin";
+  return user.role || "user";
+}
+
 export default function Profile() {
   const [user, setUser] = React.useState(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -23,6 +39,7 @@ export default function Profile() {
   const [billingError, setBillingError] = useState("");
   const isPlatformAdmin = Boolean(user?.is_platform_admin);
   const canManageUsers = isPlatformAdmin || user?.org_role === "owner";
+  const profileBadgeLabel = getProfileBadgeLabel(user);
 
   useEffect(() => {
     base44.auth.me().then(setUser).catch(() => {});
@@ -72,7 +89,7 @@ export default function Profile() {
               <p className="text-xs text-slate-300 mt-0.5">{user.org_name}</p>
             )}
             <span className="inline-block mt-1.5 text-[10px] font-bold uppercase tracking-widest bg-white/20 text-white px-2 py-0.5 rounded-full">
-              {user?.role || "user"}
+              {profileBadgeLabel}
             </span>
           </div>
         </div>
