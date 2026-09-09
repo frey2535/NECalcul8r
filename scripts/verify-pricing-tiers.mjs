@@ -6,6 +6,8 @@ import {
   getResolvedEntitlement,
   isPlanUpgrade,
 } from "../src/lib/pricing.js";
+import { NEC_CATEGORIES } from "../src/data/calculatorCatalog.js";
+import { buildCalculatorTierSections } from "../src/lib/calculatorTierGroups.js";
 
 function assert(condition, message) {
   if (!condition) {
@@ -24,6 +26,16 @@ assert(freeAccess.includedCount === 5, "free tier should include 5 calculators")
 assert(freeAccess.isAllowed("calc_5"), "free tier should allow the fifth calculator");
 assert(!freeAccess.isAllowed("calc_6"), "free tier should lock the sixth calculator");
 
+const calculatorTierSections = buildCalculatorTierSections(NEC_CATEGORIES);
+const configuredCalculatorCount = calculatorTierSections.reduce((total, section) => total + section.categories.length, 0);
+assert(configuredCalculatorCount === NEC_CATEGORIES.length, "all calculators should appear in exactly one configured tier section");
+
+const configuredFreeAccess = getCalculatorAccess(NEC_CATEGORIES, freeUser);
+assert(configuredFreeAccess.includedCount === 5, "configured free tier should include exactly 5 selected calculators");
+assert(configuredFreeAccess.isAllowed("voltage_drop"), "configured free tier should allow Voltage Drop");
+assert(configuredFreeAccess.isAllowed("dwelling_optional"), "configured free tier should allow Dwelling Optional");
+assert(!configuredFreeAccess.isAllowed("commercial_load"), "configured free tier should lock calculators selected for paid tiers");
+
 const starterPaid = {
   access_type: "paid",
   access_status: "active",
@@ -34,6 +46,11 @@ assert(starterAccess.includedCount === 15, "individual_6_15 should include 15 ca
 assert(starterAccess.isAllowed("calc_15"), "individual_6_15 should allow the fifteenth calculator");
 assert(!starterAccess.isAllowed("calc_16"), "individual_6_15 should lock the sixteenth calculator");
 assert(getResolvedEntitlement(starterPaid).hasNecTables, "paid individual users should have NEC Tables");
+
+const configuredStarterAccess = getCalculatorAccess(NEC_CATEGORIES, starterPaid);
+assert(configuredStarterAccess.includedCount === 15, "configured individual_6_15 should include free calculators plus its selected group");
+assert(configuredStarterAccess.isAllowed("grounding_electrode"), "configured individual_6_15 should allow selected 6-15 calculators");
+assert(!configuredStarterAccess.isAllowed("main_bonding_jumper"), "configured individual_6_15 should lock selected 16-25 calculators");
 
 const advancedPaid = {
   access_type: "paid",
@@ -46,6 +63,11 @@ assert(advancedAccess.isAllowed("calc_35"), "individual_26_35 should allow the t
 assert(!advancedAccess.isAllowed("calc_36"), "individual_26_35 should lock the thirty-sixth calculator");
 assert(getPlanOption("individual_26_35").priceLabel === "$35/mo", "individual_26_35 should default to $35/month");
 assert(getPlanOption("individual_26_35").billingQuantity === 35, "individual_26_35 should bill using quantity 35 for tiered Stripe prices");
+
+const configuredAdvancedAccess = getCalculatorAccess(NEC_CATEGORIES, advancedPaid);
+assert(configuredAdvancedAccess.includedCount === 35, "configured individual_26_35 should include selected calculators through the 26-35 group");
+assert(configuredAdvancedAccess.isAllowed("three_phase_power"), "configured individual_26_35 should allow selected 26-35 calculators");
+assert(!configuredAdvancedAccess.isAllowed("single_phase_power"), "configured individual_26_35 should lock selected 36+ calculators");
 
 const fullPaid = {
   access_type: "paid",

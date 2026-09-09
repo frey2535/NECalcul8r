@@ -43,6 +43,7 @@ VITE_SUPABASE_ANON_KEY=
 VITE_STRIPE_INDIVIDUAL_PRICE_ID=
 VITE_STRIPE_COMPANY_PRICE_ID=
 VITE_STRIPE_PRICE_MATRIX_JSON=
+VITE_CALCULATOR_TIER_GROUPS_JSON=
 ```
 
 When Supabase env vars are present, the API facade switches to centralized Supabase auth, profiles, organizations, subscriptions, entitlements, and app records. Stripe and app-store purchase verification should be handled by Supabase Edge Functions so secret keys never ship to the browser.

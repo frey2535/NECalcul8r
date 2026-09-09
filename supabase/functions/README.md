@@ -20,13 +20,14 @@ supabase secrets set STRIPE_SECRET_KEY=sk_live_...
 supabase secrets set STRIPE_WEBHOOK_SECRET=whsec_...
 ```
 
-The frontend also needs `VITE_STRIPE_PRICE_MATRIX_JSON` configured with Stripe
-price IDs for every purchase package shown in the app. Checkout sends the
-selected customer tier, calculator tier, seat limit, and billing quantity to
-Stripe metadata. `stripe-webhook` copies those values into Supabase
-entitlements, and `sync-stripe-checkout-session` provides an authenticated
-return-from-Checkout reconciliation path if webhook delivery is delayed or needs
-to be resent.
+The frontend also needs Stripe Vite variables configured with price IDs for
+every purchase package shown in the app. If you want to override the default
+free and paid calculator selections per tier at build time, provide
+`VITE_CALCULATOR_TIER_GROUPS_JSON`. Checkout sends the selected customer tier,
+calculator tier, seat limit, and billing quantity to Stripe metadata.
+`stripe-webhook` copies those values into Supabase entitlements, and
+`sync-stripe-checkout-session` provides an authenticated return-from-Checkout
+reconciliation path if webhook delivery is delayed or needs to be resent.
 
 `update-stripe-subscription` updates the current active Stripe subscription item
 for prorated upgrades. It uses `proration_behavior=always_invoice` so the

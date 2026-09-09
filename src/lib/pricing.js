@@ -1,3 +1,9 @@
+import {
+  buildCalculatorTierSections,
+  getIncludedCalculatorIdsForPlan,
+  hasConfiguredCalculatorTierMatches,
+} from "./calculatorTierGroups.js";
+
 export const FREE_PLAN_KEY = "free";
 export const OWNER_FULL_ACCESS_PLAN_KEY = "owner_full_access";
 export const DEFAULT_PAID_PLAN_KEY = "individual_36_plus";
@@ -349,12 +355,20 @@ export function getCalculatorAccess(categories = [], user = null) {
   const entitlement = getResolvedEntitlement(user);
   const calculatorTier = getCalculatorTier(entitlement.planKey);
   const limit = entitlement.calculatorLimit;
-  const includedCategories = limit == null ? categories : categories.slice(0, limit);
+  const tierSections = buildCalculatorTierSections(categories);
+  const hasTierMatches = hasConfiguredCalculatorTierMatches(categories);
+  const configuredIds = limit == null ? new Set(categories.map((category) => category.id)) : getIncludedCalculatorIdsForPlan(categories, entitlement.planKey);
+  const includedCategories = limit == null
+    ? categories
+    : hasTierMatches
+      ? categories.filter((category) => configuredIds.has(category.id))
+      : categories.slice(0, limit);
   const includedIds = new Set(includedCategories.map((category) => category.id));
 
   return {
     entitlement,
     calculatorTier,
+    tierSections,
     limit,
     includedCount: includedCategories.length,
     totalCount: categories.length,
