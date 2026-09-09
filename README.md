@@ -48,6 +48,8 @@ VITE_CALCULATOR_TIER_GROUPS_JSON=
 
 When Supabase env vars are present, the API facade switches to centralized Supabase auth, profiles, organizations, subscriptions, entitlements, and app records. Stripe and app-store purchase verification should be handled by Supabase Edge Functions so secret keys never ship to the browser.
 
+For Android production submission steps, see [`docs/google-play-production-checklist.md`](docs/google-play-production-checklist.md).
+
 See [`docs/commercial-access.md`](docs/commercial-access.md) and [`supabase/schema.sql`](supabase/schema.sql).
 
 ## What changed vs Base44

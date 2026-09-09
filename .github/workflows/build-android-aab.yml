@@ -2,6 +2,22 @@ name: Build Android App Bundle
 
 on:
   workflow_dispatch:
+    inputs:
+      upload_to_play:
+        description: "Upload the signed AAB to Google Play after build"
+        required: true
+        default: false
+        type: boolean
+      play_track:
+        description: "Google Play track to upload to"
+        required: true
+        default: "internal"
+        type: choice
+        options:
+          - internal
+          - alpha
+          - beta
+          - production
 
 permissions:
   contents: read
@@ -117,3 +133,24 @@ jobs:
             release/NECalcul8r-1.0.0.aab.sha256
           if-no-files-found: error
           retention-days: 30
+
+      - name: Verify Google Play upload secret
+        if: ${{ inputs.upload_to_play }}
+        env:
+          GOOGLE_PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
+        run: |
+          if [ -z "$GOOGLE_PLAY_SERVICE_ACCOUNT_JSON" ]; then
+            echo "::error ::Missing GitHub secret: GOOGLE_PLAY_SERVICE_ACCOUNT_JSON"
+            echo "Add the Play Console service account JSON as a GitHub Actions secret before enabling upload_to_play."
+            exit 1
+          fi
+
+      - name: Upload AAB to Google Play
+        if: ${{ inputs.upload_to_play }}
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: com.currentflow.necalcul8r
+          releaseFiles: release/NECalcul8r-1.0.0.aab
+          tracks: ${{ inputs.play_track }}
+          status: draft
