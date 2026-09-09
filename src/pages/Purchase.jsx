@@ -122,7 +122,7 @@ export default function Purchase() {
           seats: selected.seatLimit,
         });
         await checkAppState();
-        setSuccess(`Subscription upgraded to ${selected.label}. Stripe prorated the remaining billing period.`);
+        setSuccess(`Subscription upgraded to ${selected.label}. You were only charged the prorated difference for the current month; the full ${selected.priceLabel} starts on your next monthly payment.`);
         setLoading(false);
       } else if (managesExistingSubscription) {
         await base44.commerce.openBillingPortal({ returnUrl: window.location.href });
@@ -241,7 +241,7 @@ export default function Purchase() {
             )}
             {upgradesExistingSubscription && (
               <p className="text-xs text-blue-600 mt-2">
-                This will upgrade your existing subscription and immediately invoice the prorated difference.
+                Upgrade today and pay only the prorated difference for the rest of your current month. The full {selected.priceLabel} starts on your next monthly payment.
               </p>
             )}
             {managesExistingSubscription && (

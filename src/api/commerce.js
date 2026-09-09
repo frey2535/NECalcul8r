@@ -10,7 +10,21 @@ const companyPriceId = import.meta.env?.VITE_STRIPE_PRICE_COMPANY_0_10
 async function invokeCommerceFunction(functionName, payload) {
   const client = requireSupabase();
   const { data, error } = await client.functions.invoke(functionName, { body: payload });
-  if (error) throw error;
+  if (error) {
+    const response = error.context;
+    if (response && typeof response.clone === "function") {
+      let body = null;
+      try {
+        body = await response.clone().json();
+      } catch {
+        body = null;
+      }
+      if (body?.error) throw new Error(body.error);
+      if (body?.message) throw new Error(body.message);
+    }
+    throw new Error(error.message || `${functionName} failed.`);
+  }
+  if (data?.error) throw new Error(data.error);
   return data;
 }
 
