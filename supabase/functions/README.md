@@ -11,6 +11,7 @@ supabase functions deploy grant-access
 supabase functions deploy stripe-webhook
 supabase functions deploy verify-google-play-purchase
 supabase functions deploy verify-apple-purchase
+supabase functions deploy create-cursor-agent
 ```
 
 Required secrets for Stripe:
@@ -19,6 +20,18 @@ Required secrets for Stripe:
 supabase secrets set STRIPE_SECRET_KEY=sk_live_...
 supabase secrets set STRIPE_WEBHOOK_SECRET=whsec_...
 ```
+
+Required secrets for the platform-owner Cursor Agent tool:
+
+```bash
+supabase secrets set CURSOR_API_KEY=...
+supabase secrets set CURSOR_REPO_URL=https://github.com/frey2535/NECalcul8r
+supabase secrets set CURSOR_DEFAULT_BRANCH=main
+```
+
+`CURSOR_API_KEY` must be a Cursor API key with access to create Cloud Agents for
+the repository. The key is used only inside the Supabase Edge Function and must
+not be exposed as a Vite/browser environment variable.
 
 The frontend also needs Stripe Vite variables configured with price IDs for
 every purchase package shown in the app. If you want to override the default
