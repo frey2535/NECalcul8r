@@ -206,6 +206,23 @@ Important tables:
 - `purchase_events`: webhook/purchase audit log.
 - `app_records`: generic app data for projects, saved calculations, reports, and verification records.
 
+## Platform-owner Cursor Agent
+
+Platform admins can open `/admin/cursor-agent` to start a Cursor Cloud Agent
+from inside NECalcul8r. The browser sends only the task prompt to Supabase; the
+Cursor API key stays server-side in Edge Function secrets.
+
+Deploy the function and set secrets:
+
+```bash
+supabase functions deploy create-cursor-agent
+supabase secrets set CURSOR_API_KEY=...
+supabase secrets set CURSOR_REPO_URL=https://github.com/frey2535/NECalcul8r
+supabase secrets set CURSOR_DEFAULT_BRANCH=main
+```
+
+Only profiles with `is_platform_admin = true` can launch a Cursor agent.
+
 ## Access model
 
 ### Individual web customer

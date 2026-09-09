@@ -214,12 +214,18 @@ async function seedArticleVerificationsComplete() {
   return { success: true, seeded: records.length };
 }
 
+async function createCursorAgent() {
+  requireAdmin();
+  throw new Error("Cursor Agent requires Supabase commercial mode and the create-cursor-agent Edge Function.");
+}
+
 const HANDLERS = {
   startAnalysis,
   analyzeBlueprintChunk,
   consolidateAnalysis,
   seedArticleVerifications,
   seedArticleVerificationsComplete,
+  "create-cursor-agent": createCursorAgent,
 };
 
 export async function invokeFunction(name, payload = {}) {

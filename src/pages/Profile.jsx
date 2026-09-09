@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { User, Trash2, LogOut, ShieldAlert, Users, FolderOpen, Download, ShoppingCart, CreditCard, Flag, RefreshCw, SlidersHorizontal } from "lucide-react";
+import { User, Trash2, LogOut, ShieldAlert, Users, FolderOpen, Download, ShoppingCart, CreditCard, Flag, RefreshCw, SlidersHorizontal, Bot } from "lucide-react";
 import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { isStandaloneDisplay, refreshApp } from "@/lib/pwa";
@@ -187,6 +187,12 @@ export default function Profile() {
                 <div className="w-full flex items-center gap-3 px-5 py-4 text-sm font-semibold text-foreground hover:bg-muted active:bg-muted/80 transition-colors border-b border-border/40">
                   <SlidersHorizontal className="w-4 h-4 text-muted-foreground" />
                   Calculator Tiers
+                </div>
+              </Link>
+              <Link to="/admin/cursor-agent" className="block">
+                <div className="w-full flex items-center gap-3 px-5 py-4 text-sm font-semibold text-foreground hover:bg-muted active:bg-muted/80 transition-colors border-b border-border/40">
+                  <Bot className="w-4 h-4 text-muted-foreground" />
+                  Cursor Agent
                 </div>
               </Link>
               <Link to="/admin/reports" className="block">
