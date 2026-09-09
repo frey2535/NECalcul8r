@@ -6,6 +6,7 @@ import { Users, Shield, Clock, CheckCircle, XCircle, Ban, RefreshCw, CreditCard,
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { DEFAULT_PAID_PLAN_KEY, FREE_PLAN_KEY, OWNER_FULL_ACCESS_PLAN_KEY, getPlanOption } from "@/lib/pricing";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -65,6 +66,25 @@ function todayStr() { return new Date().toISOString().split('T')[0]; }
 function daysFromNow(n) {
   const d = new Date(); d.setDate(d.getDate() + n);
   return d.toISOString().split('T')[0];
+}
+
+function getPurchasedTier(user) {
+  const planKey = user.plan_key
+    || user.calculator_tier_id
+    || (user.access_type === "permanent" ? OWNER_FULL_ACCESS_PLAN_KEY : null)
+    || (user.access_type === "paid" && user.access_status === "active" ? DEFAULT_PAID_PLAN_KEY : FREE_PLAN_KEY);
+  const plan = getPlanOption(planKey);
+  const accessDetail = plan.accountType === "company"
+    ? `Seats: ${plan.companySeatLimit == null ? "Unlimited" : plan.companySeatLimit}`
+    : plan.calculatorLimit == null
+      ? "Calculators: All"
+      : `Calculators: ${plan.calculatorLimit}`;
+
+  return {
+    label: plan.label,
+    price: plan.priceLabel,
+    detail: accessDetail,
+  };
 }
 
 function normalizeManualEdits(user, edits) {
@@ -140,6 +160,7 @@ function UserCard({ user, onQuickAction, onSaveEdits, extendDays, isSaving, canG
   const daysLeft = getDaysLeft(user);
   const isAdmin = user.is_platform_admin;
   const isDirty = Object.keys(edits).length > 0;
+  const purchasedTier = getPurchasedTier(user);
 
   const handleSave = () => { onSaveEdits(user.id, normalizeManualEdits(user, edits)); setEdits({}); };
 
@@ -197,6 +218,15 @@ function UserCard({ user, onQuickAction, onSaveEdits, extendDays, isSaving, canG
                 <span className="font-semibold text-foreground">{user.subscription_status}</span>
               </div>
             )}
+            <div className="rounded-lg bg-muted/60 px-2.5 py-1.5">
+              <span className="text-muted-foreground">Tier: </span>
+              <span className="font-semibold text-foreground">{purchasedTier.label}</span>
+              <span className="text-muted-foreground"> · </span>
+              <span className="font-semibold text-foreground">{purchasedTier.price}</span>
+            </div>
+            <div className="rounded-lg bg-muted/60 px-2.5 py-1.5">
+              <span className="text-muted-foreground">{purchasedTier.detail}</span>
+            </div>
           </div>
         )}
 
