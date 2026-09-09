@@ -66,8 +66,9 @@ For a draft upload to Google Play:
 - `upload_to_play`: `true`
 - `play_track`: `internal`
 
-The workflow uploads `release/NECalcul8r-1.0.0.aab` as an artifact and, when
-enabled, uploads the same AAB to the selected Play track as a draft release.
+The workflow uploads the versioned `release/NECalcul8r-<package-version>.aab`
+artifact and, when enabled, uploads the same AAB to the selected Play track as a
+draft release.
 
 ## 5. Required Play Console forms
 
