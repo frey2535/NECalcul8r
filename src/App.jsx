@@ -37,6 +37,7 @@ const DiscrepancyReports = lazy(lazyRetry(() => import('@/pages/admin/Discrepanc
 const NECCoverageReport = lazy(lazyRetry(() => import('@/pages/NECCoverageReport'), 'NECCoverageReport'));
 const CodebookMatrix = lazy(lazyRetry(() => import('@/pages/admin/CodebookMatrix'), 'CodebookMatrix'));
 const CalculatorVerification = lazy(lazyRetry(() => import('@/pages/admin/CalculatorVerification'), 'CalculatorVerification'));
+const CalculatorTierManager = lazy(lazyRetry(() => import('@/pages/admin/CalculatorTierManager'), 'CalculatorTierManager'));
 const Landing = lazy(lazyRetry(() => import('@/pages/Landing'), 'Landing'));
 const Profile = lazy(lazyRetry(() => import('@/pages/Profile'), 'Profile'));
 const Purchase = lazy(lazyRetry(() => import('@/pages/Purchase'), 'Purchase'));
@@ -216,6 +217,7 @@ const AuthenticatedApp = () => {
               <Route path="/admin/coverage" element={<NECCoverageReport />} />
               <Route path="/admin/codebook" element={<CodebookMatrix />} />
               <Route path="/admin/verification" element={<CalculatorVerification />} />
+              <Route path="/admin/calculator-tiers" element={<CalculatorTierManager />} />
             </Route>
           </Route>
         </Route>

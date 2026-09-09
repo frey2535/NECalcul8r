@@ -1,7 +1,7 @@
 import { requireUser } from "./localAuth";
 import { httpError, loadDb, newId, publicUser, saveDb } from "./localDb";
 
-const ENTITY_NAMES = ["Analysis", "DiscrepancyReport", "ArticleVerification", "Project", "SavedCalculation", "User"];
+const ENTITY_NAMES = ["Analysis", "DiscrepancyReport", "ArticleVerification", "CalculatorTierSettings", "Project", "SavedCalculation", "User"];
 const USER_ACCESS_FIELDS = new Set([
   "access_type",
   "access_status",
@@ -50,6 +50,7 @@ function scopedList(db, user, name, records) {
   }
   // Reference data shared by everyone in the product.
   if (name === "ArticleVerification") return records;
+  if (name === "CalculatorTierSettings") return records;
   if (name === "DiscrepancyReport" && user.is_platform_admin) return records;
   // Analyses, discrepancy reports, and any future saved calculations stay
   // private to the signed-in user — including org admins.
@@ -82,6 +83,9 @@ function createEntityApi(name) {
     async create(data) {
       const { db, user } = requireUser();
       if (name === "User") throw httpError("Create users through registration");
+      if (name === "CalculatorTierSettings" && !user.is_platform_admin) {
+        throw httpError("Calculator tier settings require platform admin access.", 403);
+      }
       const now = new Date().toISOString();
       const record = {
         ...data,
@@ -112,10 +116,13 @@ function createEntityApi(name) {
         saveDb(db);
         return publicUser(target, db);
       }
+      if (name === "CalculatorTierSettings" && !user.is_platform_admin) {
+        throw httpError("Calculator tier settings require platform admin access.", 403);
+      }
       const idx = db.entities[name].findIndex((r) => r.id === id);
       if (idx === -1) throw httpError(`${name} not found`, 404);
       const existing = db.entities[name][idx];
-      if (name !== "ArticleVerification" && existing.created_by_id !== user.id) {
+      if (name !== "ArticleVerification" && name !== "CalculatorTierSettings" && existing.created_by_id !== user.id) {
         throw httpError("Forbidden", 403);
       }
       const updated = {
@@ -140,10 +147,13 @@ function createEntityApi(name) {
     async delete(id) {
       const { db, user } = requireUser();
       if (name === "User") throw httpError("User delete is not supported");
+      if (name === "CalculatorTierSettings" && !user.is_platform_admin) {
+        throw httpError("Calculator tier settings require platform admin access.", 403);
+      }
       const idx = db.entities[name].findIndex((r) => r.id === id);
       if (idx === -1) throw httpError(`${name} not found`, 404);
       const existing = db.entities[name][idx];
-      if (existing.created_by_id !== user.id) {
+      if (name !== "CalculatorTierSettings" && existing.created_by_id !== user.id) {
         throw httpError("Forbidden", 403);
       }
       db.entities[name].splice(idx, 1);
@@ -158,6 +168,9 @@ function createEntityApi(name) {
 
     async deleteMany(query) {
       const { db, user } = requireUser();
+      if (name === "CalculatorTierSettings" && !user.is_platform_admin) {
+        throw httpError("Calculator tier settings require platform admin access.", 403);
+      }
       if (name === "ArticleVerification") {
         if (user.role !== "admin") throw httpError("Admin access required", 403);
         const before = db.entities[name].length;

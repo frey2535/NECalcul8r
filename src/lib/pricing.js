@@ -351,13 +351,15 @@ function normalizedEntitlement(plan, overrides = {}) {
   };
 }
 
-export function getCalculatorAccess(categories = [], user = null) {
+export function getCalculatorAccess(categories = [], user = null, calculatorTierGroups = null) {
   const entitlement = getResolvedEntitlement(user);
   const calculatorTier = getCalculatorTier(entitlement.planKey);
   const limit = entitlement.calculatorLimit;
-  const tierSections = buildCalculatorTierSections(categories);
-  const hasTierMatches = hasConfiguredCalculatorTierMatches(categories);
-  const configuredIds = limit == null ? new Set(categories.map((category) => category.id)) : getIncludedCalculatorIdsForPlan(categories, entitlement.planKey);
+  const tierSections = buildCalculatorTierSections(categories, calculatorTierGroups);
+  const hasTierMatches = hasConfiguredCalculatorTierMatches(categories, calculatorTierGroups);
+  const configuredIds = limit == null
+    ? new Set(categories.map((category) => category.id))
+    : getIncludedCalculatorIdsForPlan(categories, entitlement.planKey, calculatorTierGroups);
   const includedCategories = limit == null
     ? categories
     : hasTierMatches

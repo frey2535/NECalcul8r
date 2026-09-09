@@ -7,7 +7,7 @@ import {
   isPlanUpgrade,
 } from "../src/lib/pricing.js";
 import { NEC_CATEGORIES } from "../src/data/calculatorCatalog.js";
-import { buildCalculatorTierSections } from "../src/lib/calculatorTierGroups.js";
+import { buildCalculatorTierSections, getCalculatorTierGroupConfig } from "../src/lib/calculatorTierGroups.js";
 
 function assert(condition, message) {
   if (!condition) {
@@ -25,6 +25,17 @@ const freeAccess = getCalculatorAccess(categories, freeUser);
 assert(freeAccess.includedCount === 5, "free tier should include 5 calculators");
 assert(freeAccess.isAllowed("calc_5"), "free tier should allow the fifth calculator");
 assert(!freeAccess.isAllowed("calc_6"), "free tier should lock the sixth calculator");
+
+const customTierGroups = getCalculatorTierGroupConfig({
+  free: ["calc_10", "calc_20", "calc_30"],
+  individual_6_15: ["calc_1", "calc_2"],
+  individual_16_25: ["calc_3"],
+  individual_26_35: ["calc_4"],
+  individual_36_plus: ["calc_5"],
+});
+const customFreeAccess = getCalculatorAccess(categories, freeUser, customTierGroups);
+assert(customFreeAccess.isAllowed("calc_10"), "runtime tier settings should choose custom free calculators");
+assert(!customFreeAccess.isAllowed("calc_1"), "runtime tier settings should keep paid calculators locked for free users");
 
 const calculatorTierSections = buildCalculatorTierSections(NEC_CATEGORIES);
 const configuredCalculatorCount = calculatorTierSections.reduce((total, section) => total + section.categories.length, 0);
@@ -46,6 +57,7 @@ assert(starterAccess.includedCount === 15, "individual_6_15 should include 15 ca
 assert(starterAccess.isAllowed("calc_15"), "individual_6_15 should allow the fifteenth calculator");
 assert(!starterAccess.isAllowed("calc_16"), "individual_6_15 should lock the sixteenth calculator");
 assert(getResolvedEntitlement(starterPaid).hasNecTables, "paid individual users should have NEC Tables");
+assert(getCalculatorAccess(categories, starterPaid, customTierGroups).isAllowed("calc_1"), "runtime tier settings should unlock selected 6-15 calculators");
 
 const configuredStarterAccess = getCalculatorAccess(NEC_CATEGORIES, starterPaid);
 assert(configuredStarterAccess.includedCount === 15, "configured individual_6_15 should include free calculators plus its selected group");

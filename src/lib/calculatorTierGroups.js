@@ -93,6 +93,9 @@ export const DEFAULT_CALCULATOR_TIER_GROUPS = [
   },
 ];
 
+export const CALCULATOR_TIER_SETTINGS_ENTITY = "CalculatorTierSettings";
+export const CALCULATOR_TIER_SETTINGS_KEY = "global";
+
 function parseConfiguredTierGroups() {
   const raw = import.meta.env?.VITE_CALCULATOR_TIER_GROUPS_JSON;
   if (!raw) return {};
@@ -118,8 +121,15 @@ function configuredGroupValue(config, planKey) {
   return config[planKey] || config.plans?.[planKey] || config.groups?.[planKey];
 }
 
-export function getCalculatorTierGroupConfig() {
-  const configured = parseConfiguredTierGroups();
+export function compactCalculatorTierGroups(groups = []) {
+  return groups.map((group) => ({
+    planKey: group.planKey,
+    calculatorIds: Array.isArray(group.calculatorIds) ? group.calculatorIds.map(String).filter(Boolean) : [],
+  }));
+}
+
+export function getCalculatorTierGroupConfig(customGroups) {
+  const configured = customGroups || parseConfiguredTierGroups();
   return DEFAULT_CALCULATOR_TIER_GROUPS.map((group) => {
     const configuredValue = configuredGroupValue(configured, group.planKey);
     const configuredIds = normalizeCalculatorIds(configuredValue);
@@ -135,17 +145,17 @@ export function getCalculatorTierGroupIndex(planKey) {
   return index === -1 ? 0 : index;
 }
 
-export function hasConfiguredCalculatorTierMatches(categories = []) {
-  const configuredIds = new Set(getCalculatorTierGroupConfig().flatMap((group) => group.calculatorIds));
+export function hasConfiguredCalculatorTierMatches(categories = [], customGroups) {
+  const configuredIds = new Set(getCalculatorTierGroupConfig(customGroups).flatMap((group) => group.calculatorIds));
   return categories.some((category) => configuredIds.has(category.id));
 }
 
-export function buildCalculatorTierSections(categories = []) {
+export function buildCalculatorTierSections(categories = [], customGroups) {
   const categoryById = new Map(categories.map((category) => [category.id, category]));
   const assignedIds = new Set();
   let assignedCount = 0;
 
-  const sections = getCalculatorTierGroupConfig().map((group, index) => {
+  const sections = getCalculatorTierGroupConfig(customGroups).map((group, index) => {
     const sectionCategories = [];
     const sectionIds = [];
     const availableSlots = group.maxCumulativeCount == null
@@ -185,11 +195,11 @@ export function buildCalculatorTierSections(categories = []) {
   return sections;
 }
 
-export function getIncludedCalculatorIdsForPlan(categories = [], planKey) {
+export function getIncludedCalculatorIdsForPlan(categories = [], planKey, customGroups) {
   const maxIndex = getCalculatorTierGroupIndex(planKey);
   const includedIds = new Set();
 
-  for (const section of buildCalculatorTierSections(categories)) {
+  for (const section of buildCalculatorTierSections(categories, customGroups)) {
     if (section.index > maxIndex) continue;
     for (const category of section.categories) {
       includedIds.add(category.id);
