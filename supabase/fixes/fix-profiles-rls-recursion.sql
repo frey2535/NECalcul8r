@@ -35,6 +35,7 @@ drop policy if exists "profiles read own org" on public.profiles;
 drop policy if exists "profiles update own or org owner" on public.profiles;
 drop policy if exists "profiles update platform admin" on public.profiles;
 drop policy if exists "organizations read own" on public.organizations;
+drop policy if exists "organizations create" on public.organizations;
 drop policy if exists "organizations update owner" on public.organizations;
 drop policy if exists "organizations update platform admin" on public.organizations;
 drop policy if exists "entitlements read assigned" on public.entitlements;
@@ -66,6 +67,10 @@ create policy "organizations read own"
     public.current_is_platform_admin()
     or id = public.current_profile_org_id()
   );
+
+create policy "organizations create"
+  on public.organizations for insert
+  with check (auth.uid() is not null);
 
 create policy "organizations update platform admin"
   on public.organizations for update
