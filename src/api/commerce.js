@@ -115,6 +115,14 @@ export const commerce = {
   },
 
   /**
+   * @param {{ sessionId?: string }} options
+   */
+  async syncStripeCheckoutSession(options = {}) {
+    const { sessionId } = options;
+    return invokeCommerceFunction("sync-stripe-checkout-session", { sessionId });
+  },
+
+  /**
  * @param {{ orgId?: string, seats?: number, expiresAt?: string, accessType?: string, planKey?: string, customerTierId?: string, calculatorTierId?: string, note?: string }} options
    */
   async grantExternalCompanyAccess(options = {}) {
