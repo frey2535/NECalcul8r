@@ -1,11 +1,12 @@
 import React, { useState, useRef, useCallback, useEffect } from "react";
 import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
-import { Calculator, BookOpen, UserCircle, Users, Calendar, ShieldCheck, FileCheck, Sun, Moon, FolderOpen, Flag, Lock } from "lucide-react";
+import { Calculator, BookOpen, UserCircle, Users, Calendar, ShieldCheck, FileCheck, Sun, Moon, FolderOpen, Flag, Lock, RefreshCw } from "lucide-react";
 import TrialBanner from "@/components/TrialBanner";
 import { useAuth } from "@/lib/AuthContext";
 import { base44 } from "@/api/base44Client";
 import { cn } from "@/lib/utils";
 import AppLogo from "@/components/branding/AppLogo";
+import { refreshApp } from "@/lib/pwa";
 import {
   Drawer,
   DrawerContent,
@@ -35,6 +36,7 @@ export default function AppLayout({ trialStatus }) {
   const navigate = useNavigate();
   const [profileOpen, setProfileOpen] = useState(false);
   const [openReportCount, setOpenReportCount] = useState(0);
+  const [refreshingApp, setRefreshingApp] = useState(false);
   // Store saved scroll positions per tab key
   const scrollPositions = useRef({ calculators: 0, tables: 0, projects: 0 });
 
@@ -56,6 +58,16 @@ export default function AppLayout({ trialStatus }) {
   };
 
   const isTabActive = (tab) => getActiveTabKey() === tab.key;
+
+  const handleRefreshApp = async () => {
+    if (refreshingApp) return;
+    setRefreshingApp(true);
+    try {
+      await refreshApp(window.__necalcul8rPendingUpdate?.targetSha);
+    } catch {
+      setRefreshingApp(false);
+    }
+  };
 
   const refreshOpenReportCount = useCallback(async () => {
     if (!isPlatformAdmin) {
@@ -205,8 +217,21 @@ export default function AppLayout({ trialStatus }) {
                 </select>
               </div>
 
+              {/* Refresh / install updates */}
+              <button
+                type="button"
+                onClick={handleRefreshApp}
+                disabled={refreshingApp}
+                className="ml-1 w-8 h-8 rounded-full bg-muted hover:bg-muted/80 active:bg-muted/60 disabled:opacity-60 flex items-center justify-center transition-colors"
+                aria-label="Refresh app and install updates"
+                title="Refresh app, clear errors, and install pending updates"
+              >
+                <RefreshCw className={cn("w-4 h-4 text-foreground", refreshingApp && "animate-spin")} />
+              </button>
+
               {/* Theme toggle */}
               <button
+                type="button"
                 onClick={toggleTheme}
                 className="ml-1 w-8 h-8 rounded-full bg-muted hover:bg-muted/80 active:bg-muted/60 flex items-center justify-center transition-colors"
                 aria-label="Toggle dark mode"
@@ -217,6 +242,7 @@ export default function AppLayout({ trialStatus }) {
 
               {/* Profile button — always visible */}
               <button
+                type="button"
                 onClick={() => setProfileOpen(true)}
                 className="ml-1 w-8 h-8 rounded-full bg-muted hover:bg-muted/80 active:bg-muted/60 flex items-center justify-center transition-colors"
                 aria-label="Profile"

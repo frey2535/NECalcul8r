@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { User, Trash2, LogOut, ShieldAlert, Users, FolderOpen, Download, ShoppingCart, CreditCard, Flag } from "lucide-react";
+import { User, Trash2, LogOut, ShieldAlert, Users, FolderOpen, Download, ShoppingCart, CreditCard, Flag, RefreshCw } from "lucide-react";
 import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
-import { isStandaloneDisplay } from "@/lib/pwa";
+import { isStandaloneDisplay, refreshApp } from "@/lib/pwa";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -37,6 +37,7 @@ export default function Profile() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [billingLoading, setBillingLoading] = useState(false);
   const [billingError, setBillingError] = useState("");
+  const [refreshing, setRefreshing] = useState(false);
   const isPlatformAdmin = Boolean(user?.is_platform_admin);
   const canManageUsers = isPlatformAdmin || user?.org_role === "owner";
   const profileBadgeLabel = getProfileBadgeLabel(user);
@@ -67,6 +68,16 @@ export default function Profile() {
     } catch (error) {
       setBillingError(error.message || "Could not open billing. Please contact sales.");
       setBillingLoading(false);
+    }
+  };
+
+  const handleRefreshApp = async () => {
+    if (refreshing) return;
+    setRefreshing(true);
+    try {
+      await refreshApp(window.__necalcul8rPendingUpdate?.targetSha);
+    } catch {
+      setRefreshing(false);
     }
   };
 
@@ -109,6 +120,20 @@ export default function Profile() {
         </div>
       </button>
       )}
+
+      <button
+        type="button"
+        onClick={handleRefreshApp}
+        disabled={refreshing}
+        className="block w-full text-left disabled:opacity-60"
+      >
+        <div className="rounded-2xl bg-card border border-border/60 shadow-sm overflow-hidden">
+          <div className="w-full flex items-center gap-3 px-5 py-4 text-sm font-semibold text-foreground hover:bg-muted active:bg-muted/80 transition-colors">
+            <RefreshCw className={`w-4 h-4 text-muted-foreground ${refreshing ? "animate-spin" : ""}`} />
+            Refresh / Update App
+          </div>
+        </div>
+      </button>
 
       <Link to="/projects" className="block">
         <div className="rounded-2xl bg-card border border-border/60 shadow-sm overflow-hidden">
