@@ -1,3 +1,8 @@
+const UPDATE_ATTEMPT_KEY = "necalcul8r_update_attempted_sha";
+const UPDATE_ATTEMPT_RETRY_MS = 15 * 60 * 1000;
+const UPDATE_IN_PROGRESS_KEY = "necalcul8r_update_in_progress";
+const STALE_ASSET_RELOADED_KEY = "necalcul8r_stale_asset_reloaded";
+
 export function registerServiceWorker() {
   if (typeof window === "undefined") return;
   installStaleAssetRecovery();
@@ -7,8 +12,8 @@ export function registerServiceWorker() {
   }
   if (new URL(window.location.href).searchParams.has("t")) {
     window.setTimeout(() => {
-      sessionStorage.removeItem("necalcul8r_update_in_progress");
-      sessionStorage.removeItem("necalcul8r_stale_asset_reloaded");
+      sessionStorage.removeItem(UPDATE_IN_PROGRESS_KEY);
+      sessionStorage.removeItem(STALE_ASSET_RELOADED_KEY);
     }, 5000);
   }
   window.addEventListener("load", () => {
@@ -60,18 +65,14 @@ function installStaleAssetRecovery() {
 }
 
 function reloadFreshOnce() {
-  const key = "necalcul8r_stale_asset_reloaded";
   try {
-    if (sessionStorage.getItem(key) === "1") return;
-    sessionStorage.setItem(key, "1");
+    if (sessionStorage.getItem(STALE_ASSET_RELOADED_KEY) === "1") return;
+    sessionStorage.setItem(STALE_ASSET_RELOADED_KEY, "1");
   } catch {
     /* sessionStorage can be unavailable in private mode */
   }
   reloadFresh();
 }
-
-const UPDATE_ATTEMPT_KEY = "necalcul8r_update_attempted_sha";
-const UPDATE_ATTEMPT_RETRY_MS = 15 * 60 * 1000;
 
 function readUpdateAttempt() {
   try {
@@ -114,7 +115,7 @@ function watchForBuildUpdates() {
   let promptedSha = "";
   const check = async () => {
     try {
-      if (sessionStorage.getItem("necalcul8r_update_in_progress") === "1") return;
+      if (sessionStorage.getItem(UPDATE_IN_PROGRESS_KEY) === "1") return;
       const response = await fetch(`/build-version.json?t=${Date.now()}`, { cache: "no-store" });
       if (!response.ok) return;
       const next = await response.json();
@@ -153,7 +154,7 @@ function dispatchUpdateAvailable(detail) {
 
 async function applyServiceWorkerUpdate(registration) {
   try {
-    sessionStorage.setItem("necalcul8r_update_in_progress", "1");
+    sessionStorage.setItem(UPDATE_IN_PROGRESS_KEY, "1");
   } catch {
     /* sessionStorage can be unavailable in private mode */
   }
@@ -167,12 +168,38 @@ async function applyServiceWorkerUpdate(registration) {
 }
 
 export async function refreshApp(targetSha) {
-  await reloadFresh(targetSha);
+  clearAppErrorState();
+  const pendingUpdate = window.__necalcul8rPendingUpdate;
+  const nextTargetSha = targetSha || pendingUpdate?.targetSha;
+  if (typeof pendingUpdate?.applyUpdate === "function") {
+    try {
+      await pendingUpdate.applyUpdate();
+      return;
+    } catch {
+      /* fall back to the cache-clearing reload below */
+    }
+  }
+  await reloadFresh(nextTargetSha);
+}
+
+export function clearAppErrorState() {
+  try {
+    sessionStorage.removeItem(UPDATE_ATTEMPT_KEY);
+    sessionStorage.removeItem(UPDATE_IN_PROGRESS_KEY);
+    sessionStorage.removeItem(STALE_ASSET_RELOADED_KEY);
+  } catch {
+    /* sessionStorage can be unavailable in private mode */
+  }
+  try {
+    window.dispatchEvent(new CustomEvent("necalcul8r-clear-errors"));
+  } catch {
+    /* event dispatch is best-effort before the reload */
+  }
 }
 
 async function reloadFresh(targetSha) {
   try {
-    sessionStorage.setItem("necalcul8r_update_in_progress", "1");
+    sessionStorage.setItem(UPDATE_IN_PROGRESS_KEY, "1");
   } catch {
     /* sessionStorage can be unavailable in private mode */
   }
