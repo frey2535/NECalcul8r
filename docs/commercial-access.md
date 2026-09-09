@@ -233,6 +233,31 @@ Output:
 { "url": "https://billing.stripe.com/..." }
 ```
 
+### `sync-stripe-checkout-session`
+
+The app calls this after Stripe redirects back with
+`stripe_checkout_session_id={CHECKOUT_SESSION_ID}`. It verifies the Checkout
+Session belongs to the signed-in profile or organization, fetches the Stripe
+subscription, and writes the same subscription/entitlement records as the
+webhook.
+
+Input:
+
+```json
+{ "sessionId": "cs_test_..." }
+```
+
+Output:
+
+```json
+{
+  "ok": true,
+  "accessStatus": "active",
+  "subscriptionStatus": "active",
+  "planKey": "company_0_10"
+}
+```
+
 ### `grant_profile_access` RPC / `grant-access`
 
 Manual owner grants use the `grant_profile_access` Supabase RPC when it is installed from

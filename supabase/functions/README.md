@@ -4,6 +4,7 @@ Deploy these functions before enabling paid production access:
 
 ```bash
 supabase functions deploy create-stripe-checkout
+supabase functions deploy sync-stripe-checkout-session
 supabase functions deploy create-stripe-portal-session
 supabase functions deploy grant-access
 supabase functions deploy stripe-webhook
@@ -21,8 +22,10 @@ supabase secrets set STRIPE_WEBHOOK_SECRET=whsec_...
 The frontend also needs `VITE_STRIPE_PRICE_MATRIX_JSON` configured with Stripe
 price IDs for every purchase package shown in the app. Checkout sends the
 selected customer tier, calculator tier, seat limit, and billing quantity to
-Stripe metadata; `stripe-webhook` copies those values into Supabase
-entitlements.
+Stripe metadata. `stripe-webhook` copies those values into Supabase
+entitlements, and `sync-stripe-checkout-session` provides an authenticated
+return-from-Checkout reconciliation path if webhook delivery is delayed or needs
+to be resent.
 
 Apple and Google purchase verification functions are intentionally fail-closed
 until production store credentials and package/bundle IDs are configured.

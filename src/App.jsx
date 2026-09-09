@@ -1,8 +1,9 @@
-import React, { Suspense, lazy, useEffect, useState } from "react";
+import React, { Suspense, lazy, useEffect, useRef, useState } from "react";
 import { Toaster } from "@/components/ui/toaster"
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
-import { BrowserRouter as Router, Route, Routes, Navigate, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { base44 } from '@/api/base44Client';
 import Login from '@/pages/Login';
 import Register from '@/pages/Register';
 import ForgotPassword from '@/pages/ForgotPassword';
@@ -94,6 +95,37 @@ function StartupLoadingScreen() {
   );
 }
 
+function useStripeCheckoutReturnSync(isAuthenticated, checkAppState) {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const syncedSessionRef = useRef(null);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const sessionId = params.get("stripe_checkout_session_id");
+    if (!isAuthenticated || !sessionId || syncedSessionRef.current === sessionId) return;
+
+    syncedSessionRef.current = sessionId;
+    base44.commerce.syncStripeCheckoutSession({ sessionId })
+      .then(() => checkAppState())
+      .then(() => {
+        params.delete("stripe_checkout_session_id");
+        const search = params.toString();
+        navigate(
+          {
+            pathname: location.pathname,
+            search: search ? `?${search}` : "",
+            hash: location.hash,
+          },
+          { replace: true }
+        );
+      })
+      .catch((error) => {
+        console.error("Stripe checkout session sync failed", error);
+      });
+  }, [checkAppState, isAuthenticated, location.hash, location.pathname, location.search, navigate]);
+}
+
 class AppErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
@@ -136,9 +168,10 @@ class AppErrorBoundary extends React.Component {
 }
 
 const AuthenticatedApp = () => {
-  const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin, user } = useAuth();
+  const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin, user, isAuthenticated, checkAppState } = useAuth();
   const location = useLocation();
   const trialStatus = useTrialStatus(user);
+  useStripeCheckoutReturnSync(isAuthenticated, checkAppState);
 
   if (isLoadingPublicSettings || isLoadingAuth) {
     return <StartupLoadingScreen />;

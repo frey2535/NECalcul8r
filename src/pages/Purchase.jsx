@@ -33,6 +33,18 @@ function TierButton({ active, title, subtitle, onClick }) {
   );
 }
 
+function checkoutReturnUrl() {
+  const url = new URL(window.location.href);
+  if (url.pathname.endsWith("/purchase")) {
+    const basePath = url.pathname.slice(0, -"/purchase".length) || "/";
+    url.pathname = basePath.endsWith("/") ? basePath : `${basePath}/`;
+  }
+  url.search = "";
+  url.searchParams.set("stripe_checkout_session_id", "{CHECKOUT_SESSION_ID}");
+  url.hash = "";
+  return url.toString();
+}
+
 export default function Purchase() {
   const { user } = useAuth();
   const [selectedPlanKey, setSelectedPlanKey] = useState(DEFAULT_PAID_PLAN_KEY);
@@ -99,8 +111,8 @@ export default function Purchase() {
           priceId: selected.priceId,
           quantity: selected.billingQuantity,
           seats: selected.seatLimit,
-          successUrl: `${window.location.origin}/`,
-          cancelUrl: `${window.location.origin}/purchase`,
+          successUrl: checkoutReturnUrl(),
+          cancelUrl: window.location.href,
         });
       }
     } catch (purchaseError) {
