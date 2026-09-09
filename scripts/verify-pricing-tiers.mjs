@@ -1,8 +1,10 @@
 import {
   GOOGLE_PLAY_PRODUCT_IDS,
   getCalculatorAccess,
+  getPlanUpgradeRank,
   getPlanOption,
   getResolvedEntitlement,
+  isPlanUpgrade,
 } from "../src/lib/pricing.js";
 
 function assert(condition, message) {
@@ -71,6 +73,16 @@ assert(companyPackage.billingQuantity === 10, "company_0_10 should bill using qu
 
 const unlimitedCompany = getPlanOption("company_unlimited");
 assert(unlimitedCompany.billingQuantity === 1000, "company_unlimited should have a high default billing quantity for the unlimited bracket");
+assert(
+  getPlanUpgradeRank("individual_6_15") < getPlanUpgradeRank("individual_16_25")
+    && getPlanUpgradeRank("individual_16_25") < getPlanUpgradeRank("individual_26_35")
+    && getPlanUpgradeRank("individual_26_35") < getPlanUpgradeRank("individual_36_plus"),
+  "individual plan upgrade rank should increase with calculator access",
+);
+assert(isPlanUpgrade("individual_16_25", "individual_36_plus"), "higher individual tiers should be detected as upgrades");
+assert(!isPlanUpgrade("individual_36_plus", "individual_16_25"), "lower individual tiers should not be detected as upgrades");
+assert(isPlanUpgrade("individual_36_plus", "company_0_10"), "company plans should rank above individual plans");
+assert(isPlanUpgrade("company_0_10", "company_unlimited"), "larger company packages should be detected as upgrades");
 
 const freePackage = getPlanOption("free");
 assert(freePackage.isFree, "0-5 calculator package should be marked free");

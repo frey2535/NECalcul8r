@@ -123,6 +123,30 @@ export const commerce = {
   },
 
   /**
+   * @param {{ accountType?: string, planKey?: string, customerTierId?: string, calculatorTierId?: string, priceId?: string, quantity?: number, seats?: number }} options
+   */
+  async updateStripeSubscription(options = {}) {
+    const {
+      accountType = "individual",
+      planKey,
+      customerTierId,
+      calculatorTierId,
+      priceId,
+      quantity = 1,
+      seats = 1,
+    } = options;
+    return invokeCommerceFunction("update-stripe-subscription", {
+      accountType,
+      planKey,
+      customerTierId,
+      calculatorTierId,
+      priceId,
+      quantity,
+      seats,
+    });
+  },
+
+  /**
  * @param {{ orgId?: string, seats?: number, expiresAt?: string, accessType?: string, planKey?: string, customerTierId?: string, calculatorTierId?: string, note?: string }} options
    */
   async grantExternalCompanyAccess(options = {}) {

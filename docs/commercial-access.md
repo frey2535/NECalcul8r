@@ -258,6 +258,41 @@ Output:
 }
 ```
 
+### `update-stripe-subscription`
+
+Active Stripe subscribers use this for upgrades instead of creating a second
+subscription. The function finds the current active subscription for the signed-in
+profile or organization, updates the subscription item to the higher tier, uses
+`proration_behavior=always_invoice`, and syncs the upgraded entitlement after
+Stripe accepts the update.
+
+Input:
+
+```json
+{
+  "accountType": "individual",
+  "planKey": "individual_36_plus",
+  "priceId": "price_...",
+  "quantity": 36,
+  "seats": 1
+}
+```
+
+Output:
+
+```json
+{
+  "ok": true,
+  "proration": "always_invoice",
+  "accessStatus": "active",
+  "subscriptionStatus": "active",
+  "planKey": "individual_36_plus"
+}
+```
+
+Same-tier, downgrade, and cancellation changes should stay in Stripe Billing
+Portal so users keep access through the billing period they already paid for.
+
 ### `grant_profile_access` RPC / `grant-access`
 
 Manual owner grants use the `grant_profile_access` Supabase RPC when it is installed from
