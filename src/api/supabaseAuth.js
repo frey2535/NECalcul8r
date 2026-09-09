@@ -136,6 +136,24 @@ async function profileFor(authUser) {
 
   if (!profile) {
     const metadata = authUser.user_metadata || {};
+    const createdByRpc = await completeRegistrationProfile(client, {
+      organizationName: metadata.organization_name,
+      inviteCode: metadata.invite_code,
+    });
+    if (createdByRpc) {
+      let createdOrg = null;
+      if (createdByRpc.org_id) {
+        const { data: orgData, error: orgError } = await client
+          .from("organizations")
+          .select("*")
+          .eq("id", createdByRpc.org_id)
+          .maybeSingle();
+        if (orgError) throw orgError;
+        createdOrg = orgData;
+      }
+      return mapProfile(createdByRpc, createdOrg);
+    }
+
     const profilePayload = await buildProfilePayload(client, authUser, {
       organizationName: metadata.organization_name,
       inviteCode: metadata.invite_code,
@@ -235,6 +253,18 @@ async function buildProfilePayload(client, authUser, { organizationName, inviteC
   };
 }
 
+async function completeRegistrationProfile(client, { organizationName, inviteCode }) {
+  const { data, error } = await client.rpc("complete_registration_profile", {
+    organization_name: String(organizationName || "").trim() || null,
+    invite_code: String(inviteCode || "").trim().toUpperCase() || null,
+  });
+  if (!error) return data;
+  if (error.code === "PGRST202" || /complete_registration_profile/i.test(error.message || "")) {
+    return null;
+  }
+  throw error;
+}
+
 export const supabaseAuth = {
   async me() {
     const client = requireSupabase();
@@ -282,9 +312,12 @@ export const supabaseAuth = {
       };
     }
 
-    const profile = await buildProfilePayload(client, data.user, { organizationName, inviteCode });
-    const { error: profileError } = await client.from("profiles").insert(profile);
-    if (profileError && profileError.code !== "23505") throw profileError;
+    const createdByRpc = await completeRegistrationProfile(client, { organizationName, inviteCode });
+    if (!createdByRpc) {
+      const profile = await buildProfilePayload(client, data.user, { organizationName, inviteCode });
+      const { error: profileError } = await client.from("profiles").insert(profile);
+      if (profileError && profileError.code !== "23505") throw profileError;
+    }
 
     return {
       access_token: data.session?.access_token || null,
