@@ -106,8 +106,11 @@ Final plan keys:
 ## Calculator tier grouping
 
 Calculator access is selected by calculator ID instead of by the calculator's
-position in the list. The default editable source is
-`src/lib/calculatorTierGroups.js`.
+position in the list. Platform admins can manage the live grouping at
+`/admin/calculator-tiers` after running the Supabase policy fix in
+`supabase/fixes/add-calculator-tier-settings.sql`.
+
+The default editable source is `src/lib/calculatorTierGroups.js`.
 
 Use `DEFAULT_CALCULATOR_TIER_GROUPS` to choose:
 

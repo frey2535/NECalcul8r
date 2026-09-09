@@ -10,6 +10,7 @@ import PullToRefreshIndicator from "@/components/ui/PullToRefreshIndicator";
 import { useAuth } from "@/lib/AuthContext";
 import { getCalculatorAccess } from "@/lib/pricing";
 import { CATEGORY_GROUPS, NEC_CATEGORIES } from "@/data/calculatorCatalog";
+import { useCalculatorTierSettings } from "@/hooks/useCalculatorTierSettings";
 
 export { NEC_CATEGORIES };
 
@@ -65,9 +66,13 @@ export default function NECCalculator() {
   const [search, setSearch] = useState("");
   const [activeGroup, setActiveGroup] = useState("all");
   const { pullDistance, isRefreshing, containerRef } = usePullToRefresh(() => Promise.resolve());
+  const { calculatorTierGroups } = useCalculatorTierSettings();
 
   const selectedCat = calcId ? NEC_CATEGORIES.find(c => c.id === calcId) : null;
-  const calculatorAccess = useMemo(() => getCalculatorAccess(NEC_CATEGORIES, user), [user]);
+  const calculatorAccess = useMemo(
+    () => getCalculatorAccess(NEC_CATEGORIES, user, calculatorTierGroups),
+    [calculatorTierGroups, user]
+  );
 
   const matchesActiveFilters = (c) =>
     (activeGroup === "all" || c.color === activeGroup) &&

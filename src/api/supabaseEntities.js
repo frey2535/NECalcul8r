@@ -2,7 +2,7 @@ import { httpError } from "./localDb";
 import { supabaseAuth } from "./supabaseAuth";
 import { requireSupabase } from "./supabaseClient";
 
-const ENTITY_NAMES = ["Analysis", "DiscrepancyReport", "ArticleVerification", "Project", "SavedCalculation", "User"];
+const ENTITY_NAMES = ["Analysis", "DiscrepancyReport", "ArticleVerification", "CalculatorTierSettings", "Project", "SavedCalculation", "User"];
 
 const USER_UPDATE_FIELDS = [
   "full_name",
@@ -27,7 +27,8 @@ const ACTIVE_ACCESS_TYPES = new Set([
   "apple_app_store",
 ]);
 
-const PLATFORM_ADMIN_SHARED_RECORDS = new Set(["ArticleVerification", "DiscrepancyReport"]);
+const AUTHENTICATED_SHARED_RECORDS = new Set(["ArticleVerification", "CalculatorTierSettings"]);
+const PLATFORM_ADMIN_SHARED_RECORDS = new Set(["ArticleVerification", "DiscrepancyReport", "CalculatorTierSettings"]);
 
 const RECORD_METADATA_FIELDS = new Set([
   "id",
@@ -400,7 +401,7 @@ async function listRecords(name, sort, limit, query) {
   let request = client.from("app_records").select("*").eq("entity_type", name);
 
   if (
-    name !== "ArticleVerification"
+    !AUTHENTICATED_SHARED_RECORDS.has(name)
     && !(currentUser.is_platform_admin && PLATFORM_ADMIN_SHARED_RECORDS.has(name))
   ) {
     request = request.eq("created_by_id", currentUser.id);
@@ -441,6 +442,9 @@ function createEntityApi(name) {
       if (name === "User") throw httpError("Create users through registration");
       const client = requireSupabase();
       const currentUser = await supabaseAuth.me();
+      if (name === "CalculatorTierSettings" && !currentUser.is_platform_admin) {
+        throw httpError("Calculator tier settings require platform admin access.", 403);
+      }
       const row = toRecordRow(name, currentUser, data);
       const { data: created, error } = await client.from("app_records").insert(row).select("*").single();
       if (error) throw error;
@@ -450,6 +454,10 @@ function createEntityApi(name) {
     async update(id, patch) {
       if (name === "User") return updateUser(id, patch);
       const client = requireSupabase();
+      const currentUser = await supabaseAuth.me();
+      if (name === "CalculatorTierSettings" && !currentUser.is_platform_admin) {
+        throw httpError("Calculator tier settings require platform admin access.", 403);
+      }
       const existing = await this.get(id);
       const existingData = Object.fromEntries(
         Object.entries(existing || {}).filter(([key]) => !RECORD_METADATA_FIELDS.has(key))
@@ -470,6 +478,10 @@ function createEntityApi(name) {
     async delete(id) {
       if (name === "User") throw httpError("User delete is not supported");
       const client = requireSupabase();
+      const currentUser = await supabaseAuth.me();
+      if (name === "CalculatorTierSettings" && !currentUser.is_platform_admin) {
+        throw httpError("Calculator tier settings require platform admin access.", 403);
+      }
       await this.get(id);
       const { error } = await client.from("app_records").delete().eq("id", id);
       if (error) throw error;
@@ -477,6 +489,12 @@ function createEntityApi(name) {
     },
 
     async deleteMany(query) {
+      if (name === "CalculatorTierSettings") {
+        const currentUser = await supabaseAuth.me();
+        if (!currentUser.is_platform_admin) {
+          throw httpError("Calculator tier settings require platform admin access.", 403);
+        }
+      }
       const records = await this.list(undefined, undefined, query);
       if (!records.length) return { deleted: 0 };
       const client = requireSupabase();
