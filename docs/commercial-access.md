@@ -31,6 +31,7 @@ VITE_STRIPE_PRICE_COMPANY_0_10=
 VITE_STRIPE_PRICE_COMPANY_11_20=
 VITE_STRIPE_PRICE_COMPANY_UNLIMITED=
 VITE_STRIPE_PRICE_MATRIX_JSON=
+VITE_CALCULATOR_TIER_GROUPS_JSON=
 ```
 
 Do not expose Stripe secret keys, Supabase service-role keys, Google service-account credentials, or Apple shared secrets in Vite env vars. Those belong only in Supabase Edge Function secrets.
@@ -95,12 +96,98 @@ Alternative: if you later split plans into separate fixed Stripe Prices, provide
 
 Final plan keys:
 
-- `free`: unlocks the first 5 calculators. NEC Tables and complete export/printing remain locked.
+- `free`: unlocks the selected 5 free calculators. NEC Tables and complete export/printing remain locked.
 - `individual_6_15`: unlocks up to 15 calculators, NEC Tables, and complete export/printing.
 - `individual_16_25`: unlocks up to 25 calculators, NEC Tables, and complete export/printing.
 - `individual_26_35`: unlocks up to 35 calculators, NEC Tables, and complete export/printing.
 - `individual_36_plus`: unlocks all calculators, including new calculators as they are developed.
 - `company_0_10`, `company_11_20`, `company_unlimited`: full-access company plans for all seats in the plan.
+
+## Calculator tier grouping
+
+Calculator access is selected by calculator ID instead of by the calculator's
+position in the list. The default editable source is
+`src/lib/calculatorTierGroups.js`.
+
+Use `DEFAULT_CALCULATOR_TIER_GROUPS` to choose:
+
+- the 5 calculators included in the free plan,
+- the calculators added by `individual_6_15`,
+- the calculators added by `individual_16_25`,
+- the calculators added by `individual_26_35`,
+- the calculators reserved for `individual_36_plus`.
+
+Paid access is cumulative. For example, `individual_16_25` includes the selected
+free calculators, the selected `individual_6_15` calculators, and the selected
+`individual_16_25` calculators. Each tier is capped at its advertised cumulative
+calculator count, so extra IDs in an override are ignored until they are placed
+in a higher tier.
+
+You can also override the grouping per environment with
+`VITE_CALCULATOR_TIER_GROUPS_JSON`:
+
+```json
+{
+  "free": [
+    "voltage_drop",
+    "conductor_ampacity",
+    "box_fill",
+    "dwelling_standard",
+    "dwelling_optional"
+  ],
+  "individual_6_15": [
+    "commercial_load",
+    "motor_full_load",
+    "motor_feeder",
+    "conduit_fill",
+    "transformer_sizing",
+    "overcurrent_protection",
+    "service_sizing",
+    "generator_sizing",
+    "egc_sizing",
+    "grounding_electrode"
+  ],
+  "individual_16_25": [
+    "main_bonding_jumper",
+    "system_bonding_jumper",
+    "gec_for_sds",
+    "bonding_jumper_parallel",
+    "supplemental_grounding_electrode",
+    "multifamily_standard",
+    "multifamily_load",
+    "farm_load",
+    "fixed_electric_heat",
+    "kitchen_equipment_demand"
+  ],
+  "individual_26_35": [
+    "demand_factor",
+    "continuous_load",
+    "hvac_load",
+    "welding_receptacle",
+    "lighting_load",
+    "multiwire_branch",
+    "receptacle_load",
+    "short_circuit",
+    "power_factor",
+    "three_phase_power"
+  ],
+  "individual_36_plus": [
+    "single_phase_power",
+    "pool_spa",
+    "solar_pv",
+    "ev_charging",
+    "data_center",
+    "rv_park_load",
+    "marina_shore_power",
+    "pull_box_sizing",
+    "neutral_load"
+  ]
+}
+```
+
+Any new calculator ID not listed in the grouping is automatically shown in the
+`individual_36_plus` section so new calculators remain full-tier-only until
+they are deliberately moved.
 
 ## Supabase database
 

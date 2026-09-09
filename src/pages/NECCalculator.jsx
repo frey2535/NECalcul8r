@@ -9,53 +9,9 @@ import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import PullToRefreshIndicator from "@/components/ui/PullToRefreshIndicator";
 import { useAuth } from "@/lib/AuthContext";
 import { getCalculatorAccess } from "@/lib/pricing";
+import { CATEGORY_GROUPS, NEC_CATEGORIES } from "@/data/calculatorCatalog";
 
-export const NEC_CATEGORIES = [
-  { id: "voltage_drop", label: "Voltage Drop", article: "NEC 210.19 / 215.2", description: "Branch circuit & feeder voltage drop", color: "blue", emoji: "⚡" },
-  { id: "conductor_ampacity", label: "Conductor Ampacity", article: "NEC 310.15", description: "Wire size, temp correction & bundling", color: "green", emoji: "🔌" },
-  { id: "box_fill", label: "Box Fill", article: "NEC 314.16", description: "Electrical box fill volume calculation", color: "purple", emoji: "📦" },
-  { id: "dwelling_standard", label: "Dwelling Load (Standard)", article: "NEC 220.40", description: "Single-family service — standard method", color: "orange", emoji: "🏠" },
-  { id: "dwelling_optional", label: "Dwelling Load (Optional)", article: "NEC 220.82", description: "Single-family service — optional method", color: "orange", emoji: "🏡" },
-  { id: "commercial_load", label: "Commercial Load", article: "NEC 220.40", description: "Lighting & receptacle demand for commercial", color: "red", emoji: "🏢" },
-  { id: "motor_full_load", label: "Motor Branch Circuit", article: "NEC 430.6 / 430.22", description: "Motor conductor, protection & overload sizing", color: "teal", emoji: "⚙️" },
-  { id: "motor_feeder", label: "Motor Feeder / Service", article: "NEC 430.24 / 430.62", description: "Feeder & service for multiple motors", color: "teal", emoji: "🔧" },
-  { id: "conduit_fill", label: "Conduit Fill", article: "NEC Ch. 9 Table 1", description: "Max wire fill % for conduit types", color: "indigo", emoji: "🔵" },
-  { id: "transformer_sizing", label: "Transformer Sizing", article: "NEC 450.3", description: "kVA, conductor & OCPD sizing", color: "yellow", emoji: "🔋" },
-  { id: "overcurrent_protection", label: "Overcurrent Protection", article: "NEC 240.4 / 240.6", description: "Breaker/fuse sizing for conductors", color: "red", emoji: "🛡️" },
-  { id: "service_sizing", label: "Service Entrance", article: "NEC 230.42", description: "Service conductor & equipment sizing", color: "slate", emoji: "🏗️" },
-  { id: "generator_sizing", label: "Generator / Standby", article: "NEC 702 / 445", description: "Generator sizing and transfer switch", color: "green", emoji: "🔦" },
-  { id: "egc_sizing", label: "Equipment Grounding", article: "NEC 250.122", description: "EGC sizing based on OCPD rating", color: "amber", emoji: "🌍" },
-  { id: "grounding_electrode", label: "Grounding Electrode", article: "NEC 250.66", description: "GEC sizing from service conductor", color: "amber", emoji: "⛏️" },
-  { id: "main_bonding_jumper", label: "Main Bonding Jumper", article: "NEC 250.28(D)", description: "MBJ sizing at service entrance", color: "amber", emoji: "🔗" },
-  { id: "system_bonding_jumper", label: "System Bonding Jumper", article: "NEC 250.30(A)(1)", description: "SBJ sizing for separately derived systems", color: "amber", emoji: "⚡" },
-  { id: "gec_for_sds", label: "GEC for Separately Derived System", article: "NEC 250.30(A)(4)", description: "GEC sizing based on SDS secondary conductors", color: "amber", emoji: "🌱" },
-  { id: "bonding_jumper_parallel", label: "Bonding Jumper — Parallel Runs", article: "NEC 250.102(C)", description: "BJ sizing for conductors in parallel raceways", color: "amber", emoji: "🔀" },
-  { id: "supplemental_grounding_electrode", label: "Supplemental Grounding Electrode", article: "NEC 250.53(A)(2)", description: "Ground rod resistance check — 25Ω rule", color: "amber", emoji: "📍" },
-  { id: "multifamily_standard", label: "Multifamily Standard", article: "NEC 220.40", description: "Standard method for apartment buildings (3+ units)", color: "orange", emoji: "🏘️" },
-  { id: "multifamily_load", label: "Multifamily Optional", article: "NEC 220.84", description: "Optional method for apartment buildings (3+ units)", color: "orange", emoji: "🏚️" },
-  { id: "farm_load", label: "Farm Load Calculation", article: "NEC 220.102", description: "Demand factors for farm buildings & dwelling", color: "green", emoji: "🌾" },
-  { id: "fixed_electric_heat", label: "Fixed Electric Space Heating", article: "NEC 220.51", description: "100% load — no demand factor permitted", color: "red", emoji: "🔆" },
-  { id: "kitchen_equipment_demand", label: "Kitchen Equipment Demand", article: "NEC 220.56", description: "Commercial cooking equipment demand factors", color: "orange", emoji: "🍳" },
-  { id: "demand_factor", label: "Demand Factor", article: "NEC 220.42 / 220.44 / 220.47", description: "Lighting & receptacle demand factors", color: "blue", emoji: "📊" },
-  { id: "continuous_load", label: "Continuous Load & OCPD", article: "NEC 210.20 / 215.3", description: "125% rule for continuous loads", color: "red", emoji: "♾️" },
-  { id: "hvac_load", label: "HVAC / A/C Load", article: "NEC 440.32 / 440.33", description: "A/C & refrigeration circuit sizing", color: "cyan", emoji: "❄️" },
-  { id: "welding_receptacle", label: "Welder / Arc Welder", article: "NEC 630.11", description: "Arc welder conductor and OCPD sizing", color: "gray", emoji: "🔥" },
-  { id: "lighting_load", label: "Lighting Load", article: "NEC 220.12", description: "General lighting by occupancy type", color: "yellow", emoji: "💡" },
-  { id: "multiwire_branch", label: "Multiwire Branch Circuit", article: "NEC 210.4(B)", description: "Shared neutral load & balance check", color: "purple", emoji: "〰️" },
-  { id: "receptacle_load", label: "Receptacle Load", article: "NEC 220.14", description: "Commercial receptacle load calculation", color: "blue", emoji: "🔌" },
-  { id: "short_circuit", label: "Short-Circuit / Fault Current", article: "NEC 110.9 / 110.10", description: "Available fault current at transformer secondary", color: "red", emoji: "⚠️" },
-  { id: "power_factor", label: "Power Factor Correction", article: "IEEE / NEC 460", description: "Capacitor sizing to correct power factor", color: "green", emoji: "📐" },
-  { id: "three_phase_power", label: "Three-Phase Power", article: "NEC General", description: "3-phase kW, kVA, current & power factor", color: "indigo", emoji: "🔺" },
-  { id: "single_phase_power", label: "Single-Phase Power", article: "NEC General", description: "1-phase kW, kVA, current & power factor", color: "indigo", emoji: "🔹" },
-  { id: "pool_spa", label: "Pool / Spa", article: "NEC 680", description: "Bonding conductor & GFCI requirements", color: "cyan", emoji: "🏊" },
-  { id: "solar_pv", label: "Solar PV System", article: "NEC 690", description: "PV conductor, combiner & inverter sizing", color: "yellow", emoji: "☀️" },
-  { id: "ev_charging", label: "EV Charging / EVSE", article: "NEC 625", description: "EV supply equipment circuit sizing", color: "green", emoji: "🚗" },
-  { id: "data_center", label: "Critical / Data Center", article: "Engineering design", description: "IT equipment and UPS load planning", color: "slate", emoji: "🖥️" },
-  { id: "rv_park_load", label: "RV Park / Campsite Load", article: "NEC Table 551.73(A)", description: "Campground service & feeder load calculation", color: "green", emoji: "🚐" },
-  { id: "marina_shore_power", label: "Marina Shore Power", article: "NEC 555.12", description: "Marina shore power demand & service sizing", color: "cyan", emoji: "⚓" },
-  { id: "pull_box_sizing", label: "Pull Box Sizing", article: "NEC 314.28", description: "Straight, angle & U pull box dimensions", color: "purple", emoji: "📐" },
-  { id: "neutral_load", label: "Neutral Load", article: "NEC 220.61", description: "Feeder & service neutral load with permitted reductions", color: "orange", emoji: "⚖️" },
-];
+export { NEC_CATEGORIES };
 
 const gradientMap = {
   blue: "from-blue-500/20 to-blue-600/20",
@@ -102,22 +58,6 @@ const accentMap = {
   gray: "border-l-gray-500",
 };
 
-// Category groups keyed by the calculator `color` field, with friendly labels.
-const CATEGORY_GROUPS = [
-  { key: "amber", label: "Grounding & Bonding" },
-  { key: "orange", label: "Dwelling & Multi-family" },
-  { key: "red", label: "Overcurrent & Protection" },
-  { key: "teal", label: "Motors" },
-  { key: "blue", label: "General Load" },
-  { key: "green", label: "Power & Generation" },
-  { key: "purple", label: "Boxes & Circuits" },
-  { key: "indigo", label: "Conduit & Power Math" },
-  { key: "yellow", label: "Transformers & Lighting" },
-  { key: "slate", label: "Service & Critical" },
-  { key: "cyan", label: "HVAC & Wet Locations" },
-  { key: "gray", label: "Special Equipment" },
-];
-
 export default function NECCalculator() {
   const { calcId } = useParams();
   const navigate = useNavigate();
@@ -129,12 +69,19 @@ export default function NECCalculator() {
   const selectedCat = calcId ? NEC_CATEGORIES.find(c => c.id === calcId) : null;
   const calculatorAccess = useMemo(() => getCalculatorAccess(NEC_CATEGORIES, user), [user]);
 
-  const filtered = NEC_CATEGORIES.filter(c =>
+  const matchesActiveFilters = (c) =>
     (activeGroup === "all" || c.color === activeGroup) &&
     (c.label.toLowerCase().includes(search.toLowerCase()) ||
     c.article.toLowerCase().includes(search.toLowerCase()) ||
-    c.description.toLowerCase().includes(search.toLowerCase()))
-  );
+    c.description.toLowerCase().includes(search.toLowerCase()));
+
+  const visibleTierSections = calculatorAccess.tierSections
+    .map((section) => ({
+      ...section,
+      categories: section.categories.filter(matchesActiveFilters),
+    }))
+    .filter((section) => section.categories.length > 0);
+  const filteredCount = visibleTierSections.reduce((total, section) => total + section.categories.length, 0);
 
   const handleSelect = (id) => {
     if (!calculatorAccess.isAllowed(id)) {
@@ -154,6 +101,9 @@ export default function NECCalculator() {
   // Calculator detail view
   if (selectedCat) {
     const selectedLocked = !calculatorAccess.isAllowed(selectedCat.id);
+    const selectedTier = calculatorAccess.tierSections.find((section) =>
+      section.categories.some((category) => category.id === selectedCat.id)
+    );
     return (
       <AnimatePresence mode="wait">
         <motion.div
@@ -180,7 +130,7 @@ export default function NECCalculator() {
               <h1 className="mt-4 text-2xl font-extrabold text-foreground">{selectedCat.label} requires an upgrade</h1>
               <p className="mt-2 text-sm text-muted-foreground max-w-xl mx-auto">
                 Your current plan is {calculatorAccess.entitlement.label}, which includes {calculatorAccess.includedCount} of {calculatorAccess.totalCount} calculators.
-                Upgrade to unlock this calculator and any higher-tier tools.
+                Upgrade to {selectedTier?.label || "a higher tier"} to unlock this calculator and any higher-tier tools.
               </p>
               <button
                 type="button"
@@ -276,64 +226,91 @@ export default function NECCalculator() {
           })}
         </div>
 
-        {filtered.length === 0 && (
+        {filteredCount === 0 && (
           <div className="text-center py-12 text-muted-foreground text-sm">No calculations found</div>
         )}
 
-        {/* Category grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          {filtered.map((cat, i) => {
-            const locked = !calculatorAccess.isAllowed(cat.id);
+        {/* Tiered calculator groups */}
+        <div className="space-y-5">
+          {visibleTierSections.map((section, sectionIndex) => {
+            const sectionLocked = section.categories.every((cat) => !calculatorAccess.isAllowed(cat.id));
             return (
-              <motion.button
-                key={cat.id}
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.025, duration: 0.2 }}
-                onClick={() => handleSelect(cat.id)}
-                className={cn(
-                  "group relative text-left w-full rounded-2xl border border-border p-4 pl-5 bg-white shadow-md",
-                  "hover:shadow-xl hover:shadow-blue-100/60 hover:-translate-y-1 hover:border-blue-200 active:scale-[0.98] transition-all duration-300 ease-out",
-                  "focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500",
-                  "border-l-4",
-                  locked && "opacity-75",
-                  accentMap[cat.color]
-                )}
-              >
-                <div className="flex items-start gap-3">
-                  {/* Icon bubble */}
-                  <div className={cn(
-                    "w-12 h-12 rounded-2xl flex items-center justify-center text-xl flex-shrink-0",
-                    "bg-gradient-to-br shadow-sm ring-1 ring-black/5 group-hover:scale-105 transition-all duration-300",
-                    gradientMap[cat.color]
-                  )}>
-                    <span>{cat.emoji}</span>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <p className="text-sm font-bold text-foreground leading-snug">{cat.label}</p>
-                      {locked && (
+              <section key={section.planKey} className="space-y-3">
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h2 className="text-sm font-black text-foreground">{section.label}</h2>
+                      <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-bold text-muted-foreground">
+                        {section.categories.length} calculator{section.categories.length === 1 ? "" : "s"}
+                      </span>
+                      {sectionLocked && (
                         <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 text-amber-700 px-2 py-0.5 text-[10px] font-black">
                           <Lock className="w-3 h-3" />
-                          Upgrade
+                          Upgrade tier
                         </span>
                       )}
                     </div>
-                    <p className="text-[11px] text-muted-foreground mt-0.5 leading-snug">{cat.description}</p>
-                    <span className={cn(
-                      "inline-block mt-2 text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm",
-                      bgMap[cat.color]
-                    )}>
-                      {cat.article}
-                    </span>
+                    <p className="mt-1 text-xs text-muted-foreground">{section.description}</p>
                   </div>
-                  {locked ? (
-                    <Lock className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
-                  ) : (
-                    <ChevronRight className="w-4 h-4 text-muted-foreground/40 flex-shrink-0 mt-0.5 group-hover:text-blue-500 group-hover:translate-x-0.5 transition-all duration-300" />
-                  )}
                 </div>
-              </motion.button>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {section.categories.map((cat, i) => {
+                    const locked = !calculatorAccess.isAllowed(cat.id);
+                    return (
+                      <motion.button
+                        key={cat.id}
+                        initial={{ opacity: 0, y: 12 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: sectionIndex * 0.04 + i * 0.015, duration: 0.2 }}
+                        onClick={() => handleSelect(cat.id)}
+                        className={cn(
+                          "group relative text-left w-full rounded-2xl border border-border p-4 pl-5 bg-white shadow-md",
+                          "hover:shadow-xl hover:shadow-blue-100/60 hover:-translate-y-1 hover:border-blue-200 active:scale-[0.98] transition-all duration-300 ease-out",
+                          "focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500",
+                          "border-l-4",
+                          locked && "opacity-75",
+                          accentMap[cat.color]
+                        )}
+                      >
+                        <div className="flex items-start gap-3">
+                          {/* Icon bubble */}
+                          <div className={cn(
+                            "w-12 h-12 rounded-2xl flex items-center justify-center text-xl flex-shrink-0",
+                            "bg-gradient-to-br shadow-sm ring-1 ring-black/5 group-hover:scale-105 transition-all duration-300",
+                            gradientMap[cat.color]
+                          )}>
+                            <span>{cat.emoji}</span>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <p className="text-sm font-bold text-foreground leading-snug">{cat.label}</p>
+                              {locked && (
+                                <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 text-amber-700 px-2 py-0.5 text-[10px] font-black">
+                                  <Lock className="w-3 h-3" />
+                                  Upgrade
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-[11px] text-muted-foreground mt-0.5 leading-snug">{cat.description}</p>
+                            <span className={cn(
+                              "inline-block mt-2 text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm",
+                              bgMap[cat.color]
+                            )}>
+                              {cat.article}
+                            </span>
+                          </div>
+                          {locked ? (
+                            <Lock className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
+                          ) : (
+                            <ChevronRight className="w-4 h-4 text-muted-foreground/40 flex-shrink-0 mt-0.5 group-hover:text-blue-500 group-hover:translate-x-0.5 transition-all duration-300" />
+                          )}
+                        </div>
+                      </motion.button>
+                    );
+                  })}
+                </div>
+              </section>
             );
           })}
         </div>

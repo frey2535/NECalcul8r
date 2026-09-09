@@ -22,7 +22,7 @@ import { Badge } from "@/components/ui/badge";
 import { jsPDF } from "jspdf";
 import html2canvas from "html2canvas";
 import CalculatorPanel from "@/components/calculator/CalculatorPanel";
-import { NEC_CATEGORIES } from "@/pages/NECCalculator";
+import { NEC_CATEGORIES } from "@/data/calculatorCatalog";
 import {
   AlertDialog,
   AlertDialogAction,
