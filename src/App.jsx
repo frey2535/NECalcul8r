@@ -44,6 +44,7 @@ const Profile = lazy(lazyRetry(() => import('@/pages/Profile'), 'Profile'));
 const Purchase = lazy(lazyRetry(() => import('@/pages/Purchase'), 'Purchase'));
 const PrivacyPolicy = lazy(lazyRetry(() => import('@/pages/PrivacyPolicy'), 'PrivacyPolicy'));
 const TermsOfService = lazy(lazyRetry(() => import('@/pages/TermsOfService'), 'TermsOfService'));
+const EULA = lazy(lazyRetry(() => import('@/pages/EULA'), 'EULA'));
 
 function PageLoader() {
   return (
@@ -194,6 +195,7 @@ const AuthenticatedApp = () => {
         <Route path="/landing" element={<Landing />} />
         <Route path="/privacy" element={<PrivacyPolicy />} />
         <Route path="/terms" element={<TermsOfService />} />
+        <Route path="/eula" element={<EULA />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />

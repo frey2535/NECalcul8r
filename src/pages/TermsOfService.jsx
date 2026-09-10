@@ -20,7 +20,7 @@ export default function TermsOfService() {
           </div>
           <h1 className="text-2xl sm:text-3xl font-bold font-heading">Terms of Service</h1>
         </div>
-        <p className="text-sm text-muted-foreground mb-8">Last updated: July 19, 2026</p>
+        <p className="text-sm text-muted-foreground mb-8">Last updated: September 10, 2026</p>
 
         <div className="space-y-8 text-sm sm:text-base leading-relaxed">
           <section>
@@ -101,13 +101,30 @@ export default function TermsOfService() {
           <section>
             <h2 className="text-lg font-semibold mb-3">7. Subscription and Payment Terms</h2>
             <p className="text-muted-foreground">
-              NECalcul8r may offer a free trial followed by a paid subscription. Subscription fees
-              are billed through the app's payment provider (Stripe or the platform payment
-              service). By subscribing, you authorize recurring billing at the displayed rate until
-              you cancel. You may cancel at any time; access continues until the end of the current
-              billing period. Refunds are handled per the payment provider's policies and applicable
-              law. Prices may change with reasonable notice; existing subscriptions are unaffected
-              until renewal.
+              NECalcul8r may offer free starter access and paid subscriptions. How you are billed
+              depends on where you purchase:
+            </p>
+            <ul className="list-disc pl-5 mt-2 space-y-2 text-muted-foreground">
+              <li>
+                <strong className="text-foreground">Google Play (Android app):</strong> Individual
+                subscriptions are billed by Google. Manage or cancel under Google Play → Payments &amp;
+                subscriptions. Refunds follow Google Play&apos;s refund policies.
+              </li>
+              <li>
+                <strong className="text-foreground">Website / Stripe:</strong> Web and company
+                subscriptions are billed by Stripe. Cancel or change plans from Manage Billing in the
+                app, or via the Stripe customer portal. Refunds follow Stripe and applicable law.
+              </li>
+              <li>
+                <strong className="text-foreground">License keys:</strong> Keys sold by invoice,
+                Payment Link, or reseller unlock access when redeemed in the app and may have their
+                own expiry stated on the invoice.
+              </li>
+            </ul>
+            <p className="text-muted-foreground mt-2">
+              By subscribing, you authorize recurring billing at the displayed rate until you cancel.
+              Access continues until the end of the current paid period. Prices may change with
+              reasonable notice; existing subscriptions are unaffected until renewal.
             </p>
           </section>
 

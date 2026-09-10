@@ -236,6 +236,10 @@ export default function Profile() {
           <Link to="/terms" className="underline underline-offset-2 hover:text-foreground">
             Terms of Service
           </Link>
+          <span aria-hidden="true">·</span>
+          <Link to="/eula" className="underline underline-offset-2 hover:text-foreground">
+            EULA
+          </Link>
         </div>
       </div>
 

@@ -137,6 +137,24 @@ export const commerce = {
   },
 
   /**
+   * Redeem a license key sold outside Google Play (invoice, Payment Link, reseller).
+   * @param {{ code: string }} options
+   */
+  async activateLicenseKey(options = {}) {
+    const code = String(options.code || "").trim();
+    if (!code) throw new Error("Enter a license key.");
+    return invokeCommerceFunction("activate-license-key", { code });
+  },
+
+  /**
+   * Platform admin only — generate redeemable license keys.
+   * @param {{ planKey: string, seats?: number, maxRedemptions?: number, count?: number, note?: string, expiresAt?: string, accessExpiresAt?: string }} options
+   */
+  async generateLicenseKeys(options = {}) {
+    return invokeCommerceFunction("generate-license-key", options);
+  },
+
+  /**
    * @param {{ accountType?: string, planKey?: string, customerTierId?: string, calculatorTierId?: string, priceId?: string, quantity?: number, seats?: number }} options
    */
   async updateStripeSubscription(options = {}) {

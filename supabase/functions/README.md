@@ -10,8 +10,20 @@ supabase functions deploy create-stripe-portal-session
 supabase functions deploy grant-access
 supabase functions deploy stripe-webhook
 supabase functions deploy verify-google-play-purchase
+supabase functions deploy google-play-rtdn
+supabase functions deploy activate-license-key
+supabase functions deploy generate-license-key
 supabase functions deploy verify-apple-purchase
 supabase functions deploy create-cursor-agent
+```
+
+Required secrets for Google Play:
+
+```bash
+supabase secrets set GOOGLE_PLAY_PACKAGE_NAME=com.currentflow.necalcul8r
+supabase secrets set GOOGLE_PLAY_SERVICE_ACCOUNT_CREDENTIALS='{...}'
+supabase secrets set GOOGLE_PLAY_BASE_PLAN_ID=monthly
+supabase secrets set GOOGLE_PLAY_RTDN_TOKEN=optional-shared-secret
 ```
 
 Required secrets for Stripe:

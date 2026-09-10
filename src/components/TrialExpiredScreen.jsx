@@ -139,9 +139,9 @@ export default function TrialExpiredScreen({ user, status, blockReason }) {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-bold text-sm text-foreground">Request Access</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">Send a request to the NEC Suite team to review your account.</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">Send a request to Current Flow Consulting to review your account.</p>
                   <a
-                    href={`mailto:support@nec-suite.com?subject=Access Request&body=Email: ${user?.email || ''}`}
+                    href={`mailto:support@currentflowconsulting.org?subject=NECalcul8r Access Request&body=Email: ${user?.email || ''}`}
                     className="inline-block mt-2 text-xs font-bold text-blue-600 hover:underline"
                   >
                     Send Request →

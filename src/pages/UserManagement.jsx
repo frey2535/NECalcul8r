@@ -31,7 +31,7 @@ const TYPE_CFG = {
 
 const ACCESS_STATUS_OPTIONS = ["active", "trial", "expired", "disabled"];
 const ACCESS_TYPE_OPTIONS    = ["permanent", "trial", "paid", "buildrpro_included", "app_store"];
-const PURCHASE_SOURCE_OPTIONS = ["admin", "manual", "stripe", "app_store", "buildrpro"];
+const PURCHASE_SOURCE_OPTIONS = ["admin", "manual", "stripe", "app_store", "google_play", "license_key", "buildrpro"];
 const SUB_STATUS_OPTIONS     = ["active", "trialing", "cancelled", "past_due", "unpaid"];
 
 // ── Helpers ──────────────────────────────────────────────────────────────────

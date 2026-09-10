@@ -30,7 +30,7 @@ create table if not exists public.profiles (
   trial_start_date date,
   trial_end_date date,
   purchase_source text not null default 'manual' check (
-    purchase_source in ('manual', 'admin', 'stripe', 'company_external', 'buildrpro', 'google_play', 'apple_app_store', 'app_store')
+    purchase_source in ('manual', 'admin', 'stripe', 'company_external', 'buildrpro', 'google_play', 'apple_app_store', 'app_store', 'license_key')
   ),
   subscription_status text,
   created_date timestamptz not null default now(),
@@ -115,6 +115,25 @@ create table if not exists public.google_play_purchases (
   unique (package_name, purchase_token)
 );
 
+create table if not exists public.license_keys (
+  id uuid primary key default gen_random_uuid(),
+  code text not null unique,
+  plan_key text not null,
+  seats integer not null default 1,
+  max_redemptions integer not null default 1,
+  redemption_count integer not null default 0,
+  status text not null default 'active' check (status in ('active', 'exhausted', 'revoked')),
+  note text,
+  org_id uuid references public.organizations(id) on delete set null,
+  expires_at timestamptz,
+  access_expires_at timestamptz,
+  created_by uuid references public.profiles(id) on delete set null,
+  last_redeemed_by uuid references public.profiles(id) on delete set null,
+  last_redeemed_at timestamptz,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
 create table if not exists public.access_grants (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references public.profiles(id) on delete cascade,
@@ -146,6 +165,8 @@ create index if not exists entitlements_profile_id_idx on public.entitlements(pr
 create index if not exists entitlements_org_id_idx on public.entitlements(org_id);
 create index if not exists google_play_purchases_user_id_idx on public.google_play_purchases(user_id);
 create index if not exists google_play_purchases_product_id_idx on public.google_play_purchases(product_id);
+create index if not exists license_keys_code_idx on public.license_keys(code);
+create index if not exists license_keys_status_idx on public.license_keys(status);
 create index if not exists access_grants_user_id_idx on public.access_grants(user_id);
 create index if not exists access_grants_active_idx on public.access_grants(active);
 create index if not exists app_records_entity_type_idx on public.app_records(entity_type);
@@ -158,6 +179,7 @@ alter table public.subscriptions enable row level security;
 alter table public.entitlements enable row level security;
 alter table public.purchase_events enable row level security;
 alter table public.google_play_purchases enable row level security;
+alter table public.license_keys enable row level security;
 alter table public.access_grants enable row level security;
 alter table public.app_records enable row level security;
 
@@ -414,7 +436,7 @@ begin
     v_purchase_source := 'manual';
   end if;
 
-  if v_purchase_source not in ('manual', 'admin', 'stripe', 'company_external', 'buildrpro', 'google_play', 'apple_app_store', 'app_store') then
+  if v_purchase_source not in ('manual', 'admin', 'stripe', 'company_external', 'buildrpro', 'google_play', 'apple_app_store', 'app_store', 'license_key') then
     v_purchase_source := 'admin';
   end if;
 

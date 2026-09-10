@@ -259,9 +259,11 @@ Only profiles with `is_platform_admin = true` can launch a Cursor agent.
 
 ### Android Play Store purchase
 
-The Android build includes the Google Play Billing Library so Google Play Console can unlock subscription
-product setup. The in-app purchase UI, native purchase bridge, and server-side Google Play Developer API
-verification must still be completed before Android users can buy digital access inside the app.
+The Android build includes Google Play Billing Library, the in-app purchase UI,
+native purchase bridge, and server-side Google Play Developer API verification.
+Individual Android subscriptions use Play Billing; company plans and license keys
+are sold on the web (see `docs/direct-sales.md`). Deploy `google-play-rtdn` and
+connect Real-time developer notifications so cancellations/expirations sync.
 
 Target flow:
 
