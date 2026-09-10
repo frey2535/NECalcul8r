@@ -49,6 +49,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Read package version
+        id: package-version
+        run: |
+          package_version=$(node -p "require('./package.json').version")
+          echo "version=$package_version" >> "$GITHUB_OUTPUT"
+
       - name: Verify signing secrets
         env:
           ANDROID_UPLOAD_KEYSTORE_BASE64: ${{ secrets.ANDROID_UPLOAD_KEYSTORE_BASE64 }}
@@ -122,15 +128,15 @@ jobs:
         run: npm run android:bundle:release
 
       - name: Write checksum
-        run: sha256sum release/NECalcul8r-1.0.0.aab | tee release/NECalcul8r-1.0.0.aab.sha256
+        run: sha256sum "release/NECalcul8r-${{ steps.package-version.outputs.version }}.aab" | tee "release/NECalcul8r-${{ steps.package-version.outputs.version }}.aab.sha256"
 
       - name: Upload AAB artifact
         uses: actions/upload-artifact@v4
         with:
-          name: NECalcul8r-1.0.0-aab
+          name: NECalcul8r-${{ steps.package-version.outputs.version }}-aab
           path: |
-            release/NECalcul8r-1.0.0.aab
-            release/NECalcul8r-1.0.0.aab.sha256
+            release/NECalcul8r-${{ steps.package-version.outputs.version }}.aab
+            release/NECalcul8r-${{ steps.package-version.outputs.version }}.aab.sha256
           if-no-files-found: error
           retention-days: 30
 
@@ -151,6 +157,6 @@ jobs:
         with:
           serviceAccountJsonPlainText: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
           packageName: com.currentflow.necalcul8r
-          releaseFiles: release/NECalcul8r-1.0.0.aab
+          releaseFiles: release/NECalcul8r-${{ steps.package-version.outputs.version }}.aab
           tracks: ${{ inputs.play_track }}
           status: draft
