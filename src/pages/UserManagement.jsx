@@ -243,14 +243,15 @@ function UserCard({ user, onQuickAction, onSaveEdits, extendDays, isSaving, canG
     });
   };
 
-  const effectiveStatus = getEffectiveStatus(user);
-  const statusCfg = STATUS_CFG[effectiveStatus] || STATUS_CFG.trial;
-  const StatusIcon = statusCfg.icon;
-  const typeCfg = TYPE_CFG[user.access_type || 'trial'] || TYPE_CFG.trial;
-  const daysLeft = getDaysLeft(user);
   const isAdmin = user.is_platform_admin;
   const isDirty = Object.keys(edits).length > 0;
-  const purchasedTier = getPurchasedTier(user);
+  const previewUser = isDirty ? { ...user, ...edits } : user;
+  const effectiveStatus = getEffectiveStatus(previewUser);
+  const statusCfg = STATUS_CFG[effectiveStatus] || STATUS_CFG.trial;
+  const StatusIcon = statusCfg.icon;
+  const typeCfg = TYPE_CFG[previewUser.access_type || 'trial'] || TYPE_CFG.trial;
+  const daysLeft = getDaysLeft(previewUser);
+  const purchasedTier = getPurchasedTier(previewUser);
 
   const handleSave = () => { onSaveEdits(user.id, normalizeManualEdits(user, edits)); setEdits({}); };
 
@@ -264,6 +265,11 @@ function UserCard({ user, onQuickAction, onSaveEdits, extendDays, isSaving, canG
             <div className="min-w-0">
               <p className="text-sm font-bold text-foreground truncate">{user.full_name || "—"}</p>
               <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+              {isDirty && (
+                <p className="mt-0.5 text-[10px] font-bold uppercase tracking-wider text-blue-600">
+                  Previewing unsaved changes
+                </p>
+              )}
             </div>
           </div>
           <div className="flex items-center gap-1.5 flex-shrink-0">
@@ -282,11 +288,11 @@ function UserCard({ user, onQuickAction, onSaveEdits, extendDays, isSaving, canG
           <div className="mt-3 flex flex-wrap gap-2 text-xs">
             <div className="rounded-lg bg-muted/60 px-2.5 py-1.5">
               <span className="text-muted-foreground">Start: </span>
-              <span className="font-semibold text-foreground">{fmt(user.trial_start_date)}</span>
+              <span className="font-semibold text-foreground">{fmt(previewUser.trial_start_date)}</span>
             </div>
             <div className="rounded-lg bg-muted/60 px-2.5 py-1.5">
               <span className="text-muted-foreground">End: </span>
-              <span className="font-semibold text-foreground">{fmt(user.trial_end_date)}</span>
+              <span className="font-semibold text-foreground">{fmt(previewUser.trial_end_date)}</span>
             </div>
             {daysLeft !== null && (
               <div className="rounded-lg bg-muted/60 px-2.5 py-1.5">
@@ -296,16 +302,16 @@ function UserCard({ user, onQuickAction, onSaveEdits, extendDays, isSaving, canG
                 </span>
               </div>
             )}
-            {user.purchase_source && (
+            {previewUser.purchase_source && (
               <div className="rounded-lg bg-muted/60 px-2.5 py-1.5">
                 <span className="text-muted-foreground">Source: </span>
-                <span className="font-semibold text-foreground">{user.purchase_source}</span>
+                <span className="font-semibold text-foreground">{previewUser.purchase_source}</span>
               </div>
             )}
-            {user.subscription_status && (
+            {previewUser.subscription_status && (
               <div className="rounded-lg bg-muted/60 px-2.5 py-1.5">
                 <span className="text-muted-foreground">Sub: </span>
-                <span className="font-semibold text-foreground">{user.subscription_status}</span>
+                <span className="font-semibold text-foreground">{previewUser.subscription_status}</span>
               </div>
             )}
             <div className="rounded-lg bg-muted/60 px-2.5 py-1.5">
@@ -381,8 +387,15 @@ function UserCard({ user, onQuickAction, onSaveEdits, extendDays, isSaving, canG
                 onChange={setTestingPlan}
                 options={PLAN_OPTIONS}
               />
-              <div className="text-xs text-blue-800 dark:text-blue-200">
-                Selecting a tier prepares a platform-admin test grant. Click <strong>Save Changes</strong> to apply it.
+              <div className="space-y-2 text-xs text-blue-800 dark:text-blue-200">
+                <p>
+                  Selecting a tier previews it in the heading. Click <strong>Apply Tier / Save</strong> to change the user&apos;s app access.
+                </p>
+                {isDirty && (
+                  <Button size="sm" className="h-8 gap-1.5" onClick={handleSave} disabled={isSaving}>
+                    <Save className="w-3.5 h-3.5" /> Apply Tier / Save
+                  </Button>
+                )}
               </div>
             </div>
           </div>
