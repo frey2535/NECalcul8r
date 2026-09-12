@@ -34,13 +34,31 @@ function positiveNumber(value: unknown) {
 }
 
 function entitlementMetadata(payload: Record<string, unknown>, actorId: string) {
-  const planKey = String(payload.planKey || payload.plan_key || payload.calculatorTierId || payload.calculator_tier_id || "owner_full_access");
-  const plan = PLAN_ACCESS[planKey] || PLAN_ACCESS.owner_full_access;
-  const customerTierId = String(payload.customerTierId || payload.customer_tier_id || "");
-  const seats = positiveNumber(payload.seats);
+  const updates = typeof payload.updates === "object" && payload.updates !== null
+    ? payload.updates as Record<string, unknown>
+    : {};
+  const requestedAccessType = String(updates.access_type || payload.accessType || "");
+  const defaultPlanKey = requestedAccessType === "permanent" ? "owner_full_access" : "individual_36_plus";
+  const planKey = String(
+    payload.planKey
+    || payload.plan_key
+    || payload.calculatorTierId
+    || payload.calculator_tier_id
+    || updates.planKey
+    || updates.plan_key
+    || updates.calculatorTierId
+    || updates.calculator_tier_id
+    || defaultPlanKey
+  );
+  const plan = PLAN_ACCESS[planKey];
+  if (!plan) {
+    throw new Error(`Invalid plan key: ${planKey}`);
+  }
+  const customerTierId = String(payload.customerTierId || payload.customer_tier_id || updates.customerTierId || updates.customer_tier_id || "");
+  const seats = positiveNumber(payload.seats || updates.seats || updates.seat_limit);
 
   return {
-    note: payload.note || null,
+    note: payload.note || updates.note || null,
     granted_by: actorId,
     plan_key: planKey,
     customer_tier_id: customerTierId || null,

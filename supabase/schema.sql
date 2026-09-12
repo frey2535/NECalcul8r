@@ -380,6 +380,14 @@ declare
   v_trial_end_date date;
   v_purchase_source text;
   v_subscription_status text;
+  v_plan_key text;
+  v_customer_tier_id text;
+  v_calculator_tier_id text;
+  v_calculator_limit integer;
+  v_has_nec_tables boolean;
+  v_can_export_complete_reports boolean;
+  v_company_seat_limit integer;
+  v_seat_limit integer;
   v_entitlement_source text;
   v_entitlement_status text;
 begin
@@ -411,6 +419,42 @@ begin
   v_trial_end_date := coalesce(nullif(access_updates->>'trial_end_date', '')::date, target.trial_end_date);
   v_purchase_source := coalesce(nullif(access_updates->>'purchase_source', ''), nullif(grant_source, ''), target.purchase_source, 'manual');
   v_subscription_status := coalesce(nullif(access_updates->>'subscription_status', ''), target.subscription_status);
+  v_plan_key := coalesce(
+    nullif(access_updates->>'plan_key', ''),
+    nullif(access_updates->>'calculator_tier_id', ''),
+    case when v_access_type = 'permanent' then 'owner_full_access' else 'individual_36_plus' end
+  );
+  v_customer_tier_id := coalesce(
+    nullif(access_updates->>'customer_tier_id', ''),
+    case when v_plan_key like 'company_%' then v_plan_key else 'individual' end
+  );
+  v_calculator_tier_id := coalesce(nullif(access_updates->>'calculator_tier_id', ''), v_plan_key);
+
+  if v_plan_key not in ('free', 'individual_6_15', 'individual_16_25', 'individual_26_35', 'individual_36_plus', 'company_0_10', 'company_11_20', 'company_unlimited', 'owner_full_access') then
+    raise exception 'Invalid plan_key: %', v_plan_key using errcode = '22023';
+  end if;
+
+  v_calculator_limit := case
+    when nullif(access_updates->>'calculator_limit', '') is not null then (access_updates->>'calculator_limit')::integer
+    when v_plan_key = 'free' then 5
+    when v_plan_key = 'individual_6_15' then 15
+    when v_plan_key = 'individual_16_25' then 25
+    when v_plan_key = 'individual_26_35' then 35
+    else null
+  end;
+  v_has_nec_tables := coalesce(nullif(access_updates->>'has_nec_tables', '')::boolean, v_plan_key <> 'free');
+  v_can_export_complete_reports := coalesce(nullif(access_updates->>'can_export_complete_reports', '')::boolean, v_plan_key <> 'free');
+  v_company_seat_limit := case
+    when nullif(access_updates->>'company_seat_limit', '') is not null then (access_updates->>'company_seat_limit')::integer
+    when v_plan_key = 'company_0_10' then 10
+    when v_plan_key = 'company_11_20' then 20
+    else null
+  end;
+  v_seat_limit := case
+    when nullif(access_updates->>'seat_limit', '') is not null then (access_updates->>'seat_limit')::integer
+    when v_company_seat_limit is not null then v_company_seat_limit
+    else 1
+  end;
 
   if v_access_status not in ('trial', 'active', 'expired', 'disabled') then
     raise exception 'Invalid access_status: %', v_access_status using errcode = '22023';
@@ -507,17 +551,20 @@ begin
       v_access_type,
       'active',
       coalesce(v_subscription_status, 'active'),
-      1,
+      coalesce(v_seat_limit, 1),
       now(),
       null,
       jsonb_build_object(
         'granted_by', actor.id,
         'grant_source', grant_source,
-        'plan_key', case when v_access_type = 'permanent' then 'owner_full_access' else 'individual_36_plus' end,
-        'calculator_tier_id', case when v_access_type = 'permanent' then 'owner_full_access' else 'individual_36_plus' end,
-        'calculator_limit', null,
-        'has_nec_tables', true,
-        'can_export_complete_reports', true
+        'plan_key', v_plan_key,
+        'customer_tier_id', v_customer_tier_id,
+        'calculator_tier_id', v_calculator_tier_id,
+        'calculator_limit', v_calculator_limit,
+        'has_nec_tables', v_has_nec_tables,
+        'can_export_complete_reports', v_can_export_complete_reports,
+        'company_seat_limit', v_company_seat_limit,
+        'seat_limit', v_seat_limit
       )
     );
   else
@@ -532,7 +579,8 @@ begin
     'ok', true,
     'profile_id', target_profile_id,
     'access_status', v_access_status,
-    'access_type', v_access_type
+    'access_type', v_access_type,
+    'plan_key', v_plan_key
   );
 end;
 $$;
