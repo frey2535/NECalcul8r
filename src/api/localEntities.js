@@ -9,6 +9,14 @@ const USER_ACCESS_FIELDS = new Set([
   "trial_end_date",
   "purchase_source",
   "subscription_status",
+  "plan_key",
+  "customer_tier_id",
+  "calculator_tier_id",
+  "calculator_limit",
+  "has_nec_tables",
+  "can_export_complete_reports",
+  "company_seat_limit",
+  "seat_limit",
 ]);
 
 function matchesQuery(record, query) {

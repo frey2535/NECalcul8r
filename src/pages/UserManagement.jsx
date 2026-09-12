@@ -6,7 +6,7 @@ import { Users, Shield, Clock, CheckCircle, XCircle, Ban, RefreshCw, CreditCard,
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import { DEFAULT_PAID_PLAN_KEY, FREE_PLAN_KEY, OWNER_FULL_ACCESS_PLAN_KEY, getPlanOption } from "@/lib/pricing";
+import { DEFAULT_PAID_PLAN_KEY, FREE_PLAN_KEY, OWNER_FULL_ACCESS_PLAN_KEY, PLAN_CATALOG, getPlanOption } from "@/lib/pricing";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -33,6 +33,10 @@ const ACCESS_STATUS_OPTIONS = ["active", "trial", "expired", "disabled"];
 const ACCESS_TYPE_OPTIONS    = ["permanent", "trial", "paid", "buildrpro_included", "app_store"];
 const PURCHASE_SOURCE_OPTIONS = ["admin", "manual", "stripe", "app_store", "google_play", "license_key", "buildrpro"];
 const SUB_STATUS_OPTIONS     = ["active", "trialing", "cancelled", "past_due", "unpaid"];
+const PLAN_OPTIONS = PLAN_CATALOG.map((plan) => ({
+  value: plan.planKey,
+  label: `${plan.label} (${plan.priceLabel})`,
+}));
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -87,6 +91,58 @@ function getPurchasedTier(user) {
   };
 }
 
+function planTestPatch(planKey) {
+  const plan = getPlanOption(planKey);
+  if (plan.planKey === FREE_PLAN_KEY) {
+    return {
+      access_status: "trial",
+      access_type: "trial",
+      purchase_source: "manual",
+      subscription_status: undefined,
+      plan_key: FREE_PLAN_KEY,
+      customer_tier_id: "individual",
+      calculator_tier_id: FREE_PLAN_KEY,
+      calculator_limit: plan.calculatorLimit,
+      has_nec_tables: plan.hasNecTables,
+      can_export_complete_reports: plan.canExportCompleteReports,
+      company_seat_limit: null,
+      seat_limit: 1,
+    };
+  }
+
+  if (plan.planKey === OWNER_FULL_ACCESS_PLAN_KEY) {
+    return {
+      access_status: "active",
+      access_type: "permanent",
+      purchase_source: "admin",
+      subscription_status: "active",
+      plan_key: OWNER_FULL_ACCESS_PLAN_KEY,
+      customer_tier_id: "individual",
+      calculator_tier_id: OWNER_FULL_ACCESS_PLAN_KEY,
+      calculator_limit: null,
+      has_nec_tables: true,
+      can_export_complete_reports: true,
+      company_seat_limit: null,
+      seat_limit: 1,
+    };
+  }
+
+  return {
+    access_status: "active",
+    access_type: plan.accountType === "company" ? "external_company" : "paid",
+    purchase_source: "admin",
+    subscription_status: "active",
+    plan_key: plan.planKey,
+    customer_tier_id: plan.accountType === "company" ? plan.planKey : "individual",
+    calculator_tier_id: plan.planKey,
+    calculator_limit: plan.calculatorLimit,
+    has_nec_tables: plan.hasNecTables,
+    can_export_complete_reports: plan.canExportCompleteReports,
+    company_seat_limit: plan.companySeatLimit,
+    seat_limit: plan.companySeatLimit || 1,
+  };
+}
+
 function normalizeManualEdits(user, edits) {
   const updates = { ...edits };
   const nextStatus = updates.access_status ?? user.access_status;
@@ -114,7 +170,11 @@ function SelectField({ label, value, onChange, options }) {
         className="w-full h-8 rounded-lg border border-input bg-muted/50 px-2.5 text-xs font-medium text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring appearance-none"
       >
         <option value="">— none —</option>
-        {options.map(o => <option key={o} value={o}>{o}</option>)}
+        {options.map((option) => {
+          const optionValue = typeof option === "string" ? option : option.value;
+          const optionLabel = typeof option === "string" ? option : option.label;
+          return <option key={optionValue} value={optionValue}>{optionLabel}</option>;
+        })}
       </select>
     </div>
   );
@@ -139,6 +199,7 @@ function UserCard({ user, onQuickAction, onSaveEdits, extendDays, isSaving, canG
   const [expanded, setExpanded] = useState(false);
   const [edits, setEdits] = useState({});
   const set = k => v => setEdits(p => ({ ...p, [k]: v }));
+  const setTestingPlan = value => setEdits(p => ({ ...p, ...planTestPatch(value || FREE_PLAN_KEY) }));
   const setAccessStatus = value => {
     setEdits(p => {
       const next = { ...p, access_status: value };
@@ -276,6 +337,19 @@ function UserCard({ user, onQuickAction, onSaveEdits, extendDays, isSaving, canG
       {/* Expanded edit panel */}
       {canGrantAccess && expanded && !isAdmin && (
         <div className="border-t border-border/60 bg-muted/30 p-4 space-y-3">
+          <div className="rounded-xl border border-blue-200 bg-blue-50 p-3 dark:border-blue-900/60 dark:bg-blue-950/30">
+            <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-3 sm:items-end">
+              <SelectField
+                label="Testing Tier"
+                value={edits.plan_key ?? user.plan_key ?? user.calculator_tier_id ?? FREE_PLAN_KEY}
+                onChange={setTestingPlan}
+                options={PLAN_OPTIONS}
+              />
+              <div className="text-xs text-blue-800 dark:text-blue-200">
+                Selecting a tier prepares a platform-admin test grant. Click <strong>Save Changes</strong> to apply it.
+              </div>
+            </div>
+          </div>
           <div className="grid grid-cols-2 gap-3">
             <SelectField label="Access Status" value={edits.access_status ?? user.access_status} onChange={setAccessStatus} options={ACCESS_STATUS_OPTIONS} />
             <SelectField label="Access Type" value={edits.access_type ?? user.access_type} onChange={set('access_type')} options={ACCESS_TYPE_OPTIONS} />
@@ -283,6 +357,10 @@ function UserCard({ user, onQuickAction, onSaveEdits, extendDays, isSaving, canG
             <TextField label="Trial End" value={edits.trial_end_date ?? user.trial_end_date} onChange={set('trial_end_date')} type="date" />
             <SelectField label="Purchase Source" value={edits.purchase_source ?? user.purchase_source} onChange={set('purchase_source')} options={PURCHASE_SOURCE_OPTIONS} />
             <SelectField label="Subscription Status" value={edits.subscription_status ?? user.subscription_status} onChange={set('subscription_status')} options={SUB_STATUS_OPTIONS} />
+            <TextField label="Plan Key" value={edits.plan_key ?? user.plan_key ?? ""} onChange={set('plan_key')} placeholder="individual_6_15" />
+            <TextField label="Calculator Tier" value={edits.calculator_tier_id ?? user.calculator_tier_id ?? ""} onChange={set('calculator_tier_id')} placeholder="individual_6_15" />
+            <TextField label="Customer Tier" value={edits.customer_tier_id ?? user.customer_tier_id ?? ""} onChange={set('customer_tier_id')} placeholder="individual" />
+            <TextField label="Seat Limit" value={edits.seat_limit ?? user.seat_limit ?? ""} onChange={set('seat_limit')} type="number" />
           </div>
           <TextField label="BuildrPro Company ID" value={edits.buildrpro_company_id ?? user.buildrpro_company_id} onChange={set('buildrpro_company_id')} placeholder="e.g. bpro_abc123" />
           <div className="space-y-1">

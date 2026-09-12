@@ -12,6 +12,14 @@ const USER_UPDATE_FIELDS = [
   "trial_end_date",
   "purchase_source",
   "subscription_status",
+  "plan_key",
+  "customer_tier_id",
+  "calculator_tier_id",
+  "calculator_limit",
+  "has_nec_tables",
+  "can_export_complete_reports",
+  "company_seat_limit",
+  "seat_limit",
 ];
 
 const SELF_UPDATE_FIELDS = new Set(["full_name"]);
