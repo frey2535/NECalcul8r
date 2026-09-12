@@ -428,7 +428,10 @@ begin
     nullif(access_updates->>'customer_tier_id', ''),
     case when v_plan_key like 'company_%' then v_plan_key else 'individual' end
   );
-  v_calculator_tier_id := coalesce(nullif(access_updates->>'calculator_tier_id', ''), v_plan_key);
+  v_calculator_tier_id := coalesce(
+    nullif(access_updates->>'calculator_tier_id', ''),
+    case when v_plan_key like 'company_%' then 'individual_36_plus' else v_plan_key end
+  );
 
   if v_plan_key not in ('free', 'individual_6_15', 'individual_16_25', 'individual_26_35', 'individual_36_plus', 'company_0_10', 'company_11_20', 'company_unlimited', 'owner_full_access') then
     raise exception 'Invalid plan_key: %', v_plan_key using errcode = '22023';

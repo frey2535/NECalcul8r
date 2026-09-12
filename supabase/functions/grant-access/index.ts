@@ -55,6 +55,13 @@ function entitlementMetadata(payload: Record<string, unknown>, actorId: string) 
     throw new Error(`Invalid plan key: ${planKey}`);
   }
   const customerTierId = String(payload.customerTierId || payload.customer_tier_id || updates.customerTierId || updates.customer_tier_id || "");
+  const calculatorTierId = String(
+    payload.calculatorTierId
+    || payload.calculator_tier_id
+    || updates.calculatorTierId
+    || updates.calculator_tier_id
+    || (planKey.startsWith("company_") ? "individual_36_plus" : planKey)
+  );
   const seats = positiveNumber(payload.seats || updates.seats || updates.seat_limit);
 
   return {
@@ -62,7 +69,7 @@ function entitlementMetadata(payload: Record<string, unknown>, actorId: string) 
     granted_by: actorId,
     plan_key: planKey,
     customer_tier_id: customerTierId || null,
-    calculator_tier_id: planKey,
+    calculator_tier_id: calculatorTierId,
     calculator_limit: plan.calculatorLimit,
     has_nec_tables: plan.hasNecTables,
     can_export_complete_reports: plan.canExportCompleteReports,
