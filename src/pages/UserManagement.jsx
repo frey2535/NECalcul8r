@@ -6,7 +6,15 @@ import { Users, Shield, Clock, CheckCircle, XCircle, Ban, RefreshCw, CreditCard,
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import { DEFAULT_PAID_PLAN_KEY, FREE_PLAN_KEY, OWNER_FULL_ACCESS_PLAN_KEY, PLAN_CATALOG, getPlanOption } from "@/lib/pricing";
+import {
+  CALCULATOR_TIERS,
+  CUSTOMER_TIERS,
+  DEFAULT_PAID_PLAN_KEY,
+  FREE_PLAN_KEY,
+  OWNER_FULL_ACCESS_PLAN_KEY,
+  PLAN_CATALOG,
+  getPlanOption,
+} from "@/lib/pricing";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -78,16 +86,37 @@ function getPurchasedTier(user) {
     || (user.access_type === "permanent" ? OWNER_FULL_ACCESS_PLAN_KEY : null)
     || (user.access_type === "paid" && user.access_status === "active" ? DEFAULT_PAID_PLAN_KEY : FREE_PLAN_KEY);
   const plan = getPlanOption(planKey);
-  const accessDetail = plan.accountType === "company"
-    ? `Seats: ${plan.companySeatLimit == null ? "Unlimited" : plan.companySeatLimit}`
-    : plan.calculatorLimit == null
-      ? "Calculators: All"
-      : `Calculators: ${plan.calculatorLimit}`;
+  const isCompanyUser = plan.accountType === "company"
+    || user.access_type === "external_company"
+    || user.access_type === "company_seat"
+    || user.org_role === "owner"
+    || user.org_role === "member"
+    || String(user.customer_tier_id || "").startsWith("company");
+  const customerTier = CUSTOMER_TIERS.find((tier) => tier.id === user.customer_tier_id)
+    || (plan.accountType === "company" ? CUSTOMER_TIERS.find((tier) => tier.id === plan.planKey) : null);
+  const calculatorTierId = user.calculator_tier_id
+    || (plan.accountType === "company" ? DEFAULT_PAID_PLAN_KEY : plan.planKey);
+  const calculatorTier = CALCULATOR_TIERS.find((tier) => tier.id === calculatorTierId)
+    || CALCULATOR_TIERS.find((tier) => tier.id === FREE_PLAN_KEY);
+  const accountLabel = customerTier?.label || (isCompanyUser ? "Company account" : "Individual account");
+  const accountDetail = customerTier?.accountType === "individual"
+    ? "One user account"
+    : customerTier?.seatLimit == null
+    ? (isCompanyUser ? "Seats: Unlimited/managed" : "One user account")
+    : `Seats: ${customerTier.seatLimit}`;
+  const calculatorLabel = plan.planKey === OWNER_FULL_ACCESS_PLAN_KEY
+    ? "Owner full access"
+    : calculatorTier.label;
+  const calculatorDetail = plan.planKey === OWNER_FULL_ACCESS_PLAN_KEY || calculatorTier.calculatorLimit == null
+    ? "All calculators"
+    : `${calculatorTier.calculatorLimit} calculators`;
 
   return {
-    label: plan.label,
+    accountLabel,
+    accountDetail,
+    calculatorLabel,
+    calculatorDetail,
     price: plan.priceLabel,
-    detail: accessDetail,
   };
 }
 
@@ -134,7 +163,7 @@ function planTestPatch(planKey) {
     subscription_status: "active",
     plan_key: plan.planKey,
     customer_tier_id: plan.accountType === "company" ? plan.planKey : "individual",
-    calculator_tier_id: plan.planKey,
+    calculator_tier_id: plan.accountType === "company" ? DEFAULT_PAID_PLAN_KEY : plan.planKey,
     calculator_limit: plan.calculatorLimit,
     has_nec_tables: plan.hasNecTables,
     can_export_complete_reports: plan.canExportCompleteReports,
@@ -280,13 +309,20 @@ function UserCard({ user, onQuickAction, onSaveEdits, extendDays, isSaving, canG
               </div>
             )}
             <div className="rounded-lg bg-muted/60 px-2.5 py-1.5">
-              <span className="text-muted-foreground">Tier: </span>
-              <span className="font-semibold text-foreground">{purchasedTier.label}</span>
+              <span className="text-muted-foreground">Account: </span>
+              <span className="font-semibold text-foreground">{purchasedTier.accountLabel}</span>
               <span className="text-muted-foreground"> · </span>
-              <span className="font-semibold text-foreground">{purchasedTier.price}</span>
+              <span className="font-semibold text-foreground">{purchasedTier.accountDetail}</span>
             </div>
             <div className="rounded-lg bg-muted/60 px-2.5 py-1.5">
-              <span className="text-muted-foreground">{purchasedTier.detail}</span>
+              <span className="text-muted-foreground">Calculators: </span>
+              <span className="font-semibold text-foreground">{purchasedTier.calculatorLabel}</span>
+              <span className="text-muted-foreground"> · </span>
+              <span className="font-semibold text-foreground">{purchasedTier.calculatorDetail}</span>
+            </div>
+            <div className="rounded-lg bg-muted/60 px-2.5 py-1.5">
+              <span className="text-muted-foreground">Price: </span>
+              <span className="font-semibold text-foreground">{purchasedTier.price}</span>
             </div>
           </div>
         )}
