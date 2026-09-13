@@ -59,8 +59,8 @@ security definer
 set search_path = public
 as $$
 declare
-  actor public.profiles;
-  target public.profiles;
+  actor record;
+  target record;
   v_access_status text;
   v_access_type text;
   v_trial_start_date date;
