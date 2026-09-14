@@ -58,24 +58,24 @@ function TableRow({ t, year }) {
   return (
     <div className={cn(
       "rounded-xl border transition-all overflow-hidden shadow-sm hover:shadow-md",
-      open ? "border-blue-200 shadow-md" : "border-border bg-white hover:border-blue-200"
+      open ? "border-blue-200 bg-white shadow-md" : "border-border bg-white hover:border-blue-200"
     )}>
       <button
         onClick={() => setOpen(p => !p)}
-        className="w-full flex items-center justify-between px-4 py-3.5 hover:bg-slate-50 active:bg-slate-100 transition-colors text-left gap-3"
+        className="w-full flex items-center justify-between px-4 py-3.5 text-slate-950 hover:bg-slate-50 active:bg-slate-100 transition-colors text-left gap-3"
       >
         <div className="flex items-start gap-2.5 min-w-0 flex-1">
           <span className="inline-block mt-0.5 text-[10px] font-bold text-blue-600 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-full flex-shrink-0">
             {resolved.article}
           </span>
-          <span className="text-sm font-semibold text-foreground leading-snug">{resolved.title}</span>
+          <span className="text-sm font-semibold text-slate-950 leading-snug">{resolved.title}</span>
           {(t.dynamicSource || t.yearRefs) && (
             <span className="inline-flex items-center gap-1 text-[9px] font-bold text-violet-600 bg-violet-50 border border-violet-200 px-1.5 py-0.5 rounded-full flex-shrink-0">
               <FlaskConical className="w-2.5 h-2.5" /> NEC {year}
             </span>
           )}
         </div>
-        <div className="flex-shrink-0 text-muted-foreground">
+        <div className="flex-shrink-0 text-slate-500">
           {open
             ? <ChevronUp className="w-4 h-4" />
             : <ChevronDown className="w-4 h-4" />
@@ -154,7 +154,7 @@ export default function NECTables() {
       <div className="relative">
         <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
         <Input
-          className="pl-10 h-11 rounded-xl border-border/60 bg-white shadow-sm text-sm"
+          className="pl-10 h-11 rounded-xl border-border/60 bg-white text-slate-950 placeholder:text-slate-500 shadow-sm text-sm"
           placeholder="Search by article, title, or value..."
           value={search}
           onChange={e => setSearch(e.target.value)}
