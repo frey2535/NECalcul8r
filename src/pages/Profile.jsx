@@ -4,6 +4,7 @@ import { User, Trash2, LogOut, ShieldAlert, Users, FolderOpen, Download, Shoppin
 import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { isStandaloneDisplay, refreshApp } from "@/lib/pwa";
+import { openGooglePlaySubscriptionManagement } from "@/lib/googlePlayBilling";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -42,6 +43,8 @@ export default function Profile() {
   const isPlatformAdmin = Boolean(user?.is_platform_admin);
   const canManageUsers = isPlatformAdmin || user?.org_role === "owner";
   const profileBadgeLabel = getProfileBadgeLabel(user);
+  const isGooglePlayBillingUser = user?.purchase_source === "google_play" || user?.access_type === "google_play";
+  const canManageBilling = isGooglePlayBillingUser || base44.commerce?.isConfigured;
 
   useEffect(() => {
     base44.auth.me().then(setUser).catch(() => {});
@@ -66,6 +69,11 @@ export default function Profile() {
     setBillingError("");
     setBillingLoading(true);
     try {
+      if (isGooglePlayBillingUser) {
+        openGooglePlaySubscriptionManagement(user?.plan_key || user?.calculator_tier_id);
+        setBillingLoading(false);
+        return;
+      }
       await base44.commerce.openBillingPortal();
     } catch (error) {
       setBillingError(error.message || "Could not open billing. Please contact sales.");
@@ -154,7 +162,7 @@ export default function Profile() {
           <ShoppingCart className="w-4 h-4 text-muted-foreground" />
           Purchase Now
         </Link>
-        {base44.commerce?.isConfigured && (
+        {canManageBilling && (
           <button
             type="button"
             onClick={handleBillingPortal}
@@ -162,7 +170,7 @@ export default function Profile() {
             className="w-full flex items-center gap-3 px-5 py-4 text-sm font-semibold text-foreground hover:bg-muted active:bg-muted/80 disabled:opacity-60 transition-colors border-t border-border/40"
           >
             <CreditCard className="w-4 h-4 text-muted-foreground" />
-            Manage Billing
+            {isGooglePlayBillingUser ? "Manage Google Play Subscription" : "Manage Billing"}
           </button>
         )}
         {billingError && (

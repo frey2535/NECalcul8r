@@ -1,9 +1,10 @@
 import { Capacitor, registerPlugin } from "@capacitor/core";
 import { base44 } from "@/api/base44Client";
-import { GOOGLE_PLAY_PRODUCT_IDS } from "@/lib/pricing";
+import { GOOGLE_PLAY_PRODUCT_IDS, getPlanOption } from "@/lib/pricing";
 
 const GooglePlayBilling = registerPlugin("GooglePlayBilling");
 const GOOGLE_PLAY_BASE_PLAN_ID = import.meta.env?.VITE_GOOGLE_PLAY_BASE_PLAN_ID || "monthly";
+const ANDROID_PACKAGE_NAME = import.meta.env?.VITE_ANDROID_PACKAGE_NAME || "com.currentflow.necalcul8r";
 
 export function isAndroidNativeApp() {
   return Capacitor.getPlatform?.() === "android" && Capacitor.isNativePlatform?.();
@@ -30,6 +31,18 @@ export async function purchaseGooglePlayPlan(plan) {
 export async function restoreGooglePlayPurchases() {
   const result = await GooglePlayBilling.restorePurchases();
   return verifyGooglePlayPurchases(result?.purchases || []);
+}
+
+export function googlePlaySubscriptionManagementUrl(planKey) {
+  const productId = getPlanOption(planKey)?.googlePlayProductId;
+  const url = new URL("https://play.google.com/store/account/subscriptions");
+  url.searchParams.set("package", ANDROID_PACKAGE_NAME);
+  if (productId) url.searchParams.set("sku", productId);
+  return url.toString();
+}
+
+export function openGooglePlaySubscriptionManagement(planKey) {
+  window.location.assign(googlePlaySubscriptionManagementUrl(planKey));
 }
 
 async function verifyGooglePlayPurchases(purchases) {
