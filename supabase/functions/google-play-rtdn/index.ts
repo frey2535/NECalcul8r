@@ -71,11 +71,14 @@ Deno.serve(async (req) => {
     }
 
     const client = serviceClient();
-    const { data: existing } = await client
+    let purchaseQuery = client
       .from("google_play_purchases")
-      .select("user_id, product_id, purchase_token")
-      .eq("purchase_token", purchaseToken)
-      .maybeSingle();
+      .select("user_id, product_id, purchase_token, package_name")
+      .eq("purchase_token", purchaseToken);
+    if (packageName) {
+      purchaseQuery = purchaseQuery.eq("package_name", packageName);
+    }
+    const { data: existing } = await purchaseQuery.maybeSingle();
 
     if (!existing?.user_id) {
       // User will pick this up via Restore Purchases / next verify call.
