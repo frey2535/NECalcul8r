@@ -27,6 +27,13 @@ Deno.serve(async (req) => {
 
   try {
     const { client, user } = await requireUser(req);
+    const clientPlatform = req.headers.get("x-necalcul8r-client-platform") || "";
+    if (clientPlatform.toLowerCase() === "android") {
+      return jsonResponse({
+        error: "License keys cannot be redeemed in the Android app. Use Google Play Billing for individual subscriptions or contact your organization administrator for company access.",
+      }, 400);
+    }
+
     const payload = await req.json().catch(() => ({}));
     const code = normalizeCode(String(payload.code || payload.licenseKey || ""));
     if (!code || code.length < 8) {
