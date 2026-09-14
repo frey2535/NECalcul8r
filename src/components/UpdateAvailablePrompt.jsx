@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { RefreshCw, X } from "lucide-react";
 
 export default function UpdateAvailablePrompt() {
@@ -16,9 +16,7 @@ export default function UpdateAvailablePrompt() {
     return () => window.removeEventListener("necalcul8r-update-available", onUpdateAvailable);
   }, []);
 
-  if (!update) return null;
-
-  const applyUpdate = async () => {
+  const applyUpdate = useCallback(async () => {
     if (applying) return;
     setApplying(true);
     if (update?.targetSha) {
@@ -56,7 +54,17 @@ export default function UpdateAvailablePrompt() {
     nextUrl.searchParams.set("t", String(Date.now()));
     if (update?.targetSha) nextUrl.searchParams.set("build", update.targetSha);
     window.location.replace(nextUrl.toString());
-  };
+  }, [applying, update]);
+
+  useEffect(() => {
+    if (!update?.required || applying) return undefined;
+    const timer = window.setTimeout(() => {
+      applyUpdate();
+    }, Number(update.autoApplyAfterMs) || 8000);
+    return () => window.clearTimeout(timer);
+  }, [applying, applyUpdate, update]);
+
+  if (!update) return null;
 
   return (
     <div className="fixed left-3 right-3 bottom-3 z-[80] sm:left-auto sm:right-5 sm:max-w-sm">
@@ -68,7 +76,7 @@ export default function UpdateAvailablePrompt() {
           <div className="min-w-0 flex-1">
             <p className="text-sm font-bold text-foreground">Update available</p>
             <p className="text-xs text-muted-foreground mt-0.5">
-              A newer version of NECalcul8r is ready. Update to get the latest fixes.
+              A newer version of NECalcul8r is ready. {update.required ? "It will install automatically to keep the app working correctly." : "Update to get the latest fixes."}
             </p>
             <div className="flex items-center gap-2 mt-3">
               <button
@@ -79,26 +87,30 @@ export default function UpdateAvailablePrompt() {
               >
                 {applying ? "Updating..." : "Update now"}
               </button>
-              <button
-                type="button"
-                onClick={() => setUpdate(null)}
-                className="rounded-lg bg-muted hover:bg-muted/80 text-muted-foreground text-xs font-bold px-3 py-1.5 transition-colors"
-              >
-                Later
-              </button>
+              {!update.required && (
+                <button
+                  type="button"
+                  onClick={() => setUpdate(null)}
+                  className="rounded-lg bg-muted hover:bg-muted/80 text-muted-foreground text-xs font-bold px-3 py-1.5 transition-colors"
+                >
+                  Later
+                </button>
+              )}
             </div>
           </div>
-          <button
-            type="button"
-            onClick={(event) => {
-              event.stopPropagation();
-              setUpdate(null);
-            }}
-            className="w-7 h-7 rounded-full hover:bg-muted flex items-center justify-center text-muted-foreground transition-colors"
-            aria-label="Dismiss update"
-          >
-            <X className="w-4 h-4" />
-          </button>
+          {!update.required && (
+            <button
+              type="button"
+              onClick={(event) => {
+                event.stopPropagation();
+                setUpdate(null);
+              }}
+              className="w-7 h-7 rounded-full hover:bg-muted flex items-center justify-center text-muted-foreground transition-colors"
+              aria-label="Dismiss update"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
         </div>
       </div>
     </div>

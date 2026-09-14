@@ -2,6 +2,7 @@ const UPDATE_ATTEMPT_KEY = "necalcul8r_update_attempted_sha";
 const UPDATE_ATTEMPT_RETRY_MS = 15 * 60 * 1000;
 const UPDATE_IN_PROGRESS_KEY = "necalcul8r_update_in_progress";
 const STALE_ASSET_RELOADED_KEY = "necalcul8r_stale_asset_reloaded";
+const MANDATORY_UPDATE_AUTO_APPLY_MS = 8000;
 
 export function registerServiceWorker() {
   if (typeof window === "undefined") return;
@@ -10,6 +11,11 @@ export function registerServiceWorker() {
     watchForBuildUpdates();
     return;
   }
+  navigator.serviceWorker.addEventListener("message", (event) => {
+    if (event.data?.type === "NECALCUL8R_SW_UPDATED") {
+      reloadFresh();
+    }
+  });
   if (new URL(window.location.href).searchParams.has("t")) {
     window.setTimeout(() => {
       sessionStorage.removeItem(UPDATE_IN_PROGRESS_KEY);
@@ -22,6 +28,8 @@ export function registerServiceWorker() {
         if (!registration.waiting || !navigator.serviceWorker.controller) return;
         dispatchUpdateAvailable({
           source: "service-worker",
+          required: true,
+          autoApplyAfterMs: MANDATORY_UPDATE_AUTO_APPLY_MS,
           applyUpdate: () => applyServiceWorkerUpdate(registration),
         });
       };
@@ -131,6 +139,8 @@ function watchForBuildUpdates() {
       dispatchUpdateAvailable({
         source: "build-version",
         targetSha: next.sha,
+        required: true,
+        autoApplyAfterMs: MANDATORY_UPDATE_AUTO_APPLY_MS,
         applyUpdate: () => reloadFresh(next.sha),
       });
     } catch {

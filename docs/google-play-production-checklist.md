@@ -118,6 +118,7 @@ Install from the Play internal testing track on a real Android device and verify
 - Expired subscription removes paid access after expiration (RTDN or next verify)
 - Company plan CTA does **not** open Stripe Checkout inside the Android app
 - App opens to the bundled home/login screen with airplane mode enabled; online-only features may require connectivity, but the shell should not be a remote-only WebView
+- Existing installed PWA/browser app sessions receive the new service worker, clear stale caches, and reload with a cache-busted URL instead of requiring users to delete/reinstall
 
 ## 8. Production access
 

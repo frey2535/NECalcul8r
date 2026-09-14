@@ -1,19 +1,30 @@
-const CACHE = "necalcul8r-shell-v3";
+const CACHE = "necalcul8r-shell-v4";
 const SHELL_ASSETS = ["/logo.png", "/icon-192.png", "/icon-512.png", "/apple-touch-icon.png"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
     caches.open(CACHE).then((cache) =>
       cache.addAll(SHELL_ASSETS).catch(() => undefined)
-    )
+    ).then(() => self.skipWaiting())
   );
 });
 
 self.addEventListener("activate", (event) => {
   event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(keys.filter((key) => key !== CACHE).map((key) => caches.delete(key)))
-    ).then(() => self.clients.claim())
+    caches.keys().then(async (keys) => {
+      const oldCaches = keys.filter((key) => key !== CACHE);
+      await Promise.all(oldCaches.map((key) => caches.delete(key)));
+      await self.clients.claim();
+      if (oldCaches.length === 0) return;
+      const clients = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+      await Promise.all(clients.map((client) => {
+        const url = new URL(client.url);
+        if (url.searchParams.get("sw") === CACHE) return client.postMessage({ type: "NECALCUL8R_SW_UPDATED", cache: CACHE });
+        url.searchParams.set("t", String(Date.now()));
+        url.searchParams.set("sw", CACHE);
+        return client.navigate(url.toString()).catch(() => client.postMessage({ type: "NECALCUL8R_SW_UPDATED", cache: CACHE }));
+      }));
+    })
   );
 });
 
