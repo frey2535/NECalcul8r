@@ -7,12 +7,33 @@ import { supabaseAuth } from "./supabaseAuth";
 import { supabaseEntities } from "./supabaseEntities";
 import { supabaseIntegrations } from "./supabaseIntegrations";
 import { invokeSupabaseFunction } from "./supabaseFunctions";
-import { isSupabaseConfigured } from "./supabaseClient";
+import { isLocalAuthFallbackEnabled, isProductionAuthMisconfigured, isSupabaseConfigured } from "./supabaseClient";
 import { ARTICLE_VERIFICATION_SEED } from "@/data/seedArticleVerifications";
 
-if (!isSupabaseConfigured) seedIfNeeded(ARTICLE_VERIFICATION_SEED);
+if (isLocalAuthFallbackEnabled) seedIfNeeded(ARTICLE_VERIFICATION_SEED);
 
-const auth = isSupabaseConfigured ? supabaseAuth : localAuth;
+function productionAuthConfigError() {
+  throw new Error("Production authentication is not configured. Update the app so Supabase auth is enabled; device-local login is disabled for hosted builds.");
+}
+
+const unconfiguredAuth = {
+  me: productionAuthConfigError,
+  loginViaEmailPassword: productionAuthConfigError,
+  register: productionAuthConfigError,
+  resetPasswordRequest: productionAuthConfigError,
+  resetPassword: productionAuthConfigError,
+  deleteAccount: productionAuthConfigError,
+  setToken: () => {},
+  logout: () => {
+    if (typeof window !== "undefined") window.location.href = "/landing";
+  },
+  redirectToLogin: () => {
+    if (typeof window !== "undefined") window.location.href = "/login";
+  },
+  loginWithProvider: productionAuthConfigError,
+};
+
+const auth = isSupabaseConfigured ? supabaseAuth : isProductionAuthMisconfigured ? unconfiguredAuth : localAuth;
 const entities = isSupabaseConfigured ? supabaseEntities : localEntities;
 const integrations = isSupabaseConfigured ? supabaseIntegrations : localIntegrations;
 const invoke = isSupabaseConfigured ? invokeSupabaseFunction : invokeFunction;

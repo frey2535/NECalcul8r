@@ -48,6 +48,11 @@ VITE_CALCULATOR_TIER_GROUPS_JSON=
 
 When Supabase env vars are present, the API facade switches to centralized Supabase auth, profiles, organizations, subscriptions, entitlements, and app records. Stripe and app-store purchase verification should be handled by Supabase Edge Functions so secret keys never ship to the browser.
 
+Production and hosted builds must include both `VITE_SUPABASE_URL` and
+`VITE_SUPABASE_ANON_KEY`. If either value is missing, device-local demo auth is
+disabled outside localhost so accounts do not accidentally exist on only one
+browser or device.
+
 For Android production submission steps, see [`docs/google-play-production-checklist.md`](docs/google-play-production-checklist.md).
 
 To sell outside Google Play (Stripe website + license keys), see [`docs/direct-sales.md`](docs/direct-sales.md).
