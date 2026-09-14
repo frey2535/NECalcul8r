@@ -4,6 +4,7 @@ import { User, Trash2, LogOut, ShieldAlert, Users, FolderOpen, Download, Shoppin
 import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { isStandaloneDisplay, refreshApp } from "@/lib/pwa";
+import { openGooglePlaySubscriptionManagement } from "@/lib/googlePlayBilling";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -35,12 +36,15 @@ export default function Profile() {
   const [user, setUser] = React.useState(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
   const [billingLoading, setBillingLoading] = useState(false);
   const [billingError, setBillingError] = useState("");
   const [refreshing, setRefreshing] = useState(false);
   const isPlatformAdmin = Boolean(user?.is_platform_admin);
   const canManageUsers = isPlatformAdmin || user?.org_role === "owner";
   const profileBadgeLabel = getProfileBadgeLabel(user);
+  const isGooglePlayBillingUser = user?.purchase_source === "google_play" || user?.access_type === "google_play";
+  const canManageBilling = isGooglePlayBillingUser || base44.commerce?.isConfigured;
 
   useEffect(() => {
     base44.auth.me().then(setUser).catch(() => {});
@@ -52,10 +56,11 @@ export default function Profile() {
 
   const handleDeleteAccount = async () => {
     setIsDeleting(true);
+    setDeleteError("");
     try {
-      // Delete user's own data then logout
-      await base44.auth.logout();
-    } catch {
+      await base44.auth.deleteAccount();
+    } catch (error) {
+      setDeleteError(error.message || "Could not delete your account. Please contact support.");
       setIsDeleting(false);
     }
   };
@@ -64,6 +69,11 @@ export default function Profile() {
     setBillingError("");
     setBillingLoading(true);
     try {
+      if (isGooglePlayBillingUser) {
+        openGooglePlaySubscriptionManagement(user?.plan_key || user?.calculator_tier_id);
+        setBillingLoading(false);
+        return;
+      }
       await base44.commerce.openBillingPortal();
     } catch (error) {
       setBillingError(error.message || "Could not open billing. Please contact sales.");
@@ -152,7 +162,7 @@ export default function Profile() {
           <ShoppingCart className="w-4 h-4 text-muted-foreground" />
           Purchase Now
         </Link>
-        {base44.commerce?.isConfigured && (
+        {canManageBilling && (
           <button
             type="button"
             onClick={handleBillingPortal}
@@ -160,7 +170,7 @@ export default function Profile() {
             className="w-full flex items-center gap-3 px-5 py-4 text-sm font-semibold text-foreground hover:bg-muted active:bg-muted/80 disabled:opacity-60 transition-colors border-t border-border/40"
           >
             <CreditCard className="w-4 h-4 text-muted-foreground" />
-            Manage Billing
+            {isGooglePlayBillingUser ? "Manage Google Play Subscription" : "Manage Billing"}
           </button>
         )}
         {billingError && (
@@ -261,11 +271,17 @@ export default function Profile() {
               This will permanently delete your account and all associated data. This action <strong>cannot be undone</strong>.
             </AlertDialogDescription>
           </AlertDialogHeader>
+          {deleteError && (
+            <p className="text-sm font-medium text-destructive">{deleteError}</p>
+          )}
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              onClick={handleDeleteAccount}
+              onClick={(event) => {
+                event.preventDefault();
+                handleDeleteAccount();
+              }}
               disabled={isDeleting}
             >
               {isDeleting ? "Deleting…" : "Delete My Account"}

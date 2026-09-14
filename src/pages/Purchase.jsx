@@ -6,8 +6,6 @@ import { COMPANY_PLANS, DEFAULT_PAID_PLAN_KEY, INDIVIDUAL_PLANS, getPlanOption, 
 import { isAndroidNativeApp, purchaseGooglePlayPlan, queryGooglePlayProducts, restoreGooglePlayPurchases } from "@/lib/googlePlayBilling";
 import { cn } from "@/lib/utils";
 
-const WEB_PURCHASE_URL = "https://necalcul8r.currentflowconsulting.org/purchase";
-
 function TierButton({ active, title, subtitle, onClick }) {
   return (
     <button
@@ -112,7 +110,7 @@ export default function Purchase() {
       return;
     }
     if (companyOnAndroid) {
-      setSuccess(`Company plans are sold on the web (not through Google Play). Open ${WEB_PURCHASE_URL} in a browser, or redeem a company license key below.`);
+      setSuccess("Company access is managed by your organization administrator or NECalcul8r support.");
       return;
     }
     if (!checkoutReady) {
@@ -169,6 +167,10 @@ export default function Purchase() {
   const handleRedeemLicense = async () => {
     setError("");
     setSuccess("");
+    if (isAndroidNative) {
+      setError("License keys cannot be redeemed in the Android app. Use Google Play Billing for individual subscriptions or contact your organization administrator for company access.");
+      return;
+    }
     setRedeeming(true);
     try {
       const result = await base44.commerce.activateLicenseKey({ code: licenseCode });
@@ -193,7 +195,7 @@ export default function Purchase() {
             <h1 className="text-2xl font-extrabold">Purchase NECalcul8r</h1>
             <p className="text-sm text-blue-100 mt-1 max-w-2xl">
               {isAndroidNative
-                ? "Individual subscriptions use Google Play Billing. Company plans and license keys are sold on the web."
+                ? "Individual subscriptions use Google Play Billing. Company access is managed by your organization."
                 : "Choose free starter access, an individual subscription (Stripe), a company plan, or redeem a license key."}
             </p>
           </div>
@@ -241,7 +243,7 @@ export default function Purchase() {
         </div>
         {isAndroidNative && (
           <p className="text-xs text-muted-foreground">
-            Company subscriptions are purchased on the website ({WEB_PURCHASE_URL}) or with a license key — not through Google Play.
+            Company subscriptions are assigned by your organization administrator or NECalcul8r support.
           </p>
         )}
       </section>
@@ -275,7 +277,7 @@ export default function Purchase() {
             )}
             {companyOnAndroid && (
               <p className="text-xs text-amber-700 dark:text-amber-300 mt-2">
-                This package is sold on the web. Tap the button for the website link, or redeem a license key below.
+                Company access is managed outside the Android app for organization accounts.
               </p>
             )}
             {upgradesExistingSubscription && (
@@ -332,36 +334,38 @@ export default function Purchase() {
         )}
       </section>
 
-      <section className="rounded-3xl border border-dashed border-border/80 bg-muted/30 p-5 space-y-3">
-        <div className="flex items-center gap-2">
-          <KeyRound className="w-4 h-4 text-blue-600" />
-          <h2 className="text-lg font-extrabold text-foreground">Redeem license key</h2>
-        </div>
-        <p className="text-sm text-muted-foreground">
-          Use a key from an invoice, Stripe Payment Link, or reseller purchase sold outside Google Play.
-        </p>
-        <div className="flex flex-col sm:flex-row gap-2">
-          <input
-            type="text"
-            value={licenseCode}
-            onChange={(e) => setLicenseCode(e.target.value)}
-            placeholder="NEC-XXXX-XXXX-XXXX"
-            className="flex-1 rounded-xl border border-border bg-background px-4 py-2.5 text-sm font-mono tracking-wide uppercase"
-            autoCapitalize="characters"
-            autoCorrect="off"
-            spellCheck={false}
-          />
-          <button
-            type="button"
-            onClick={handleRedeemLicense}
-            disabled={redeeming || !licenseCode.trim()}
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-foreground text-background font-bold px-5 py-2.5 disabled:opacity-50"
-          >
-            {redeeming ? <Loader2 className="w-4 h-4 animate-spin" /> : <KeyRound className="w-4 h-4" />}
-            Activate
-          </button>
-        </div>
-      </section>
+      {!isAndroidNative && (
+        <section className="rounded-3xl border border-dashed border-border/80 bg-muted/30 p-5 space-y-3">
+          <div className="flex items-center gap-2">
+            <KeyRound className="w-4 h-4 text-blue-600" />
+            <h2 className="text-lg font-extrabold text-foreground">Redeem license key</h2>
+          </div>
+          <p className="text-sm text-muted-foreground">
+            Use a key from an invoice, Stripe Payment Link, or reseller purchase sold outside Google Play.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <input
+              type="text"
+              value={licenseCode}
+              onChange={(e) => setLicenseCode(e.target.value)}
+              placeholder="NEC-XXXX-XXXX-XXXX"
+              className="flex-1 rounded-xl border border-border bg-background px-4 py-2.5 text-sm font-mono tracking-wide uppercase"
+              autoCapitalize="characters"
+              autoCorrect="off"
+              spellCheck={false}
+            />
+            <button
+              type="button"
+              onClick={handleRedeemLicense}
+              disabled={redeeming || !licenseCode.trim()}
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-foreground text-background font-bold px-5 py-2.5 disabled:opacity-50"
+            >
+              {redeeming ? <Loader2 className="w-4 h-4 animate-spin" /> : <KeyRound className="w-4 h-4" />}
+              Activate
+            </button>
+          </div>
+        </section>
+      )}
     </div>
   );
 }

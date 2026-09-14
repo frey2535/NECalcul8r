@@ -1,4 +1,5 @@
 import { isSupabaseConfigured, requireSupabase } from "./supabaseClient";
+import { Capacitor } from "@capacitor/core";
 
 const individualPriceId = import.meta.env?.VITE_STRIPE_PRICE_INDIVIDUAL_36_PLUS
   || import.meta.env?.VITE_STRIPE_INDIVIDUAL_PRICE_ID
@@ -9,7 +10,12 @@ const companyPriceId = import.meta.env?.VITE_STRIPE_PRICE_COMPANY_0_10
 
 async function invokeCommerceFunction(functionName, payload) {
   const client = requireSupabase();
-  const { data, error } = await client.functions.invoke(functionName, { body: payload });
+  const { data, error } = await client.functions.invoke(functionName, {
+    body: payload,
+    headers: {
+      "x-necalcul8r-client-platform": Capacitor.getPlatform?.() || "web",
+    },
+  });
   if (error) {
     const response = error.context;
     if (response && typeof response.clone === "function") {

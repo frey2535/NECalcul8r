@@ -5,7 +5,7 @@ Three supported channels:
 | Channel | Who | How |
 | --- | --- | --- |
 | **Stripe Checkout (website)** | Individuals & companies | `/purchase` on https://necalcul8r.currentflowconsulting.org |
-| **License keys** | Invoices, Payment Links, resellers | Admin generates key → customer redeems on `/purchase` |
+| **License keys** | Invoices, Payment Links, resellers | Admin generates key → customer redeems on `/purchase` in a web browser |
 | **Admin grant** | Manual / BuildrPro / comps | User Management → set access |
 
 ## Website Stripe (already built)
@@ -45,7 +45,11 @@ Or invoke the Edge Function with the admin JWT.
 
 ### 4. Customer redeems
 
-Customer signs in → **Purchase** → **Redeem license key** → enters `NEC-XXXX-XXXX-XXXX`.
+Customer signs in through the web app → **Purchase** → **Redeem license key** → enters `NEC-XXXX-XXXX-XXXX`.
+
+License-key redemption is intentionally hidden and rejected in the Google Play
+Android app. Individual Android subscriptions must use Google Play Billing;
+company access should be assigned by an organization administrator or support.
 
 ## Stripe Payment Links workflow
 
@@ -57,5 +61,5 @@ Customer signs in → **Purchase** → **Redeem license key** → enters `NEC-XX
 
 ## What not to do
 
-- Do **not** sell the same individual Android digital subscription through an in-app Stripe Checkout button (Play policy). Individual Android buys use Google Play Billing.
+- Do **not** sell or redeem the same individual Android digital subscription through in-app Stripe Checkout or license-key flows (Play policy). Individual Android buys use Google Play Billing.
 - Prefer PWA + Play Store for Android distribution; sideloading APKs is optional and confusing for customers.

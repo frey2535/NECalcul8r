@@ -12,6 +12,7 @@ supabase functions deploy verify-google-play-purchase --project-ref gqdxvctvufal
 supabase functions deploy google-play-rtdn --project-ref gqdxvctvufalunaaopyj
 supabase functions deploy activate-license-key --project-ref gqdxvctvufalunaaopyj
 supabase functions deploy generate-license-key --project-ref gqdxvctvufalunaaopyj
+supabase functions deploy delete-account --project-ref gqdxvctvufalunaaopyj
 supabase functions deploy create-stripe-checkout --project-ref gqdxvctvufalunaaopyj
 supabase functions deploy stripe-webhook --project-ref gqdxvctvufalunaaopyj
 supabase functions deploy sync-stripe-checkout-session --project-ref gqdxvctvufalunaaopyj

@@ -377,4 +377,26 @@ export const localAuth = {
     saveDb(db);
     return { ok: true };
   },
+
+  async deleteAccount() {
+    const db = loadDb();
+    const token = getSessionToken();
+    const user = token ? db.users.find((u) => u.sessionToken === token) : null;
+    if (!user) throw httpError("Authentication required", 401);
+
+    db.users = db.users.filter((u) => u.id !== user.id);
+    for (const records of Object.values(db.entities || {})) {
+      if (!Array.isArray(records)) continue;
+      for (let i = records.length - 1; i >= 0; i -= 1) {
+        if (records[i]?.created_by_id === user.id) records.splice(i, 1);
+      }
+    }
+    if (user.org_id && !db.users.some((u) => u.org_id === user.org_id)) {
+      db.orgs = (db.orgs || []).filter((org) => org.id !== user.org_id);
+    }
+    setSessionToken(null);
+    saveDb(db);
+    if (typeof window !== "undefined") window.location.href = "/landing";
+    return { ok: true };
+  },
 };

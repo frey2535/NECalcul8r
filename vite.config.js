@@ -18,6 +18,33 @@ const builtAt = buildSha === "local"
   ? "local"
   : (process.env.VITE_APP_BUILT_AT || process.env.BUILD_TIME || new Date().toISOString());
 
+const spaFallbackRoutes = [
+  "login",
+  "register",
+  "forgot-password",
+  "reset-password",
+  "landing",
+  "privacy",
+  "terms",
+  "eula",
+  "purchase",
+  "projects",
+  "history",
+  "new-analysis",
+  "results",
+  "profile",
+  "nec-tables",
+  "admin/users",
+  "admin/audit",
+  "admin/reports",
+  "admin/coverage",
+  "admin/codebook",
+  "admin/verification",
+  "admin/calculator-tiers",
+  "admin/revenue",
+  "admin/cursor-agent",
+];
+
 function buildVersionPlugin() {
   return {
     name: "necalcul8r-build-version",
@@ -32,6 +59,14 @@ function buildVersionPlugin() {
         path.join(outDir, "build-version.json"),
         `${JSON.stringify({ sha: buildSha, builtAt })}\n`,
       );
+
+      const indexPath = path.join(outDir, "index.html");
+      if (!fs.existsSync(indexPath)) return;
+      for (const route of spaFallbackRoutes) {
+        const routeDir = path.join(outDir, route);
+        fs.mkdirSync(routeDir, { recursive: true });
+        fs.copyFileSync(indexPath, path.join(routeDir, "index.html"));
+      }
     },
   };
 }
