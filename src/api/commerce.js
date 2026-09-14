@@ -10,12 +10,16 @@ const companyPriceId = import.meta.env?.VITE_STRIPE_PRICE_COMPANY_0_10
 
 async function invokeCommerceFunction(functionName, payload) {
   const client = requireSupabase();
-  const { data, error } = await client.functions.invoke(functionName, {
-    body: payload,
-    headers: {
-      "x-necalcul8r-client-platform": Capacitor.getPlatform?.() || "web",
-    },
-  });
+  // Only native Android sends the custom platform header. Web browsers omit it
+  // so commerce calls stay simple CORS requests and keep working even when Edge
+  // Function CORS allow-lists have not been redeployed yet.
+  const invokeOptions = { body: payload };
+  if (Capacitor.isNativePlatform?.() && Capacitor.getPlatform?.() === "android") {
+    invokeOptions.headers = {
+      "x-necalcul8r-client-platform": "android",
+    };
+  }
+  const { data, error } = await client.functions.invoke(functionName, invokeOptions);
   if (error) {
     const response = error.context;
     if (response && typeof response.clone === "function") {
