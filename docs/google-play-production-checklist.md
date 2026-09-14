@@ -86,7 +86,7 @@ artifact and, when enabled, uploads the same AAB to the selected Play track as a
 draft release.
 
 You can also upload the latest local AAB from Downloads
-(`NECalcul8r-1.0.0.aab`) manually in Play Console → Production / Testing.
+(`NECalcul8r-<package-version>.aab`) manually in Play Console → Production / Testing.
 
 ## 6. Required Play Console forms
 
