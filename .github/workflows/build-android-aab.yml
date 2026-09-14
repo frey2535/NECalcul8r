@@ -162,3 +162,4 @@ jobs:
           releaseFiles: release/NECalcul8r-${{ steps.package-version.outputs.version }}.aab
           tracks: ${{ inputs.play_track }}
           status: draft
+          changesNotSentForReview: true
