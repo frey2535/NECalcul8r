@@ -4,10 +4,6 @@ const config: CapacitorConfig = {
   appId: 'com.currentflow.necalcul8r',
   appName: 'NECalcul8r',
   webDir: 'dist',
-  server: {
-    url: 'https://necalcul8r.currentflowconsulting.org',
-    cleartext: false
-  },
   plugins: {
     SplashScreen: {
       launchShowDuration: 1200,

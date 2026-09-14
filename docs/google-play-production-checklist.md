@@ -103,6 +103,7 @@ Complete:
 - App access instructions / test credentials
 - Subscription declarations and pricing
 - Confirm individual in-app purchases use Play Billing only (no Stripe Checkout for digital goods inside the Android app)
+- Confirm the Android build uses bundled Capacitor assets (no `server.url` in `capacitor.config.ts`)
 
 ## 7. Device test before production
 
@@ -116,6 +117,7 @@ Install from the Play internal testing track on a real Android device and verify
 - Cancelled subscription remains active through the paid period
 - Expired subscription removes paid access after expiration (RTDN or next verify)
 - Company plan CTA does **not** open Stripe Checkout inside the Android app
+- App opens to the bundled home/login screen with airplane mode enabled; online-only features may require connectivity, but the shell should not be a remote-only WebView
 
 ## 8. Production access
 
