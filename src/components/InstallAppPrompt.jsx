@@ -116,7 +116,10 @@ export default function InstallAppPrompt() {
           <button
             type="button"
             ref={closeButtonRef}
-            onClick={close}
+            onClick={(event) => {
+              event.stopPropagation();
+              close();
+            }}
             className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/15 flex items-center justify-center"
             aria-label="Close"
           >

@@ -90,7 +90,10 @@ export default function UpdateAvailablePrompt() {
           </div>
           <button
             type="button"
-            onClick={() => setUpdate(null)}
+            onClick={(event) => {
+              event.stopPropagation();
+              setUpdate(null);
+            }}
             className="w-7 h-7 rounded-full hover:bg-muted flex items-center justify-center text-muted-foreground transition-colors"
             aria-label="Dismiss update"
           >

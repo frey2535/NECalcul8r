@@ -1,6 +1,6 @@
 import React, { useState, useRef, useCallback, useEffect } from "react";
 import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
-import { Calculator, BookOpen, UserCircle, Users, Calendar, ShieldCheck, FileCheck, Sun, Moon, FolderOpen, Flag, Lock, RefreshCw, SlidersHorizontal, Bot, DollarSign } from "lucide-react";
+import { Calculator, BookOpen, UserCircle, Users, Calendar, ShieldCheck, FileCheck, Sun, Moon, FolderOpen, Flag, Lock, RefreshCw, SlidersHorizontal, Bot, DollarSign, X } from "lucide-react";
 import TrialBanner from "@/components/TrialBanner";
 import { useAuth } from "@/lib/AuthContext";
 import { base44 } from "@/api/base44Client";
@@ -9,6 +9,7 @@ import AppLogo from "@/components/branding/AppLogo";
 import { refreshApp } from "@/lib/pwa";
 import {
   Drawer,
+  DrawerClose,
   DrawerContent,
   DrawerHeader,
   DrawerTitle,
@@ -364,8 +365,18 @@ export default function AppLayout({ trialStatus }) {
       {/* Profile Drawer */}
       <Drawer open={profileOpen} onOpenChange={setProfileOpen}>
         <DrawerContent>
-          <DrawerHeader>
+          <DrawerHeader className="relative pr-12">
             <DrawerTitle className="text-base font-bold">My Profile</DrawerTitle>
+            <DrawerClose asChild>
+              <button
+                type="button"
+                className="absolute right-4 top-3 flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                aria-label="Close profile"
+                onClick={(event) => event.stopPropagation()}
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </DrawerClose>
           </DrawerHeader>
           <div className="px-4 pb-8 overflow-y-auto max-h-[80vh]">
             <Profile />
