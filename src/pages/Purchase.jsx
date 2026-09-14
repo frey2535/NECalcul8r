@@ -72,10 +72,25 @@ export default function Purchase() {
   const currentPlanKey = user?.plan_key || user?.calculator_tier_id || (isActiveStripeSubscriber ? DEFAULT_PAID_PLAN_KEY : "free");
   const upgradesExistingSubscription = isActiveStripeSubscriber && isPlanUpgrade(currentPlanKey, selected.planKey);
   const managesExistingSubscription = isActiveStripeSubscriber && !upgradesExistingSubscription;
-  const checkoutReady = selected.isFree
+  const checkoutReady = Boolean(selected.isFree
     || companyOnAndroid
     || (usesGooglePlay && Boolean(playProducts[selected.googlePlayProductId]))
-    || (base44.commerce?.isConfigured && selected.priceId && !selectedRequiresCompany);
+    || (base44.commerce?.isConfigured && selected.priceId && !selectedRequiresCompany));
+  const checkoutUnavailableMessage = useMemo(() => {
+    if (selectedRequiresCompany) {
+      return "Company packages require an account connected to a company. Register with a company name or join a company invite before buying a company package.";
+    }
+    if (usesGooglePlay) {
+      return `Google Play product details are unavailable for ${selected.googlePlayProductId || selected.planKey}. Confirm this subscription product is active in Play Console with the monthly base plan, then reopen the purchase screen.`;
+    }
+    if (!base44.commerce?.isConfigured) {
+      return "Stripe checkout is not configured for this app build. Add Supabase and Stripe public configuration before selling web subscriptions.";
+    }
+    if (!selected.priceId) {
+      return `Stripe checkout is not configured for ${selected.label}. Add a Stripe price ID for ${selected.planKey} in VITE_STRIPE_PRICE_MATRIX_JSON, or set the tiered fallback env var for this account type.`;
+    }
+    return "Checkout is not available for this package yet. Please contact support.";
+  }, [selected, selectedRequiresCompany, usesGooglePlay]);
 
   useEffect(() => {
     if (!isAndroidNative) return undefined;
@@ -114,7 +129,7 @@ export default function Purchase() {
       return;
     }
     if (!checkoutReady) {
-      setError("Checkout is not configured for this package yet. Add its Stripe price ID to VITE_STRIPE_PRICE_MATRIX_JSON.");
+      setError(checkoutUnavailableMessage);
       return;
     }
     setLoading(true);
@@ -263,11 +278,7 @@ export default function Purchase() {
             </p>
             {!checkoutReady && (
               <p className="text-xs text-amber-600 mt-2">
-                {selectedRequiresCompany
-                  ? "Company packages require an account connected to a company."
-                  : usesGooglePlay
-                    ? "Google Play product details are still loading or unavailable."
-                    : "Stripe price ID needed for this exact package before checkout can open."}
+                {checkoutUnavailableMessage}
               </p>
             )}
             {usesGooglePlay && (
