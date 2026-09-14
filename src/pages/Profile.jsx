@@ -35,6 +35,7 @@ export default function Profile() {
   const [user, setUser] = React.useState(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
   const [billingLoading, setBillingLoading] = useState(false);
   const [billingError, setBillingError] = useState("");
   const [refreshing, setRefreshing] = useState(false);
@@ -52,10 +53,11 @@ export default function Profile() {
 
   const handleDeleteAccount = async () => {
     setIsDeleting(true);
+    setDeleteError("");
     try {
-      // Delete user's own data then logout
-      await base44.auth.logout();
-    } catch {
+      await base44.auth.deleteAccount();
+    } catch (error) {
+      setDeleteError(error.message || "Could not delete your account. Please contact support.");
       setIsDeleting(false);
     }
   };
@@ -261,11 +263,17 @@ export default function Profile() {
               This will permanently delete your account and all associated data. This action <strong>cannot be undone</strong>.
             </AlertDialogDescription>
           </AlertDialogHeader>
+          {deleteError && (
+            <p className="text-sm font-medium text-destructive">{deleteError}</p>
+          )}
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              onClick={handleDeleteAccount}
+              onClick={(event) => {
+                event.preventDefault();
+                handleDeleteAccount();
+              }}
               disabled={isDeleting}
             >
               {isDeleting ? "Deleting…" : "Delete My Account"}

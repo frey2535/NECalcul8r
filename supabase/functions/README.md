@@ -8,6 +8,7 @@ supabase functions deploy sync-stripe-checkout-session
 supabase functions deploy update-stripe-subscription
 supabase functions deploy create-stripe-portal-session
 supabase functions deploy grant-access
+supabase functions deploy delete-account
 supabase functions deploy stripe-webhook
 supabase functions deploy verify-google-play-purchase
 supabase functions deploy google-play-rtdn
