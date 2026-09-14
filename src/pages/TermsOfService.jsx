@@ -117,8 +117,9 @@ export default function TermsOfService() {
               </li>
               <li>
                 <strong className="text-foreground">License keys:</strong> Keys sold by invoice,
-                Payment Link, or reseller unlock access when redeemed in the app and may have their
-                own expiry stated on the invoice.
+                Payment Link, or reseller unlock access when redeemed through the web app and may
+                have their own expiry stated on the invoice. License keys are not redeemed inside
+                the Android app.
               </li>
             </ul>
             <p className="text-muted-foreground mt-2">

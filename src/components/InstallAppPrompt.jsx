@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Download, Share, PlusSquare, MoreVertical, X } from "lucide-react";
+import { Capacitor } from "@capacitor/core";
 import { Button } from "@/components/ui/button";
 import { getInstallPlatform, isStandaloneDisplay } from "@/lib/pwa";
 import AppLogo from "@/components/branding/AppLogo";
@@ -25,6 +26,10 @@ function dismiss() {
   }
 }
 
+function isNativeApp() {
+  return Boolean(Capacitor.isNativePlatform?.());
+}
+
 export default function InstallAppPrompt() {
   const [open, setOpen] = useState(false);
   const [deferred, setDeferred] = useState(null);
@@ -34,20 +39,22 @@ export default function InstallAppPrompt() {
   const platform = getInstallPlatform();
 
   useEffect(() => {
-    if (isStandaloneDisplay()) return undefined;
+    if (isStandaloneDisplay() || isNativeApp()) return undefined;
 
     const onPrompt = (event) => {
       event.preventDefault();
       setDeferred(event);
       if (!wasDismissedRecently()) setOpen(true);
     };
-    const onForceShow = () => setOpen(true);
+    const onForceShow = () => {
+      if (!isNativeApp()) setOpen(true);
+    };
     window.addEventListener("beforeinstallprompt", onPrompt);
     window.addEventListener("necalcul8r-show-install", onForceShow);
 
     const timer = window.setTimeout(() => {
       const { isMobile } = getInstallPlatform();
-      if (isMobile && !isStandaloneDisplay() && !wasDismissedRecently()) setOpen(true);
+      if (isMobile && !isStandaloneDisplay() && !isNativeApp() && !wasDismissedRecently()) setOpen(true);
     }, 900);
 
     return () => {
@@ -95,7 +102,7 @@ export default function InstallAppPrompt() {
     }
   };
 
-  if (!open || isStandaloneDisplay()) return null;
+  if (!open || isStandaloneDisplay() || isNativeApp()) return null;
 
   return (
     <div className="fixed inset-0 z-[80] flex items-end sm:items-center justify-center p-3 sm:p-6">
