@@ -116,7 +116,8 @@ export async function syncPlayPurchaseForUser(
 ) {
   const plan = PRODUCT_PLANS[productId];
   if (!plan) throw new Error("Unsupported Google Play product ID.");
-  if (!purchaseToken) throw new Error("Missing Google Play purchase token.");
+  const normalizedPurchaseToken = purchaseToken.trim();
+  if (!normalizedPurchaseToken) throw new Error("Missing Google Play purchase token.");
 
   const packageName = options.packageName
     || Deno.env.get("GOOGLE_PLAY_PACKAGE_NAME")
@@ -125,8 +126,19 @@ export async function syncPlayPurchaseForUser(
     || Deno.env.get("GOOGLE_PLAY_BASE_PLAN_ID")
     || "monthly";
 
+  const { data: existingPurchase, error: existingPurchaseError } = await client
+    .from("google_play_purchases")
+    .select("user_id")
+    .eq("package_name", packageName)
+    .eq("purchase_token", normalizedPurchaseToken)
+    .maybeSingle();
+  if (existingPurchaseError) throw existingPurchaseError;
+  if (existingPurchase?.user_id && existingPurchase.user_id !== userId) {
+    throw new Error("This Google Play purchase is already linked to another NECalcul8r account. Sign in with that account or contact support.");
+  }
+
   const accessToken = await googleAccessToken();
-  const status = await fetchSubscriptionStatus(packageName, purchaseToken, accessToken);
+  const status = await fetchSubscriptionStatus(packageName, normalizedPurchaseToken, accessToken);
   const lineItem = Array.isArray(status.lineItems) ? status.lineItems[0] || {} : {};
   const verifiedProductId = String(lineItem.productId || productId);
   const basePlanId = String(lineItem.offerDetails?.basePlanId || expectedBasePlanId);
@@ -148,7 +160,7 @@ export async function syncPlayPurchaseForUser(
     package_name: packageName,
     product_id: productId,
     base_plan_id: basePlanId,
-    purchase_token: purchaseToken,
+    purchase_token: normalizedPurchaseToken,
     purchase_state: subscriptionState,
     acknowledgement_state: active ? "ACKNOWLEDGEMENT_STATE_ACKNOWLEDGED" : acknowledgementState,
     auto_renewing: status.lineItems?.some?.((item: Record<string, unknown>) => Boolean(item.autoRenewingPlan)) || false,

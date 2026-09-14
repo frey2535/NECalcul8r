@@ -18,6 +18,12 @@ Deno.serve(async (req) => {
     });
     return jsonResponse(result);
   } catch (error) {
-    return jsonResponse({ error: error instanceof Error ? error.message : "Google Play verification failed." }, 500);
+    const message = error instanceof Error ? error.message : "Google Play verification failed.";
+    const status = message.includes("already linked to another NECalcul8r account")
+      ? 409
+      : message === "Authentication required"
+        ? 401
+        : 500;
+    return jsonResponse({ error: message }, status);
   }
 });
