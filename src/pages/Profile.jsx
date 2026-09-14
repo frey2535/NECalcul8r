@@ -4,7 +4,7 @@ import { User, Trash2, LogOut, ShieldAlert, Users, FolderOpen, Download, Shoppin
 import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { isStandaloneDisplay, refreshApp } from "@/lib/pwa";
-import { openGooglePlaySubscriptionManagement } from "@/lib/googlePlayBilling";
+import { isAndroidNativeApp, openGooglePlaySubscriptionManagement } from "@/lib/googlePlayBilling";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -44,7 +44,8 @@ export default function Profile() {
   const canManageUsers = isPlatformAdmin || user?.org_role === "owner";
   const profileBadgeLabel = getProfileBadgeLabel(user);
   const isGooglePlayBillingUser = user?.purchase_source === "google_play" || user?.access_type === "google_play";
-  const canManageBilling = isGooglePlayBillingUser || base44.commerce?.isConfigured;
+  const isAndroidNative = isAndroidNativeApp();
+  const canManageBilling = isGooglePlayBillingUser || (!isAndroidNative && base44.commerce?.isConfigured);
 
   useEffect(() => {
     base44.auth.me().then(setUser).catch(() => {});
@@ -116,7 +117,7 @@ export default function Profile() {
         </div>
       </div>
 
-      {!isStandaloneDisplay() && (
+      {!isStandaloneDisplay() && !isAndroidNative && (
       <button
         type="button"
         onClick={() => window.dispatchEvent(new Event("necalcul8r-show-install"))}
@@ -269,6 +270,12 @@ export default function Profile() {
             </AlertDialogTitle>
             <AlertDialogDescription>
               This will permanently delete your account and all associated data. This action <strong>cannot be undone</strong>.
+              {isGooglePlayBillingUser && (
+                <>
+                  <br />
+                  Deleting your NECalcul8r account does not cancel your Google Play subscription. Manage or cancel it in Google Play before deleting your account if you want billing to stop.
+                </>
+              )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           {deleteError && (

@@ -157,10 +157,10 @@ export default function PrivacyPolicy() {
             </p>
             <ul className="space-y-2 text-muted-foreground list-disc pl-5">
               <li>
-                <strong className="text-foreground">Account deletion:</strong> You can request deletion
-                of your account and all associated personal data (analyses, reports, uploaded files,
-                and account information) by contacting us as described in Section 11. We will process
-                your deletion request within 30 days.
+                <strong className="text-foreground">Account deletion:</strong> You can delete your
+                account in the app from Profile → Delete Account. You can also request deletion by
+                contacting us as described in Section 11. Account deletion removes associated personal
+                data such as analyses, reports, uploaded files, and account information.
               </li>
               <li>
                 <strong className="text-foreground">In-app deletion:</strong> Where available, you can

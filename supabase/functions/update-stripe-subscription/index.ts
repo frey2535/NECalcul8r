@@ -42,11 +42,21 @@ function subscriptionItem(subscription: Record<string, unknown>) {
     : null;
 }
 
+function isAndroidClient(req: Request) {
+  return (req.headers.get("x-necalcul8r-client-platform") || "").toLowerCase() === "android";
+}
+
 Deno.serve(async (req) => {
   const options = handleOptions(req);
   if (options) return options;
 
   try {
+    if (isAndroidClient(req)) {
+      return jsonResponse({
+        error: "Stripe subscription changes are not available in the Android app. Use Google Play Billing for individual subscriptions or manage web subscriptions from a browser.",
+      }, 400);
+    }
+
     const { client, user, profile } = await requireProfile(req);
     const payload = await req.json().catch(() => ({}));
     const priceId = String(payload.priceId || "").trim();
