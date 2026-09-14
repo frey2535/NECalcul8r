@@ -83,7 +83,9 @@ For a draft upload to Google Play:
 
 The workflow uploads the versioned `release/NECalcul8r-<package-version>.aab`
 artifact and, when enabled, uploads the same AAB to the selected Play track as a
-draft release.
+draft release. Google Play requires the final **Send for review** action from
+the Play Console UI, so the workflow commits uploads with
+`changesNotSentForReview: true`.
 
 You can also upload the latest local AAB from Downloads
 (`NECalcul8r-<package-version>.aab`) manually in Play Console → Production / Testing.
