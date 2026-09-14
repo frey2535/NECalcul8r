@@ -337,8 +337,8 @@ export default function Landing() {
                       {calc.emoji}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-bold text-foreground leading-tight">{calc.label}</p>
-                      <p className="text-[10px] text-muted-foreground font-mono mt-0.5">{calc.article}</p>
+                      <p className="text-sm font-bold text-slate-950 leading-tight">{calc.label}</p>
+                      <p className="text-[10px] text-slate-700 font-mono mt-0.5">{calc.article}</p>
                     </div>
                   </div>
                   {/* Screenshot */}

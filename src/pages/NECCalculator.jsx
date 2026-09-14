@@ -289,7 +289,7 @@ export default function NECCalculator() {
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
-                              <p className="text-sm font-bold text-foreground leading-snug">{cat.label}</p>
+                              <p className="text-sm font-bold text-slate-950 leading-snug">{cat.label}</p>
                               {locked && (
                                 <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 text-amber-700 px-2 py-0.5 text-[10px] font-black">
                                   <Lock className="w-3 h-3" />
@@ -297,9 +297,9 @@ export default function NECCalculator() {
                                 </span>
                               )}
                             </div>
-                            <p className="text-[11px] text-muted-foreground mt-0.5 leading-snug">{cat.description}</p>
+                            <p className="text-[11px] text-slate-700 mt-0.5 leading-snug">{cat.description}</p>
                             <span className={cn(
-                              "inline-block mt-2 text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm",
+                              "inline-block mt-2 text-[10px] font-bold text-slate-950 px-2 py-0.5 rounded-full shadow-sm",
                               bgMap[cat.color]
                             )}>
                               {cat.article}
