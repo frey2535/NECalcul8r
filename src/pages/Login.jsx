@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
+import { isProductionAuthMisconfigured } from "@/api/supabaseClient";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,6 +9,7 @@ import { LogIn, Mail, Lock, Loader2 } from "lucide-react";
 import AuthLayout from "@/components/AuthLayout";
 
 export default function Login() {
+  const authConfigMessage = "Production authentication is not configured on this app build. Update the app so Supabase auth is enabled; device-local login is disabled for hosted builds.";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -18,6 +20,7 @@ export default function Login() {
     setError("");
     setLoading(true);
     try {
+      if (isProductionAuthMisconfigured) throw new Error(authConfigMessage);
       await base44.auth.loginViaEmailPassword(email, password);
       window.location.href = "/";
     } catch (err) {
@@ -41,9 +44,9 @@ export default function Login() {
         </>
       }
     >
-      {error && (
+      {(isProductionAuthMisconfigured || error) && (
         <div className="mb-4 p-3 rounded-lg bg-destructive/10 text-destructive text-sm">
-          {error}
+          {error || authConfigMessage}
         </div>
       )}
 
@@ -86,7 +89,7 @@ export default function Login() {
             />
           </div>
         </div>
-        <Button type="submit" className="w-full h-12 font-medium" disabled={loading}>
+        <Button type="submit" className="w-full h-12 font-medium" disabled={loading || isProductionAuthMisconfigured}>
           {loading ? (
             <>
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
