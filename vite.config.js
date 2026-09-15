@@ -48,7 +48,9 @@ const spaFallbackRoutes = [
 function buildVersionPlugin() {
   return {
     name: "necalcul8r-build-version",
-    apply: "build",
+    transformIndexHtml(html) {
+      return html.replace(/%NECALCUL8R_BUILD_SHA%/g, buildSha);
+    },
     writeBundle(outputOptions) {
       const outDir = outputOptions.dir
         ? path.resolve(rootDir, outputOptions.dir)
@@ -62,6 +64,9 @@ function buildVersionPlugin() {
 
       const indexPath = path.join(outDir, "index.html");
       if (!fs.existsSync(indexPath)) return;
+      // Ensure the built index always carries the commit SHA even if transformIndexHtml was skipped.
+      const html = fs.readFileSync(indexPath, "utf8").replace(/%NECALCUL8R_BUILD_SHA%/g, buildSha);
+      fs.writeFileSync(indexPath, html);
       for (const route of spaFallbackRoutes) {
         const routeDir = path.join(outDir, route);
         fs.mkdirSync(routeDir, { recursive: true });
