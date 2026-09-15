@@ -35,11 +35,14 @@
     "audit:calculator-verification:strict": "node scripts/audit-calculator-verification.mjs --strict",
     "verify:2020": "npm run verify:commercial-load-2020 && npm run verify:lighting-load-2020 && npm run verify:remaining-2020 && npm run verify:marina-2020 && npm run verify:conductor-ampacity-2020 && npm run verify:rv-park-2020 && npm run verify:remaining-calcs-2020",
     "verify:remaining-2020": "node scripts/verify-remaining-2020.mjs",
-    "verify:release": "npm run verify:dwelling-optional && npm run verify:dwelling-standard && npm run verify:commercial-load && npm run verify:kitchen-equipment && npm run verify:multifamily-load && npm run verify:farm-load && npm run verify:rv-park && npm run verify:marina && npm run verify:remaining-2017 && npm run verify:neutral-load && npm run verify:pull-box && npm run verify:pricing-tiers && npm run verify:2020"
+    "verify:release": "npm run verify:dwelling-optional && npm run verify:dwelling-standard && npm run verify:commercial-load && npm run verify:kitchen-equipment && npm run verify:multifamily-load && npm run verify:farm-load && npm run verify:rv-park && npm run verify:marina && npm run verify:remaining-2017 && npm run verify:neutral-load && npm run verify:pull-box && npm run verify:pricing-tiers && npm run verify:2020",
+    "ios:sync": "npm run build && npx cap sync ios",
+    "ios:open": "npx cap open ios"
   },
   "dependencies": {
     "@capacitor/android": "^8.5.1",
     "@capacitor/core": "^8.5.1",
+    "@capacitor/ios": "^8.5.2",
     "@hello-pangea/dnd": "^17.0.0",
     "@hookform/resolvers": "^4.1.2",
     "@radix-ui/react-accordion": "^1.2.3",

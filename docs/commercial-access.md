@@ -290,9 +290,22 @@ Do not route Android in-app digital purchases through Stripe.
 
 ### iOS App Store purchase
 
+The Capacitor iOS project (`ios/`) includes a StoreKit 2 plugin and JS bridge.
+Individual iOS subscriptions must use Apple In-App Purchase. See
+`docs/apple-app-store-production-checklist.md`.
+
+Active App Store product IDs (match Google Play):
+
+- `individual_6_15`
+- `individual_16_25`
+- `individual_26_35`
+- `individual_36_plus`
+
+Target flow:
+
 1. User buys inside the iOS app with Apple In-App Purchase.
-2. iOS app sends receipt/transaction data to a Supabase Edge Function.
-3. Edge Function verifies it with Apple.
+2. iOS app sends signed transaction / transaction id to `verify-apple-purchase`.
+3. Edge Function verifies it with the App Store Server API.
 4. Edge Function writes:
    - `subscriptions.provider = 'apple_app_store'`
    - `entitlements.source = 'apple_app_store'`

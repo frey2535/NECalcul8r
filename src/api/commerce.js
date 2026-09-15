@@ -242,11 +242,21 @@ export const commerce = {
    * @param {{ receiptData?: string, transactionId?: string }} options
    */
   async verifyApplePurchase(options = {}) {
-    const { receiptData, transactionId } = options;
-    return invokeCommerceFunction("verify-apple-purchase", {
-      receiptData,
+    const {
+      productId,
       transactionId,
-      source: "apple_app_store",
+      originalTransactionId,
+      signedTransaction,
+      receiptData,
+      source = "apple_app_store",
+    } = options;
+    return invokeCommerceFunction("verify-apple-purchase", {
+      productId,
+      transactionId,
+      originalTransactionId,
+      signedTransaction,
+      receiptData,
+      source,
     });
   },
 };

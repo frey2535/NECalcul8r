@@ -24,6 +24,7 @@ export const INDIVIDUAL_PLANS = [
     googlePlayProductId: null,
     googlePlayBasePlanId: null,
     googlePlayDisplayPrice: "Free",
+    appleAppStoreProductId: null,
     isFree: true,
   },
   {
@@ -41,6 +42,7 @@ export const INDIVIDUAL_PLANS = [
     googlePlayProductId: "individual_6_15",
     googlePlayBasePlanId: "monthly",
     googlePlayDisplayPrice: "$9.99",
+    appleAppStoreProductId: "individual_6_15",
   },
   {
     planKey: "individual_16_25",
@@ -57,6 +59,7 @@ export const INDIVIDUAL_PLANS = [
     googlePlayProductId: "individual_16_25",
     googlePlayBasePlanId: "monthly",
     googlePlayDisplayPrice: "$19.99",
+    appleAppStoreProductId: "individual_16_25",
   },
   {
     planKey: "individual_26_35",
@@ -73,6 +76,7 @@ export const INDIVIDUAL_PLANS = [
     googlePlayProductId: "individual_26_35",
     googlePlayBasePlanId: "monthly",
     googlePlayDisplayPrice: "$34.99",
+    appleAppStoreProductId: "individual_26_35",
   },
   {
     planKey: "individual_36_plus",
@@ -89,6 +93,7 @@ export const INDIVIDUAL_PLANS = [
     googlePlayProductId: "individual_36_plus",
     googlePlayBasePlanId: "monthly",
     googlePlayDisplayPrice: "$49.99",
+    appleAppStoreProductId: "individual_36_plus",
   },
 ];
 
@@ -156,6 +161,10 @@ export const PLAN_CATALOG = [
 
 export const GOOGLE_PLAY_PRODUCT_IDS = INDIVIDUAL_PLANS
   .map((plan) => plan.googlePlayProductId)
+  .filter(Boolean);
+
+export const APPLE_APP_STORE_PRODUCT_IDS = INDIVIDUAL_PLANS
+  .map((plan) => plan.appleAppStoreProductId)
   .filter(Boolean);
 
 // Compatibility exports for older code paths that still discuss customer or calculator tiers.

@@ -4,6 +4,7 @@ import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/lib/AuthContext";
 import { COMPANY_PLANS, DEFAULT_PAID_PLAN_KEY, INDIVIDUAL_PLANS, getPlanOption, isPlanUpgrade } from "@/lib/pricing";
 import { isAndroidNativeApp, purchaseGooglePlayPlan, queryGooglePlayProducts, restoreGooglePlayPurchases } from "@/lib/googlePlayBilling";
+import { isIosNativeApp, purchaseAppleAppStorePlan, queryAppleAppStoreProducts, restoreAppleAppStorePurchases } from "@/lib/appleAppStoreBilling";
 import { cn } from "@/lib/utils";
 
 function TierButton({ active, title, subtitle, onClick }) {
@@ -55,7 +56,10 @@ export default function Purchase() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [playProducts, setPlayProducts] = useState({});
+  const [appleProducts, setAppleProducts] = useState({});
   const isAndroidNative = isAndroidNativeApp();
+  const isIosNative = isIosNativeApp();
+  const isStoreNative = isAndroidNative || isIosNative;
 
   const selected = useMemo(
     () => getPlanOption(selectedPlanKey),
@@ -63,8 +67,9 @@ export default function Purchase() {
   );
   const selectedRequiresCompany = selected.accountType === "company" && !user?.org_id;
   const usesGooglePlay = isAndroidNative && selected.accountType === "individual" && !selected.isFree;
-  // Google Play policy: digital goods on Android must use Play Billing — do not open Stripe Checkout in-app.
-  const companyOnAndroid = isAndroidNative && selected.accountType === "company" && !selected.isFree;
+  const usesAppleIap = isIosNative && selected.accountType === "individual" && !selected.isFree;
+  // Store policy: digital goods on native apps must use store billing — do not open Stripe Checkout in-app.
+  const companyOnStore = isStoreNative && selected.accountType === "company" && !selected.isFree;
   const isActiveStripeSubscriber = user?.access_type === "paid"
     && user?.purchase_source === "stripe"
     && (user?.subscription_status === "active" || user?.subscription_status === "trialing")
@@ -73,8 +78,9 @@ export default function Purchase() {
   const upgradesExistingSubscription = isActiveStripeSubscriber && isPlanUpgrade(currentPlanKey, selected.planKey);
   const managesExistingSubscription = isActiveStripeSubscriber && !upgradesExistingSubscription;
   const checkoutReady = Boolean(selected.isFree
-    || companyOnAndroid
+    || companyOnStore
     || (usesGooglePlay && Boolean(playProducts[selected.googlePlayProductId]))
+    || (usesAppleIap && Boolean(appleProducts[selected.appleAppStoreProductId]))
     || (base44.commerce?.isConfigured && selected.priceId && !selectedRequiresCompany));
   const checkoutUnavailableMessage = useMemo(() => {
     if (selectedRequiresCompany) {
@@ -83,6 +89,9 @@ export default function Purchase() {
     if (usesGooglePlay) {
       return `Google Play product details are unavailable for ${selected.googlePlayProductId || selected.planKey}. Confirm this subscription product is active in Play Console with the monthly base plan, then reopen the purchase screen.`;
     }
+    if (usesAppleIap) {
+      return `App Store product details are unavailable for ${selected.appleAppStoreProductId || selected.planKey}. Confirm this auto-renewable subscription is active in App Store Connect, then reopen the purchase screen.`;
+    }
     if (!base44.commerce?.isConfigured) {
       return "Stripe checkout is not configured for this app build. Add Supabase and Stripe public configuration before selling web subscriptions.";
     }
@@ -90,27 +99,35 @@ export default function Purchase() {
       return `Stripe checkout is not configured for ${selected.label}. Add a Stripe price ID for ${selected.planKey} in VITE_STRIPE_PRICE_MATRIX_JSON, or set the tiered fallback env var for this account type.`;
     }
     return "Checkout is not available for this package yet. Please contact support.";
-  }, [selected, selectedRequiresCompany, usesGooglePlay]);
+  }, [selected, selectedRequiresCompany, usesGooglePlay, usesAppleIap]);
 
   useEffect(() => {
-    if (!isAndroidNative) return undefined;
+    if (!isAndroidNative && !isIosNative) return undefined;
     let cancelled = false;
-    queryGooglePlayProducts()
-      .then((products) => {
-        if (cancelled) return;
-        setPlayProducts(Object.fromEntries(products.map((product) => [product.productId, product])));
-      })
-      .catch((playError) => {
-        if (!cancelled) setError(playError.message || "Could not load Google Play products.");
-      });
+    const load = isAndroidNative
+      ? queryGooglePlayProducts().then((products) => {
+          if (cancelled) return;
+          setPlayProducts(Object.fromEntries(products.map((product) => [product.productId, product])));
+        })
+      : queryAppleAppStoreProducts().then((products) => {
+          if (cancelled) return;
+          setAppleProducts(Object.fromEntries(products.map((product) => [product.productId, product])));
+        });
+    load.catch((storeError) => {
+      if (!cancelled) {
+        setError(storeError.message || (isAndroidNative ? "Could not load Google Play products." : "Could not load App Store products."));
+      }
+    });
     return () => {
       cancelled = true;
     };
-  }, [isAndroidNative]);
+  }, [isAndroidNative, isIosNative]);
 
   const displayPrice = (plan) => {
     const option = getPlanOption(plan.planKey);
-    return playProducts[plan.googlePlayProductId]?.formattedPrice || option.priceLabel;
+    return playProducts[plan.googlePlayProductId]?.formattedPrice
+      || appleProducts[plan.appleAppStoreProductId]?.formattedPrice
+      || option.priceLabel;
   };
 
   const handlePurchase = async () => {
@@ -124,8 +141,8 @@ export default function Purchase() {
       window.location.assign("/");
       return;
     }
-    if (companyOnAndroid) {
-      setSuccess("Company access is managed by your organization administrator or NECalcul8r support.");
+    if (companyOnStore) {
+      setSuccess("Company access is managed by your organization administrator or NECalcul8r support. Purchase company plans on the website.");
       return;
     }
     if (!checkoutReady) {
@@ -136,6 +153,9 @@ export default function Purchase() {
     try {
       if (usesGooglePlay) {
         await purchaseGooglePlayPlan(selected);
+        window.location.assign("/");
+      } else if (usesAppleIap) {
+        await purchaseAppleAppStorePlan(selected);
         window.location.assign("/");
       } else if (upgradesExistingSubscription) {
         try {
@@ -182,10 +202,16 @@ export default function Purchase() {
     setError("");
     setRestoring(true);
     try {
-      await restoreGooglePlayPurchases();
+      if (isIosNative) {
+        await restoreAppleAppStorePurchases();
+      } else {
+        await restoreGooglePlayPurchases();
+      }
       window.location.assign("/");
     } catch (restoreError) {
-      setError(restoreError.message || "Could not restore Google Play purchases for this account.");
+      setError(restoreError.message || (isIosNative
+        ? "Could not restore App Store purchases for this account."
+        : "Could not restore Google Play purchases for this account."));
       setRestoring(false);
     }
   };
@@ -193,8 +219,10 @@ export default function Purchase() {
   const handleRedeemLicense = async () => {
     setError("");
     setSuccess("");
-    if (isAndroidNative) {
-      setError("License keys cannot be redeemed in the Android app. Use Google Play Billing for individual subscriptions or contact your organization administrator for company access.");
+    if (isStoreNative) {
+      setError(isIosNative
+        ? "License keys cannot be redeemed in the iOS app. Use App Store subscriptions for individual plans or contact your organization administrator for company access."
+        : "License keys cannot be redeemed in the Android app. Use Google Play Billing for individual subscriptions or contact your organization administrator for company access.");
       return;
     }
     setRedeeming(true);
@@ -222,7 +250,9 @@ export default function Purchase() {
             <p className="text-sm text-blue-100 mt-1 max-w-2xl">
               {isAndroidNative
                 ? "Individual subscriptions use Google Play Billing. Company access is managed by your organization."
-                : "Choose free starter access, an individual subscription (Stripe), a company plan, or redeem a license key."}
+                : isIosNative
+                  ? "Individual subscriptions use Apple In-App Purchase. Company access is managed by your organization."
+                  : "Choose free starter access, an individual subscription (Stripe), a company plan, or redeem a license key."}
             </p>
           </div>
         </div>
@@ -267,7 +297,7 @@ export default function Purchase() {
             );
           })}
         </div>
-        {isAndroidNative && (
+        {isStoreNative && (
           <p className="text-xs text-muted-foreground">
             Company subscriptions are assigned by your organization administrator or NECalcul8r support.
           </p>
@@ -297,9 +327,14 @@ export default function Purchase() {
                 Android individual purchases use Google Play Billing. Manage or cancel in Google Play → Subscriptions.
               </p>
             )}
-            {companyOnAndroid && (
+            {usesAppleIap && (
+              <p className="text-xs text-muted-foreground mt-2">
+                iOS individual purchases use Apple In-App Purchase. Manage or cancel in Settings → Apple ID → Subscriptions.
+              </p>
+            )}
+            {companyOnStore && (
               <p className="text-xs text-amber-700 dark:text-amber-300 mt-2">
-                Company access is managed outside the Android app for organization accounts.
+                Company access is managed outside the mobile app for organization accounts.
               </p>
             )}
             {upgradesExistingSubscription && (
@@ -324,7 +359,7 @@ export default function Purchase() {
               ? (upgradesExistingSubscription ? "Upgrading..." : "Opening billing...")
               : selected.isFree
                 ? "Continue with free tier"
-                : companyOnAndroid
+                : companyOnStore
                   ? "How to buy on web"
                   : upgradesExistingSubscription
                     ? "Upgrade now"
@@ -333,7 +368,7 @@ export default function Purchase() {
                       : "Purchase now"}
           </button>
         </div>
-        {isAndroidNative && (
+        {isStoreNative && (
           <button
             type="button"
             onClick={handleRestore}
@@ -356,14 +391,14 @@ export default function Purchase() {
         )}
       </section>
 
-      {!isAndroidNative && (
+      {!isStoreNative && (
         <section className="rounded-3xl border border-dashed border-border/80 bg-muted/30 p-5 space-y-3">
           <div className="flex items-center gap-2">
             <KeyRound className="w-4 h-4 text-blue-600" />
             <h2 className="text-lg font-extrabold text-foreground">Redeem license key</h2>
           </div>
           <p className="text-sm text-muted-foreground">
-            Use a key from an invoice, Stripe Payment Link, or reseller purchase sold outside Google Play.
+            Use a key from an invoice, Stripe Payment Link, or reseller purchase sold outside the app stores.
           </p>
           <div className="flex flex-col sm:flex-row gap-2">
             <input
