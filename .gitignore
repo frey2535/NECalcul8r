@@ -38,3 +38,4 @@ google-services.json
 .env
 .vite
 base44/.app.jsonc
+supabase/.temp/
