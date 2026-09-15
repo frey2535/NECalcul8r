@@ -21,11 +21,31 @@
     <script>
       (function () {
         var redirect = sessionStorage.getItem("necalcul8r_redirect");
-        if (!redirect) return;
-        sessionStorage.removeItem("necalcul8r_redirect");
-        if (redirect !== window.location.pathname + window.location.search + window.location.hash) {
-          history.replaceState(null, "", redirect);
+        if (redirect) {
+          sessionStorage.removeItem("necalcul8r_redirect");
+          if (redirect !== window.location.pathname + window.location.search + window.location.hash) {
+            history.replaceState(null, "", redirect);
+          }
         }
+
+        // Boot-time update check for installed PWAs. Runs before React so a stale
+        // home-screen shell can still detect a newer GitHub Pages deploy.
+        var currentSha = "%NECALCUL8R_BUILD_SHA%";
+        window.__NECALCUL8R_BUILD_SHA__ = currentSha;
+        if (!currentSha || currentSha === "local" || currentSha.indexOf("%NECALCUL8R") === 0) return;
+        var reloadKey = "necalcul8r_boot_reload_" + currentSha;
+        fetch("/build-version.json?t=" + Date.now(), { cache: "no-store" })
+          .then(function (response) { return response.ok ? response.json() : null; })
+          .then(function (next) {
+            if (!next || !next.sha || next.sha === currentSha) return;
+            if (sessionStorage.getItem(reloadKey) === next.sha) return;
+            sessionStorage.setItem(reloadKey, next.sha);
+            var url = new URL(window.location.href);
+            url.searchParams.set("t", String(Date.now()));
+            url.searchParams.set("build", next.sha);
+            window.location.replace(url.toString());
+          })
+          .catch(function () { /* ignore offline/boot races */ });
       })();
     </script>
     <script type="module" src="/src/main.jsx"></script>

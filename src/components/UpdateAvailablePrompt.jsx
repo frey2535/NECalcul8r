@@ -30,7 +30,7 @@ export default function UpdateAvailablePrompt() {
       }
     }
     try {
-      sessionStorage.setItem("necalcul8r_update_in_progress", "1");
+      sessionStorage.setItem("necalcul8r_update_in_progress", String(Date.now()));
     } catch {
       /* sessionStorage can be unavailable in private mode */
     }
@@ -58,9 +58,15 @@ export default function UpdateAvailablePrompt() {
 
   useEffect(() => {
     if (!update?.required || applying) return undefined;
+    const standalone = window.matchMedia("(display-mode: standalone)").matches
+      || window.matchMedia("(display-mode: fullscreen)").matches
+      || window.navigator.standalone === true;
+    const delay = Number.isFinite(Number(update.autoApplyAfterMs))
+      ? Number(update.autoApplyAfterMs)
+      : (standalone ? 100 : 800);
     const timer = window.setTimeout(() => {
       applyUpdate();
-    }, Number(update.autoApplyAfterMs) || 8000);
+    }, delay);
     return () => window.clearTimeout(timer);
   }, [applying, applyUpdate, update]);
 

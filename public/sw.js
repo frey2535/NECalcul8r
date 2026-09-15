@@ -1,4 +1,4 @@
-const CACHE = "necalcul8r-shell-v4";
+const CACHE = "necalcul8r-shell-v5";
 const SHELL_ASSETS = ["/logo.png", "/icon-192.png", "/icon-512.png", "/apple-touch-icon.png"];
 
 self.addEventListener("install", (event) => {
@@ -10,22 +10,23 @@ self.addEventListener("install", (event) => {
 });
 
 self.addEventListener("activate", (event) => {
-  event.waitUntil(
-    caches.keys().then(async (keys) => {
-      const oldCaches = keys.filter((key) => key !== CACHE);
-      await Promise.all(oldCaches.map((key) => caches.delete(key)));
-      await self.clients.claim();
-      if (oldCaches.length === 0) return;
-      const clients = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
-      await Promise.all(clients.map((client) => {
-        const url = new URL(client.url);
-        if (url.searchParams.get("sw") === CACHE) return client.postMessage({ type: "NECALCUL8R_SW_UPDATED", cache: CACHE });
-        url.searchParams.set("t", String(Date.now()));
-        url.searchParams.set("sw", CACHE);
-        return client.navigate(url.toString()).catch(() => client.postMessage({ type: "NECALCUL8R_SW_UPDATED", cache: CACHE }));
-      }));
-    })
-  );
+  event.waitUntil((async () => {
+    const keys = await caches.keys();
+    await Promise.all(keys.filter((key) => key !== CACHE).map((key) => caches.delete(key)));
+    await self.clients.claim();
+    const clients = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+    await Promise.all(clients.map((client) => {
+      const url = new URL(client.url);
+      if (url.searchParams.get("sw") === CACHE) {
+        return client.postMessage({ type: "NECALCUL8R_SW_UPDATED", cache: CACHE });
+      }
+      url.searchParams.set("t", String(Date.now()));
+      url.searchParams.set("sw", CACHE);
+      return client.navigate(url.toString()).catch(() =>
+        client.postMessage({ type: "NECALCUL8R_SW_UPDATED", cache: CACHE })
+      );
+    }));
+  })());
 });
 
 self.addEventListener("message", (event) => {
@@ -42,12 +43,25 @@ self.addEventListener("fetch", (event) => {
   if (request.method !== "GET") return;
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
-  if (url.pathname.startsWith("/@") || url.pathname.startsWith("/node_modules") || url.search.includes("t=")) return;
-  const isAppShell = request.mode === "navigate" || url.pathname === "/" || url.pathname.endsWith(".html") || url.pathname === "/build-version.json";
+  if (url.pathname.startsWith("/@") || url.pathname.startsWith("/node_modules")) return;
+
+  const isNavigation = request.mode === "navigate";
+  const isAppShell = isNavigation
+    || url.pathname === "/"
+    || url.pathname.endsWith(".html")
+    || url.pathname === "/build-version.json"
+    || url.pathname === "/sw.js"
+    || url.pathname === "/manifest.json";
   const isAppAsset = url.pathname.startsWith("/assets/");
 
+  // Bypass GitHub Pages HTTP cache (max-age=600) for shell documents so installed
+  // PWAs pick up new releases without delete/reinstall.
+  const networkRequest = isAppShell
+    ? new Request(request, { cache: "no-store" })
+    : request;
+
   event.respondWith(
-    fetch(request)
+    fetch(networkRequest)
       .then((response) => {
         if (response.status === 404 && isAppAsset && url.pathname.endsWith(".js")) {
           return new Response(
@@ -55,17 +69,25 @@ self.addEventListener("fetch", (event) => {
             { headers: { "Content-Type": "application/javascript; charset=utf-8" } }
           );
         }
-        if (!isAppShell && !isAppAsset && response && response.ok && request.url.startsWith(self.location.origin)) {
+        // Never cache HTML/app shell. Only cache immutable hashed assets offline-friendly icons.
+        if (!isAppShell && !isAppAsset && response && response.ok) {
           const copy = response.clone();
           caches.open(CACHE).then((cache) => cache.put(request, copy));
         }
         return response;
       })
       .catch(async () => {
+        if (isAppShell || isNavigation) {
+          // Prefer failing closed over serving a stale app shell when offline HTML is unknown.
+          const cached = await caches.match(request);
+          if (cached) return cached;
+          return new Response(
+            "<!doctype html><title>NECalcul8r</title><p>You appear offline. Reconnect and reopen NECalcul8r.</p><script>setTimeout(function(){location.reload();},3000);</script>",
+            { headers: { "Content-Type": "text/html; charset=utf-8" }, status: 503 }
+          );
+        }
         const cached = await caches.match(request);
-        if (cached) return cached;
-        if (request.mode === "navigate") return caches.match("/");
-        return Response.error();
+        return cached || Response.error();
       })
   );
 });

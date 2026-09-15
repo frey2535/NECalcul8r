@@ -1,12 +1,29 @@
 const UPDATE_ATTEMPT_KEY = "necalcul8r_update_attempted_sha";
-const UPDATE_ATTEMPT_RETRY_MS = 15 * 60 * 1000;
+const UPDATE_ATTEMPT_RETRY_MS = 60 * 1000;
 const UPDATE_IN_PROGRESS_KEY = "necalcul8r_update_in_progress";
+const UPDATE_IN_PROGRESS_MAX_MS = 30 * 1000;
 const STALE_ASSET_RELOADED_KEY = "necalcul8r_stale_asset_reloaded";
-const MANDATORY_UPDATE_AUTO_APPLY_MS = 8000;
+const MANDATORY_UPDATE_AUTO_APPLY_MS = 800;
+const STANDALONE_UPDATE_AUTO_APPLY_MS = 100;
+
+function isStandalonePwa() {
+  if (typeof window === "undefined") return false;
+  return (
+    window.matchMedia("(display-mode: standalone)").matches ||
+    window.matchMedia("(display-mode: fullscreen)").matches ||
+    window.navigator.standalone === true
+  );
+}
+
+function autoApplyDelayMs(required = true) {
+  if (!required) return 30 * 1000;
+  return isStandalonePwa() ? STANDALONE_UPDATE_AUTO_APPLY_MS : MANDATORY_UPDATE_AUTO_APPLY_MS;
+}
 
 export function registerServiceWorker() {
   if (typeof window === "undefined") return;
   installStaleAssetRecovery();
+  clearStaleUpdateLock();
   if (!("serviceWorker" in navigator)) {
     watchForBuildUpdates();
     return;
@@ -23,13 +40,15 @@ export function registerServiceWorker() {
     }, 5000);
   }
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("/sw.js").then((registration) => {
+    // Bust GitHub Pages HTTP caching of sw.js (max-age=600) on every deploy.
+    const swUrl = `/sw.js?v=${encodeURIComponent(import.meta.env.VITE_APP_BUILD_SHA || "dev")}`;
+    navigator.serviceWorker.register(swUrl).then((registration) => {
       const promptUpdate = () => {
         if (!registration.waiting || !navigator.serviceWorker.controller) return;
         dispatchUpdateAvailable({
           source: "service-worker",
           required: true,
-          autoApplyAfterMs: MANDATORY_UPDATE_AUTO_APPLY_MS,
+          autoApplyAfterMs: autoApplyDelayMs(true),
           applyUpdate: () => applyServiceWorkerUpdate(registration),
         });
       };
@@ -44,17 +63,36 @@ export function registerServiceWorker() {
         });
       });
 
-      window.addEventListener("focus", () => registration.update().catch(() => undefined));
+      const checkWorker = () => registration.update().catch(() => undefined);
+      window.addEventListener("focus", checkWorker);
+      window.addEventListener("pageshow", checkWorker);
       document.addEventListener("visibilitychange", () => {
-        if (document.visibilityState === "visible") registration.update().catch(() => undefined);
+        if (document.visibilityState === "visible") checkWorker();
       });
-      window.setInterval(() => registration.update().catch(() => undefined), 60 * 1000);
+      window.setInterval(checkWorker, isStandalonePwa() ? 20 * 1000 : 60 * 1000);
     }).catch(() => {
       /* install prompt still works without a worker in some browsers */
     });
   });
 
   watchForBuildUpdates();
+}
+
+function clearStaleUpdateLock() {
+  try {
+    const raw = sessionStorage.getItem(UPDATE_IN_PROGRESS_KEY);
+    if (!raw) return;
+    if (raw === "1") {
+      sessionStorage.removeItem(UPDATE_IN_PROGRESS_KEY);
+      return;
+    }
+    const startedAt = Number(raw);
+    if (!Number.isFinite(startedAt) || Date.now() - startedAt > UPDATE_IN_PROGRESS_MAX_MS) {
+      sessionStorage.removeItem(UPDATE_IN_PROGRESS_KEY);
+    }
+  } catch {
+    /* sessionStorage can be unavailable in private mode */
+  }
 }
 
 function installStaleAssetRecovery() {
@@ -108,7 +146,7 @@ function rememberUpdateAttempt(targetSha) {
 }
 
 function watchForBuildUpdates() {
-  const currentSha = import.meta.env.VITE_APP_BUILD_SHA || "";
+  const currentSha = import.meta.env.VITE_APP_BUILD_SHA || window.__NECALCUL8R_BUILD_SHA__ || "";
   if (!currentSha || currentSha === "local") return;
 
   const attemptedAtBoot = readUpdateAttempt();
@@ -123,7 +161,15 @@ function watchForBuildUpdates() {
   let promptedSha = "";
   const check = async () => {
     try {
-      if (sessionStorage.getItem(UPDATE_IN_PROGRESS_KEY) === "1") return;
+      clearStaleUpdateLock();
+      const inProgress = sessionStorage.getItem(UPDATE_IN_PROGRESS_KEY);
+      if (inProgress && inProgress !== "1") {
+        const startedAt = Number(inProgress);
+        if (Number.isFinite(startedAt) && Date.now() - startedAt < UPDATE_IN_PROGRESS_MAX_MS) return;
+        sessionStorage.removeItem(UPDATE_IN_PROGRESS_KEY);
+      } else if (inProgress === "1") {
+        sessionStorage.removeItem(UPDATE_IN_PROGRESS_KEY);
+      }
       const response = await fetch(`/build-version.json?t=${Date.now()}`, { cache: "no-store" });
       if (!response.ok) return;
       const next = await response.json();
@@ -140,7 +186,7 @@ function watchForBuildUpdates() {
         source: "build-version",
         targetSha: next.sha,
         required: true,
-        autoApplyAfterMs: MANDATORY_UPDATE_AUTO_APPLY_MS,
+        autoApplyAfterMs: autoApplyDelayMs(true),
         applyUpdate: () => reloadFresh(next.sha),
       });
     } catch {
@@ -148,10 +194,12 @@ function watchForBuildUpdates() {
     }
   };
 
-  window.setTimeout(check, 1000);
+  window.setTimeout(check, 250);
+  window.setTimeout(check, 2 * 1000);
   window.setTimeout(check, 10 * 1000);
-  window.setInterval(check, 60 * 1000);
+  window.setInterval(check, isStandalonePwa() ? 20 * 1000 : 60 * 1000);
   window.addEventListener("focus", check);
+  window.addEventListener("pageshow", check);
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "visible") check();
   });
@@ -164,7 +212,7 @@ function dispatchUpdateAvailable(detail) {
 
 async function applyServiceWorkerUpdate(registration) {
   try {
-    sessionStorage.setItem(UPDATE_IN_PROGRESS_KEY, "1");
+    sessionStorage.setItem(UPDATE_IN_PROGRESS_KEY, String(Date.now()));
   } catch {
     /* sessionStorage can be unavailable in private mode */
   }
@@ -209,7 +257,7 @@ export function clearAppErrorState() {
 
 async function reloadFresh(targetSha) {
   try {
-    sessionStorage.setItem(UPDATE_IN_PROGRESS_KEY, "1");
+    sessionStorage.setItem(UPDATE_IN_PROGRESS_KEY, String(Date.now()));
   } catch {
     /* sessionStorage can be unavailable in private mode */
   }
@@ -234,12 +282,7 @@ async function reloadFresh(targetSha) {
 }
 
 export function isStandaloneDisplay() {
-  if (typeof window === "undefined") return false;
-  return (
-    window.matchMedia("(display-mode: standalone)").matches ||
-    window.matchMedia("(display-mode: fullscreen)").matches ||
-    window.navigator.standalone === true
-  );
+  return isStandalonePwa();
 }
 
 export function getInstallPlatform() {
