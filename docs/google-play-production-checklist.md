@@ -16,7 +16,7 @@ supabase functions deploy delete-account --project-ref gqdxvctvufalunaaopyj
 supabase functions deploy create-stripe-checkout --project-ref gqdxvctvufalunaaopyj
 supabase functions deploy stripe-webhook --project-ref gqdxvctvufalunaaopyj
 supabase functions deploy sync-stripe-checkout-session --project-ref gqdxvctvufalunaaopyj
-supabase functions deploy update-stripe-subscription --project-ref gqdxvctvufalunaaopyj
+supabase functions deploy update-stripe-subscription  # REQUIRED for web plan upgrades --project-ref gqdxvctvufalunaaopyj
 supabase functions deploy create-stripe-portal-session --project-ref gqdxvctvufalunaaopyj
 ```
 

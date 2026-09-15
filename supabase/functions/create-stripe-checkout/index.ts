@@ -1,4 +1,5 @@
 import { handleOptions, jsonResponse } from "../_shared/cors.ts";
+import { isAndroidClient } from "../_shared/client-platform.ts";
 import { requireProfile } from "../_shared/supabase.ts";
 import { stripeRequest } from "../_shared/stripe.ts";
 
@@ -29,23 +30,18 @@ function metadataValue(value: unknown) {
   return value == null ? "" : String(value);
 }
 
-function isAndroidClient(req: Request) {
-  return (req.headers.get("x-necalcul8r-client-platform") || "").toLowerCase() === "android";
-}
-
 Deno.serve(async (req) => {
   const options = handleOptions(req);
   if (options) return options;
 
   try {
-    if (isAndroidClient(req)) {
+    const { user, profile } = await requireProfile(req);
+    const payload = await req.json().catch(() => ({}));
+    if (isAndroidClient(req, payload)) {
       return jsonResponse({
         error: "Stripe checkout is not available in the Android app. Use Google Play Billing for individual subscriptions or contact your organization administrator for company access.",
       }, 400);
     }
-
-    const { user, profile } = await requireProfile(req);
-    const payload = await req.json().catch(() => ({}));
     const priceId = String(payload.priceId || "").trim();
     if (!priceId) return jsonResponse({ error: "Missing Stripe price ID." }, 400);
 

@@ -1,4 +1,5 @@
 import { handleOptions, jsonResponse } from "../_shared/cors.ts";
+import { isAndroidClient } from "../_shared/client-platform.ts";
 import { requireUser } from "../_shared/supabase.ts";
 
 const PLAN_ACCESS: Record<string, {
@@ -27,14 +28,12 @@ Deno.serve(async (req) => {
 
   try {
     const { client, user } = await requireUser(req);
-    const clientPlatform = req.headers.get("x-necalcul8r-client-platform") || "";
-    if (clientPlatform.toLowerCase() === "android") {
+    const payload = await req.json().catch(() => ({}));
+    if (isAndroidClient(req, payload)) {
       return jsonResponse({
         error: "License keys cannot be redeemed in the Android app. Use Google Play Billing for individual subscriptions or contact your organization administrator for company access.",
       }, 400);
     }
-
-    const payload = await req.json().catch(() => ({}));
     const code = normalizeCode(String(payload.code || payload.licenseKey || ""));
     if (!code || code.length < 8) {
       return jsonResponse({ error: "Enter a valid license key." }, 400);

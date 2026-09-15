@@ -8,17 +8,25 @@ const companyPriceId = import.meta.env?.VITE_STRIPE_PRICE_COMPANY_0_10
   || import.meta.env?.VITE_STRIPE_COMPANY_PRICE_ID
   || "";
 
-async function invokeCommerceFunction(functionName, payload) {
-  const client = requireSupabase();
-  // Only native Android sends the custom platform header. Web browsers omit it
-  // so commerce calls stay simple CORS requests and keep working even when Edge
-  // Function CORS allow-lists have not been redeployed yet.
-  const invokeOptions = { body: payload };
+function clientPlatform() {
   if (Capacitor.isNativePlatform?.() && Capacitor.getPlatform?.() === "android") {
-    invokeOptions.headers = {
-      "x-necalcul8r-client-platform": "android",
-    };
+    return "android";
   }
+  return "web";
+}
+
+async function invokeCommerceFunction(functionName, payload = {}) {
+  const client = requireSupabase();
+  // Put platform in the JSON body only. A custom header triggers browser/WebView
+  // CORS preflights, and production Edge Functions still omit that header from
+  // Access-Control-Allow-Headers, which surfaces as "Failed to send a request to
+  // the Edge Function" on Android and stale PWAs.
+  const invokeOptions = {
+    body: {
+      ...payload,
+      clientPlatform: clientPlatform(),
+    },
+  };
   const { data, error } = await client.functions.invoke(functionName, invokeOptions);
   if (error) {
     const response = error.context;
@@ -30,9 +38,20 @@ async function invokeCommerceFunction(functionName, payload) {
         body = null;
       }
       if (body?.error) throw new Error(body.error);
+      if (body?.code === "NOT_FOUND" || /not found/i.test(String(body?.message || ""))) {
+        throw new Error(
+          `${functionName} is not deployed in Supabase yet. Deploy that Edge Function and retry.`
+        );
+      }
       if (body?.message) throw new Error(body.message);
     }
-    throw new Error(error.message || `${functionName} failed.`);
+    const message = error.message || `${functionName} failed.`;
+    if (/failed to send a request to the edge function/i.test(message)) {
+      throw new Error(
+        `${functionName} could not be reached (network/CORS). If this is an upgrade, confirm update-stripe-subscription is deployed.`
+      );
+    }
+    throw new Error(message);
   }
   if (data?.error) throw new Error(data.error);
   return data;

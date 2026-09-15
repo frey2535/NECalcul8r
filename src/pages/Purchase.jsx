@@ -138,16 +138,27 @@ export default function Purchase() {
         await purchaseGooglePlayPlan(selected);
         window.location.assign("/");
       } else if (upgradesExistingSubscription) {
-        await base44.commerce.updateStripeSubscription({
-          accountType: selected.accountType,
-          planKey: selected.planKey,
-          priceId: selected.priceId,
-          quantity: selected.billingQuantity,
-          seats: selected.seatLimit,
-        });
-        await checkAppState();
-        setSuccess(`Subscription upgraded to ${selected.label}. You were only charged the prorated difference for the current month; the full ${selected.priceLabel} starts on your next monthly payment.`);
-        setLoading(false);
+        try {
+          await base44.commerce.updateStripeSubscription({
+            accountType: selected.accountType,
+            planKey: selected.planKey,
+            priceId: selected.priceId,
+            quantity: selected.billingQuantity,
+            seats: selected.seatLimit,
+          });
+          await checkAppState();
+          setSuccess(`Subscription upgraded to ${selected.label}. You were only charged the prorated difference for the current month; the full ${selected.priceLabel} starts on your next monthly payment.`);
+          setLoading(false);
+        } catch (upgradeError) {
+          const message = String(upgradeError?.message || "");
+          // Production was missing update-stripe-subscription; fall back to the
+          // Stripe portal so customers can still change plans immediately.
+          if (/not deployed|not found|could not be reached|failed to send/i.test(message)) {
+            await base44.commerce.openBillingPortal({ returnUrl: window.location.href });
+            return;
+          }
+          throw upgradeError;
+        }
       } else if (managesExistingSubscription) {
         await base44.commerce.openBillingPortal({ returnUrl: window.location.href });
       } else {
