@@ -15,6 +15,7 @@ import com.android.billingclient.api.QueryProductDetailsResult;
 import com.android.billingclient.api.QueryPurchasesParams;
 import com.getcapacitor.JSArray;
 import com.getcapacitor.JSObject;
+import com.getcapacitor.Logger;
 import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
 import com.getcapacitor.PluginMethod;
@@ -28,17 +29,38 @@ import java.util.List;
 public class GooglePlayBillingPlugin extends Plugin implements PurchasesUpdatedListener {
     private BillingClient billingClient;
     private PluginCall pendingPurchaseCall;
+    private final Object billingLock = new Object();
 
     @Override
     public void load() {
-        billingClient = BillingClient.newBuilder(getContext())
-            .enablePendingPurchases(
-                PendingPurchasesParams.newBuilder()
-                    .enableOneTimeProducts()
-                    .build()
-            )
-            .setListener(this)
-            .build();
+        // Do not touch BillingClient here. If construction throws during Capacitor's
+        // plugin registration, the plugin is silently dropped and JS reports
+        // "GooglePlayBilling plugin is not implemented on android".
+        Logger.info("GooglePlayBillingPlugin registered.");
+    }
+
+    private BillingClient requireBillingClient() {
+        synchronized (billingLock) {
+            if (billingClient == null) {
+                billingClient = BillingClient.newBuilder(getContext())
+                    .enablePendingPurchases(
+                        PendingPurchasesParams.newBuilder()
+                            .enableOneTimeProducts()
+                            .build()
+                    )
+                    .setListener(this)
+                    .build();
+            }
+            return billingClient;
+        }
+    }
+
+    @PluginMethod
+    public void isAvailable(PluginCall call) {
+        JSObject result = new JSObject();
+        result.put("available", true);
+        result.put("platform", "android");
+        call.resolve(result);
     }
 
     @PluginMethod
@@ -49,7 +71,7 @@ public class GooglePlayBillingPlugin extends Plugin implements PurchasesUpdatedL
             return;
         }
         String basePlanId = call.getString("basePlanId", "monthly");
-        withBillingClient(call, () -> queryProductDetails(ids, basePlanId, call));
+        withBillingClient(call, client -> queryProductDetails(client, ids, basePlanId, call));
     }
 
     @PluginMethod
@@ -60,20 +82,18 @@ public class GooglePlayBillingPlugin extends Plugin implements PurchasesUpdatedL
             call.reject("productId is required.");
             return;
         }
-        JSArray ids = new JSArray();
-        ids.put(productId);
-        withBillingClient(call, () -> queryProductDetailsForPurchase(productId, basePlanId, call));
+        withBillingClient(call, client -> queryProductDetailsForPurchase(client, productId, basePlanId, call));
     }
 
     @PluginMethod
     public void restorePurchases(PluginCall call) {
-        withBillingClient(call, () -> billingClient.queryPurchasesAsync(
+        withBillingClient(call, client -> client.queryPurchasesAsync(
             QueryPurchasesParams.newBuilder()
                 .setProductType(BillingClient.ProductType.SUBS)
                 .build(),
             (billingResult, purchases) -> {
                 if (billingResult.getResponseCode() != BillingClient.BillingResponseCode.OK) {
-                    call.reject(billingResult.getDebugMessage());
+                    call.reject(billingMessage(billingResult, "Could not restore Google Play purchases."));
                     return;
                 }
                 JSObject result = new JSObject();
@@ -83,20 +103,32 @@ public class GooglePlayBillingPlugin extends Plugin implements PurchasesUpdatedL
         ));
     }
 
-    private void withBillingClient(PluginCall call, Runnable connected) {
-        if (billingClient != null && billingClient.isReady()) {
-            connected.run();
+    private interface BillingReadyAction {
+        void run(BillingClient client);
+    }
+
+    private void withBillingClient(PluginCall call, BillingReadyAction connected) {
+        final BillingClient client;
+        try {
+            client = requireBillingClient();
+        } catch (Exception ex) {
+            call.reject("Google Play Billing could not start: " + ex.getMessage());
             return;
         }
 
-        billingClient.startConnection(new BillingClientStateListener() {
+        if (client.isReady()) {
+            connected.run(client);
+            return;
+        }
+
+        client.startConnection(new BillingClientStateListener() {
             @Override
             public void onBillingSetupFinished(BillingResult billingResult) {
                 if (billingResult.getResponseCode() != BillingClient.BillingResponseCode.OK) {
-                    call.reject(billingResult.getDebugMessage());
+                    call.reject(billingMessage(billingResult, "Google Play Billing is unavailable on this device."));
                     return;
                 }
-                connected.run();
+                connected.run(client);
             }
 
             @Override
@@ -122,10 +154,10 @@ public class GooglePlayBillingPlugin extends Plugin implements PurchasesUpdatedL
             .build();
     }
 
-    private void queryProductDetails(JSArray ids, String basePlanId, PluginCall call) {
-        billingClient.queryProductDetailsAsync(productDetailsParams(ids), (billingResult, queryResult) -> {
+    private void queryProductDetails(BillingClient client, JSArray ids, String basePlanId, PluginCall call) {
+        client.queryProductDetailsAsync(productDetailsParams(ids), (billingResult, queryResult) -> {
             if (billingResult.getResponseCode() != BillingClient.BillingResponseCode.OK) {
-                call.reject(billingResult.getDebugMessage());
+                call.reject(billingMessage(billingResult, "Could not load Google Play products."));
                 return;
             }
             JSObject result = new JSObject();
@@ -134,12 +166,17 @@ public class GooglePlayBillingPlugin extends Plugin implements PurchasesUpdatedL
         });
     }
 
-    private void queryProductDetailsForPurchase(String productId, String basePlanId, PluginCall call) {
+    private void queryProductDetailsForPurchase(
+        BillingClient client,
+        String productId,
+        String basePlanId,
+        PluginCall call
+    ) {
         JSArray ids = new JSArray();
         ids.put(productId);
-        billingClient.queryProductDetailsAsync(productDetailsParams(ids), (billingResult, queryResult) -> {
+        client.queryProductDetailsAsync(productDetailsParams(ids), (billingResult, queryResult) -> {
             if (billingResult.getResponseCode() != BillingClient.BillingResponseCode.OK) {
-                call.reject(billingResult.getDebugMessage());
+                call.reject(billingMessage(billingResult, "Could not load Google Play product " + productId + "."));
                 return;
             }
             ProductDetails productDetails = null;
@@ -151,16 +188,25 @@ public class GooglePlayBillingPlugin extends Plugin implements PurchasesUpdatedL
                 break;
             }
             if (productDetails == null || offer == null) {
-                call.reject("Monthly subscription offer was not found for " + productId + ".");
+                call.reject(
+                    "Google Play subscription offer was not found for " + productId +
+                        " (base plan '" + basePlanId + "'). Activate the product/base plan in Play Console."
+                );
                 return;
             }
+
+            Activity activity = getActivity();
+            if (activity == null) {
+                call.reject("Google Play purchase UI is unavailable because the Android activity is missing.");
+                return;
+            }
+
             pendingPurchaseCall = call;
             BillingFlowParams.ProductDetailsParams detailsParams = BillingFlowParams.ProductDetailsParams.newBuilder()
                 .setProductDetails(productDetails)
                 .setOfferToken(offer.getOfferToken())
                 .build();
-            Activity activity = getActivity();
-            BillingResult launchResult = billingClient.launchBillingFlow(
+            BillingResult launchResult = client.launchBillingFlow(
                 activity,
                 BillingFlowParams.newBuilder()
                     .setProductDetailsParamsList(Collections.singletonList(detailsParams))
@@ -168,7 +214,7 @@ public class GooglePlayBillingPlugin extends Plugin implements PurchasesUpdatedL
             );
             if (launchResult.getResponseCode() != BillingClient.BillingResponseCode.OK) {
                 pendingPurchaseCall = null;
-                call.reject(launchResult.getDebugMessage());
+                call.reject(billingMessage(launchResult, "Could not open Google Play purchase sheet."));
             }
         });
     }
@@ -184,13 +230,16 @@ public class GooglePlayBillingPlugin extends Plugin implements PurchasesUpdatedL
 
     private JSArray productDetailsToArray(QueryProductDetailsResult queryResult, String basePlanId) {
         JSArray products = new JSArray();
-        for (ProductDetails details : queryResult.getProductDetailsList()) {
+        List<ProductDetails> detailsList = queryResult.getProductDetailsList();
+        if (detailsList == null) return products;
+        for (ProductDetails details : detailsList) {
             ProductDetails.SubscriptionOfferDetails offer = monthlyOffer(details, basePlanId);
             JSObject item = new JSObject();
             item.put("productId", details.getProductId());
             item.put("title", details.getTitle());
             item.put("description", details.getDescription());
-            if (offer != null && !offer.getPricingPhases().getPricingPhaseList().isEmpty()) {
+            if (offer != null && offer.getPricingPhases() != null
+                && !offer.getPricingPhases().getPricingPhaseList().isEmpty()) {
                 ProductDetails.PricingPhase phase = offer.getPricingPhases().getPricingPhaseList().get(0);
                 item.put("basePlanId", offer.getBasePlanId());
                 item.put("offerToken", offer.getOfferToken());
@@ -206,6 +255,7 @@ public class GooglePlayBillingPlugin extends Plugin implements PurchasesUpdatedL
 
     private JSArray purchasesToArray(List<Purchase> purchases) {
         JSArray array = new JSArray();
+        if (purchases == null) return array;
         for (Purchase purchase : purchases) {
             JSObject item = new JSObject();
             item.put("orderId", purchase.getOrderId());
@@ -222,6 +272,12 @@ public class GooglePlayBillingPlugin extends Plugin implements PurchasesUpdatedL
         return array;
     }
 
+    private String billingMessage(BillingResult billingResult, String fallback) {
+        String debug = billingResult.getDebugMessage();
+        if (debug != null && !debug.trim().isEmpty()) return debug;
+        return fallback + " (code " + billingResult.getResponseCode() + ")";
+    }
+
     @Override
     public void onPurchasesUpdated(BillingResult billingResult, List<Purchase> purchases) {
         JSObject result = new JSObject();
@@ -236,7 +292,7 @@ public class GooglePlayBillingPlugin extends Plugin implements PurchasesUpdatedL
         } else if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.USER_CANCELED) {
             pendingPurchaseCall.reject("Purchase canceled.");
         } else {
-            pendingPurchaseCall.reject(billingResult.getDebugMessage());
+            pendingPurchaseCall.reject(billingMessage(billingResult, "Google Play purchase failed."));
         }
         pendingPurchaseCall = null;
     }

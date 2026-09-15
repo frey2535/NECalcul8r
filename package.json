@@ -1,7 +1,7 @@
 {
   "name": "necalcul8r",
   "private": true,
-  "version": "1.0.2",
+  "version": "1.0.3",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -10,7 +10,7 @@
     "lint:fix": "eslint . --fix",
     "typecheck": "tsc -p ./jsconfig.json",
     "preview": "vite preview",
-    "android:sync": "npm run build && cap sync android",
+    "android:sync": "npm run build && cap sync android && node scripts/ensure-android-billing-plugin.mjs",
     "android:bundle:release": "npm run android:sync && cd android && ./gradlew bundleRelease && cd .. && mkdir -p release && cp android/app/build/outputs/bundle/release/app-release.aab \"release/NECalcul8r-${npm_package_version}.aab\" && sha256sum \"release/NECalcul8r-${npm_package_version}.aab\"",
     "verify:dwelling-optional": "node scripts/verify-dwelling-optional.mjs",
     "verify:mutation:dwelling-optional": "node scripts/verify-mutation-dwelling-optional.mjs",
