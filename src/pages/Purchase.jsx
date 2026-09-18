@@ -3,7 +3,7 @@ import { Check, CreditCard, KeyRound, Loader2, RefreshCw, ShoppingCart, Users } 
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/lib/AuthContext";
 import { COMPANY_PLANS, DEFAULT_PAID_PLAN_KEY, INDIVIDUAL_PLANS, getPlanOption, isPlanUpgrade } from "@/lib/pricing";
-import { isAndroidNativeApp, purchaseGooglePlayPlan, queryGooglePlayProducts, restoreGooglePlayPurchases } from "@/lib/googlePlayBilling";
+import { isAndroidNativeApp, isGooglePlayBillingPluginMissing, openPlayStoreListing, purchaseGooglePlayPlan, queryGooglePlayProducts, restoreGooglePlayPurchases } from "@/lib/googlePlayBilling";
 import { isIosNativeApp, purchaseAppleAppStorePlan, queryAppleAppStoreProducts, restoreAppleAppStorePurchases } from "@/lib/appleAppStoreBilling";
 import { cn } from "@/lib/utils";
 
@@ -60,6 +60,7 @@ export default function Purchase() {
   const isAndroidNative = isAndroidNativeApp();
   const isIosNative = isIosNativeApp();
   const isStoreNative = isAndroidNative || isIosNative;
+  const needsPlayUpdate = isGooglePlayBillingPluginMissing();
 
   const selected = useMemo(
     () => getPlanOption(selectedPlanKey),
@@ -86,6 +87,9 @@ export default function Purchase() {
     if (selectedRequiresCompany) {
       return "Company packages require an account connected to a company. Register with a company name or join a company invite before buying a company package.";
     }
+    if (needsPlayUpdate) {
+      return "This phone still has an older NECalcul8r build. Open the Play Store and tap Update — do not uninstall. Purchasing works after that update finishes.";
+    }
     if (usesGooglePlay) {
       return `Google Play product details are unavailable for ${selected.googlePlayProductId || selected.planKey}. Confirm this subscription product is active in Play Console with the monthly base plan, then reopen the purchase screen.`;
     }
@@ -99,7 +103,7 @@ export default function Purchase() {
       return `Stripe checkout is not configured for ${selected.label}. Add a Stripe price ID for ${selected.planKey} in VITE_STRIPE_PRICE_MATRIX_JSON, or set the tiered fallback env var for this account type.`;
     }
     return "Checkout is not available for this package yet. Please contact support.";
-  }, [selected, selectedRequiresCompany, usesGooglePlay, usesAppleIap]);
+  }, [needsPlayUpdate, selected, selectedRequiresCompany, usesGooglePlay, usesAppleIap]);
 
   useEffect(() => {
     if (!isAndroidNative && !isIosNative) return undefined;
@@ -143,6 +147,10 @@ export default function Purchase() {
     }
     if (companyOnStore) {
       setSuccess("Company access is managed by your organization administrator or NECalcul8r support. Purchase company plans on the website.");
+      return;
+    }
+    if (needsPlayUpdate) {
+      openPlayStoreListing();
       return;
     }
     if (!checkoutReady) {
@@ -258,6 +266,22 @@ export default function Purchase() {
         </div>
       </div>
 
+      {needsPlayUpdate && (
+        <section className="rounded-3xl border border-amber-300 bg-amber-50 dark:bg-amber-950/30 p-5 space-y-3">
+          <h2 className="text-lg font-extrabold text-foreground">Play Store update required</h2>
+          <p className="text-sm text-muted-foreground">
+            Purchases need the current Play Store build. Open the listing and tap <strong>Update</strong>. You do not need to uninstall or create a new account.
+          </p>
+          <button
+            type="button"
+            onClick={openPlayStoreListing}
+            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold px-6 py-3"
+          >
+            Update from Play Store
+          </button>
+        </section>
+      )}
+
       <section className="space-y-3">
         <div className="flex items-center gap-2">
           <Users className="w-4 h-4 text-blue-600" />
@@ -359,7 +383,9 @@ export default function Purchase() {
               ? (upgradesExistingSubscription ? "Upgrading..." : "Opening billing...")
               : selected.isFree
                 ? "Continue with free tier"
-                : companyOnStore
+                : needsPlayUpdate
+                  ? "Update from Play Store"
+                  : companyOnStore
                   ? "How to buy on web"
                   : upgradesExistingSubscription
                     ? "Upgrade now"

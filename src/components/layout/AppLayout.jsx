@@ -18,6 +18,7 @@ import Profile from "@/pages/Profile";
 import { useNECYear } from "@/context/NECYearContext";
 import { useTheme } from "@/context/ThemeContext";
 import { getResolvedEntitlement } from "@/lib/pricing";
+import { isGooglePlayBillingPluginMissing, openPlayStoreListing } from "@/lib/googlePlayBilling";
 
 // Each tab remembers its last visited path independently
 const TABS = [
@@ -111,6 +112,18 @@ export default function AppLayout({ trialStatus }) {
     <div className="min-h-dvh bg-background flex flex-col">
       {/* Trial banner */}
       {trialStatus?.status === 'trial' && <TrialBanner daysLeft={trialStatus.daysLeft} />}
+      {isGooglePlayBillingPluginMissing() && (
+        <div className="bg-amber-500 text-amber-950 px-4 py-2 text-sm font-semibold flex items-center justify-between gap-3">
+          <span>A Play Store update is required before purchases work. Do not uninstall.</span>
+          <button
+            type="button"
+            onClick={openPlayStoreListing}
+            className="shrink-0 rounded-lg bg-amber-950 text-amber-50 px-3 py-1.5 text-xs font-extrabold"
+          >
+            Update
+          </button>
+        </div>
+      )}
 
       {/* Header */}
       <header
