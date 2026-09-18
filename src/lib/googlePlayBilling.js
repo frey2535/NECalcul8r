@@ -6,12 +6,24 @@ const GooglePlayBilling = registerPlugin("GooglePlayBilling");
 const GOOGLE_PLAY_BASE_PLAN_ID = import.meta.env?.VITE_GOOGLE_PLAY_BASE_PLAN_ID || "monthly";
 const ANDROID_PACKAGE_NAME = import.meta.env?.VITE_ANDROID_PACKAGE_NAME || "com.currentflow.necalcul8r";
 
+export const PLAY_STORE_LISTING_URL = `https://play.google.com/store/apps/details?id=${ANDROID_PACKAGE_NAME}`;
+
 export function isAndroidNativeApp() {
   return Capacitor.getPlatform?.() === "android" && Capacitor.isNativePlatform?.();
 }
 
+export function openPlayStoreListing() {
+  window.location.assign(PLAY_STORE_LISTING_URL);
+}
+
+export function isGooglePlayBillingPluginMissing() {
+  if (!isAndroidNativeApp()) return false;
+  return typeof Capacitor.isPluginAvailable === "function"
+    && !Capacitor.isPluginAvailable("GooglePlayBilling");
+}
+
 function unimplementedBillingMessage() {
-  return "Google Play Billing is missing from this installed app build. Update NECalcul8r from the Play Store (or install a newly uploaded build), then try again.";
+  return "This phone still has an older NECalcul8r build. Open the Play Store and tap Update — do not uninstall. Purchasing works after that update finishes.";
 }
 
 async function assertBillingPluginAvailable() {
