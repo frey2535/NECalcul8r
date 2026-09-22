@@ -384,6 +384,6 @@ export function getCalculatorAccess(categories = [], user = null, calculatorTier
     includedCount: includedCategories.length,
     totalCount: categories.length,
     isFullAccess: limit == null || includedCategories.length >= categories.length,
-    isAllowed: (calculatorId) => includedIds.has(calculatorId),
+    isAllowed: (calculatorId) => includedIds.has(calculatorId) || categories.some((category) => category.id === calculatorId && category.alwaysFree),
   };
 }
