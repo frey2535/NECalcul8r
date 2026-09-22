@@ -143,7 +143,7 @@ export default function ElectricalFundamentals({ category, necYear = "2023" }) {
   const parallel = useMemo(() => calcParallelCircuit({ voltage: sourceVoltage, resistors }), [sourceVoltage, resistors]);
   const ac = useMemo(() => calcAcPower({ system: acSystem, voltage: acVoltage, current: acCurrent, powerFactor: pf }), [acSystem, acVoltage, acCurrent, pf]);
 
-  const formulaOptions = {
+  const formulaOptions = useMemo(() => ({
     I: [
       { value: "V_R", label: "Voltage + Resistance → Current" },
       { value: "P_V", label: "Power + Voltage → Current" },
@@ -164,7 +164,7 @@ export default function ElectricalFundamentals({ category, necYear = "2023" }) {
       { value: "I_R", label: "Current + Resistance → Power" },
       { value: "V_R", label: "Voltage + Resistance → Power" },
     ],
-  };
+  }), []);
 
   const labelsByFormula = {
     I: { V_R: ["Voltage", "Resistance"], P_V: ["Power", "Voltage"], P_R: ["Power", "Resistance"] },
