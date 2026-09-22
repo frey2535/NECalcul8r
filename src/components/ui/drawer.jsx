@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import { Drawer as DrawerPrimitive } from "vaul"
+import { X } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 
@@ -37,6 +38,14 @@ const DrawerContent = React.forwardRef(({ className, children, ...props }, ref) 
         className
       )}
       {...props}>
+      <DrawerPrimitive.Close
+        type="button"
+        aria-label="Close drawer"
+        className="absolute right-3 top-3 z-20 inline-flex h-10 w-10 touch-manipulation items-center justify-center rounded-full border border-border/60 bg-background/95 text-foreground shadow-sm transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+      >
+        <X className="h-5 w-5" aria-hidden="true" />
+        <span className="sr-only">Close</span>
+      </DrawerPrimitive.Close>
       <div className="mx-auto mt-4 h-2 w-[100px] rounded-full bg-muted" />
       {children}
     </DrawerPrimitive.Content>
