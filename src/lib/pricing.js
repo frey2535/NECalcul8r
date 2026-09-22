@@ -12,9 +12,9 @@ export const INDIVIDUAL_PLANS = [
   {
     planKey: FREE_PLAN_KEY,
     label: "Free",
-    description: "Use up to 5 calculators at no cost.",
+    description: "Use the free calculator collection at no cost.",
     accountType: "individual",
-    calculatorLimit: 5,
+    calculatorLimit: 6,
     hasNecTables: false,
     canExportCompleteReports: false,
     companySeatLimit: null,

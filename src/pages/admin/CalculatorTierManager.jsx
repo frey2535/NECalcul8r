@@ -89,8 +89,10 @@ export default function CalculatorTierManager() {
       const targetIndex = nextGroups.findIndex((group) => group.planKey === nextPlanKey);
       if (targetIndex === -1) return currentGroups;
 
+      const movingCategory = NEC_CATEGORIES.find((category) => category.id === calculatorId);
       const capacity = tierCapacity(nextGroups, targetIndex);
-      if (nextGroups[targetIndex].calculatorIds.length >= capacity) {
+      const isAlwaysFreeTarget = nextPlanKey === "free" && movingCategory?.alwaysFree;
+      if (!isAlwaysFreeTarget && nextGroups[targetIndex].calculatorIds.length >= capacity) {
         toast({
           title: "Tier is full",
           description: `${nextGroups[targetIndex].label} cannot include more calculators without moving one out first.`,
@@ -152,7 +154,7 @@ export default function CalculatorTierManager() {
               </div>
             </div>
             <p className="mt-3 max-w-3xl text-sm text-muted-foreground">
-              Move calculators into the Free, 6-15, 16-25, 26-35, or 36+ groups.
+              Move calculators into the Free, 6-15, 16-25, 26-35, or 36+ groups. Electrical Fundamentals is included in Free by default.
               Paid tiers are cumulative, so a 16-25 subscriber receives the Free group,
               the 6-15 group, and the 16-25 group.
             </p>
