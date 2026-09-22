@@ -1,4 +1,5 @@
 export const NEC_CATEGORIES = [
+  { id: "electrical_fundamentals", label: "Electrical Fundamentals", article: "Electrical Theory + NEC Application", description: "Ohm's Law, power, series, parallel & AC fundamentals with guided learning", color: "indigo", emoji: "🎓", alwaysFree: true },
   { id: "voltage_drop", label: "Voltage Drop", article: "NEC 210.19 / 215.2", description: "Branch circuit & feeder voltage drop", color: "blue", emoji: "⚡" },
   { id: "conductor_ampacity", label: "Conductor Ampacity", article: "NEC 310.15", description: "Wire size, temp correction & bundling", color: "green", emoji: "🔌" },
   { id: "box_fill", label: "Box Fill", article: "NEC 314.16", description: "Electrical box fill volume calculation", color: "purple", emoji: "📦" },
