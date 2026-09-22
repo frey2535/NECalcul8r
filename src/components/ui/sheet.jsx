@@ -6,7 +6,13 @@ import { X } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 
-const Sheet = SheetPrimitive.Root
+const SheetContext = React.createContext(null)
+
+const Sheet = ({ onOpenChange, ...props }) => (
+  <SheetContext.Provider value={onOpenChange || null}>
+    <SheetPrimitive.Root onOpenChange={onOpenChange} {...props} />
+  </SheetContext.Provider>
+)
 
 const SheetTrigger = SheetPrimitive.Trigger
 
@@ -44,21 +50,32 @@ const sheetVariants = cva(
   }
 )
 
-const SheetContent = React.forwardRef(({ side = "right", className, children, ...props }, ref) => (
-  <SheetPortal>
-    <SheetOverlay />
-    <SheetPrimitive.Content ref={ref} className={cn(sheetVariants({ side }), className)} {...props}>
-      <SheetPrimitive.Close
-        type="button"
-        aria-label="Close panel"
-        className="absolute right-3 top-3 z-20 inline-flex h-10 w-10 touch-manipulation items-center justify-center rounded-full border border-border/60 bg-background/95 text-foreground shadow-sm transition-colors hover:bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none">
-        <X className="h-5 w-5" aria-hidden="true" />
-        <span className="sr-only">Close</span>
-      </SheetPrimitive.Close>
-      {children}
-    </SheetPrimitive.Content>
-  </SheetPortal>
-))
+const SheetContent = React.forwardRef(({ side = "right", className, children, ...props }, ref) => {
+  const onOpenChange = React.useContext(SheetContext);
+  const close = React.useCallback((event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    onOpenChange?.(false);
+  }, [onOpenChange]);
+
+  return (
+    <SheetPortal>
+      <SheetOverlay />
+      <SheetPrimitive.Content ref={ref} className={cn(sheetVariants({ side }), className)} {...props}>
+        <button
+          type="button"
+          aria-label="Close panel"
+          onPointerDown={close}
+          onClick={close}
+          className="absolute right-3 top-3 z-[100] inline-flex h-11 w-11 touch-manipulation items-center justify-center rounded-full border border-border/60 bg-background text-foreground shadow-md hover:bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+          <X className="h-5 w-5 pointer-events-none" aria-hidden="true" />
+          <span className="sr-only">Close</span>
+        </button>
+        {children}
+      </SheetPrimitive.Content>
+    </SheetPortal>
+  );
+})
 SheetContent.displayName = SheetPrimitive.Content.displayName
 
 const SheetHeader = ({
