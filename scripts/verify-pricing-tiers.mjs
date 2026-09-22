@@ -42,7 +42,8 @@ const configuredCalculatorCount = calculatorTierSections.reduce((total, section)
 assert(configuredCalculatorCount === NEC_CATEGORIES.length, "all calculators should appear in exactly one configured tier section");
 
 const configuredFreeAccess = getCalculatorAccess(NEC_CATEGORIES, freeUser);
-assert(configuredFreeAccess.includedCount === 5, "configured free tier should include exactly 5 selected calculators");
+assert(configuredFreeAccess.includedCount === 6, "configured free access should include the 5 selected calculators plus the always-free Electrical Fundamentals calculator");
+assert(configuredFreeAccess.isAllowed("electrical_fundamentals"), "Electrical Fundamentals should remain free without displacing a selected free-tier calculator");
 assert(configuredFreeAccess.isAllowed("voltage_drop"), "configured free tier should allow Voltage Drop");
 assert(configuredFreeAccess.isAllowed("dwelling_optional"), "configured free tier should allow Dwelling Optional");
 assert(!configuredFreeAccess.isAllowed("commercial_load"), "configured free tier should lock calculators selected for paid tiers");
@@ -60,7 +61,7 @@ assert(getResolvedEntitlement(starterPaid).hasNecTables, "paid individual users 
 assert(getCalculatorAccess(categories, starterPaid, customTierGroups).isAllowed("calc_1"), "runtime tier settings should unlock selected 6-15 calculators");
 
 const configuredStarterAccess = getCalculatorAccess(NEC_CATEGORIES, starterPaid);
-assert(configuredStarterAccess.includedCount === 15, "configured individual_6_15 should include free calculators plus its selected group");
+assert(configuredStarterAccess.includedCount === 16, "configured individual_6_15 should include its 15 tier calculators plus the always-free Electrical Fundamentals calculator");
 assert(configuredStarterAccess.isAllowed("grounding_electrode"), "configured individual_6_15 should allow selected 6-15 calculators");
 assert(!configuredStarterAccess.isAllowed("main_bonding_jumper"), "configured individual_6_15 should lock selected 16-25 calculators");
 
@@ -77,7 +78,7 @@ assert(getPlanOption("individual_26_35").priceLabel === "$35/mo", "individual_26
 assert(getPlanOption("individual_26_35").billingQuantity === 35, "individual_26_35 should bill using quantity 35 for tiered Stripe prices");
 
 const configuredAdvancedAccess = getCalculatorAccess(NEC_CATEGORIES, advancedPaid);
-assert(configuredAdvancedAccess.includedCount === 35, "configured individual_26_35 should include selected calculators through the 26-35 group");
+assert(configuredAdvancedAccess.includedCount === 36, "configured individual_26_35 should include its 35 tier calculators plus the always-free Electrical Fundamentals calculator");
 assert(configuredAdvancedAccess.isAllowed("three_phase_power"), "configured individual_26_35 should allow selected 26-35 calculators");
 assert(!configuredAdvancedAccess.isAllowed("single_phase_power"), "configured individual_26_35 should lock selected 36+ calculators");
 
