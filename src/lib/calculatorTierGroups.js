@@ -25,7 +25,7 @@ export const DEFAULT_CALCULATOR_TIER_GROUPS = [
     planKey: "individual_6_15",
     label: "Individual 6-15",
     description: "Unlocked by the 6-15 calculator package.",
-    maxCumulativeCount: 15,
+    maxCumulativeCount: 16,
     calculatorIds: [
       "commercial_load",
       "motor_full_load",
@@ -43,7 +43,7 @@ export const DEFAULT_CALCULATOR_TIER_GROUPS = [
     planKey: "individual_16_25",
     label: "Individual 16-25",
     description: "Unlocked by the 16-25 calculator package.",
-    maxCumulativeCount: 25,
+    maxCumulativeCount: 26,
     calculatorIds: [
       "main_bonding_jumper",
       "system_bonding_jumper",
@@ -61,7 +61,7 @@ export const DEFAULT_CALCULATOR_TIER_GROUPS = [
     planKey: "individual_26_35",
     label: "Individual 26-35",
     description: "Unlocked by the 26-35 calculator package.",
-    maxCumulativeCount: 35,
+    maxCumulativeCount: 36,
     calculatorIds: [
       "demand_factor",
       "continuous_load",
