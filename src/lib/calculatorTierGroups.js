@@ -10,9 +10,10 @@ export const DEFAULT_CALCULATOR_TIER_GROUPS = [
   {
     planKey: "free",
     label: "Free calculators",
-    description: "Included before purchase. Edit these IDs to choose the free five.",
-    maxCumulativeCount: 5,
+    description: "Included before purchase. Electrical Fundamentals is part of the free tier.",
+    maxCumulativeCount: 6,
     calculatorIds: [
+      "electrical_fundamentals",
       "voltage_drop",
       "conductor_ampacity",
       "box_fill",
