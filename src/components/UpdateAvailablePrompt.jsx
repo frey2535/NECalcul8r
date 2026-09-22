@@ -73,14 +73,19 @@ export default function UpdateAvailablePrompt() {
   if (!update) return null;
 
   return (
-    <div className="fixed left-3 right-3 bottom-3 z-[80] sm:left-auto sm:right-5 sm:max-w-sm">
-      <div className="rounded-2xl border border-border/60 bg-card shadow-2xl p-4">
+    <div
+      className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="necalcul8r-update-title"
+    >
+      <div className="w-full max-w-sm rounded-2xl border border-border/60 bg-card shadow-2xl p-5">
         <div className="flex items-start gap-3">
           <div className="w-9 h-9 rounded-xl bg-blue-100 dark:bg-blue-950/50 flex items-center justify-center flex-shrink-0">
             <RefreshCw className="w-4 h-4 text-blue-600 dark:text-blue-400" />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-bold text-foreground">Update available</p>
+            <p id="necalcul8r-update-title" className="text-sm font-bold text-foreground">Update available</p>
             <p className="text-xs text-muted-foreground mt-0.5">
               A newer version of NECalcul8r is ready. {update.required ? "It will install automatically to keep the app working correctly." : "Update to get the latest fixes."}
             </p>
