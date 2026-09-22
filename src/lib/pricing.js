@@ -14,7 +14,7 @@ export const INDIVIDUAL_PLANS = [
     label: "Free",
     description: "Use the free calculator collection at no cost.",
     accountType: "individual",
-    calculatorLimit: 6,
+    calculatorLimit: 5,
     hasNecTables: false,
     canExportCompleteReports: false,
     companySeatLimit: null,
