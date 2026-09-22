@@ -369,11 +369,13 @@ export function getCalculatorAccess(categories = [], user = null, calculatorTier
   const configuredIds = limit == null
     ? new Set(categories.map((category) => category.id))
     : getIncludedCalculatorIdsForPlan(categories, entitlement.planKey, calculatorTierGroups);
+  const alwaysFreeCategories = categories.filter((category) => category.alwaysFree);
+  const tieredCategories = categories.filter((category) => !category.alwaysFree);
   const includedCategories = limit == null
     ? categories
     : hasTierMatches
-      ? categories.filter((category) => configuredIds.has(category.id))
-      : categories.slice(0, limit);
+      ? categories.filter((category) => category.alwaysFree || configuredIds.has(category.id))
+      : [...alwaysFreeCategories, ...tieredCategories.slice(0, limit)];
   const includedIds = new Set(includedCategories.map((category) => category.id));
 
   return {
