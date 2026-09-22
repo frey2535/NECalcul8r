@@ -48,6 +48,7 @@ import RVParkLoad from "./calcs/RVParkLoad";
 import MarinaShorePower from "./calcs/MarinaShorePower";
 import PullBoxSizing from "./calcs/PullBoxSizing";
 import NeutralLoad from "./calcs/NeutralLoad";
+import ElectricalFundamentals from "./calcs/ElectricalFundamentals";
 
 const MAP = {
   voltage_drop: VoltageDrop,
@@ -94,9 +95,10 @@ const MAP = {
   marina_shore_power: MarinaShorePower,
   pull_box_sizing: PullBoxSizing,
   neutral_load: NeutralLoad,
+  electrical_fundamentals: ElectricalFundamentals,
 };
 
-const VALID_YEARS = ["2017", "2020"];
+const VALID_YEARS = ["2017", "2020", "2023", "2026"];
 
 export default function CalculatorPanel({ category, savedCalculation = null, necYearOverride = null }) {
   const { year, setYear, years } = useNECYear();
