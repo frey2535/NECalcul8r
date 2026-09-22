@@ -98,19 +98,16 @@ export default function UpdateAvailablePrompt() {
               >
                 {applying ? "Updating..." : "Update now"}
               </button>
-              {!update.required && (
-                <button
+              <button
                   type="button"
                   onClick={() => setUpdate(null)}
                   className="rounded-lg bg-muted hover:bg-muted/80 text-muted-foreground text-xs font-bold px-3 py-1.5 transition-colors"
                 >
                   Later
                 </button>
-              )}
             </div>
           </div>
-          {!update.required && (
-            <button
+          <button
               type="button"
               onClick={(event) => {
                 event.stopPropagation();
@@ -121,7 +118,6 @@ export default function UpdateAvailablePrompt() {
             >
               <X className="w-4 h-4" />
             </button>
-          )}
         </div>
       </div>
     </div>
