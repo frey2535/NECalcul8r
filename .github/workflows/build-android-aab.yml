@@ -153,6 +153,10 @@ jobs:
             exit 1
           fi
 
+      # Play Console for this app auto-sends edits for review. Setting
+      # changesNotSentForReview fails with:
+      # "Changes are sent for review automatically. The query parameter
+      # changesNotSentForReview must not be set."
       - name: Upload AAB to Google Play
         if: ${{ inputs.upload_to_play }}
         uses: r0adkll/upload-google-play@v1
@@ -162,4 +166,3 @@ jobs:
           releaseFiles: release/NECalcul8r-${{ steps.package-version.outputs.version }}.aab
           tracks: ${{ inputs.play_track }}
           status: draft
-          changesNotSentForReview: true
