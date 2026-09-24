@@ -256,10 +256,11 @@ export default function AppLayout({ trialStatus }) {
                 <select
                   value={year}
                   onChange={e => setYear(e.target.value)}
-                  className="bg-transparent text-xs font-semibold text-muted-foreground border-none outline-none cursor-pointer appearance-none py-1 pr-1"
+                  className="bg-card text-xs font-semibold text-muted-foreground border border-input rounded-md outline-none cursor-pointer appearance-none py-1 px-2"
+                  style={{ backgroundColor: "hsl(var(--card))" }}
                 >
                   {years.map(y => (
-                    <option key={y} value={y}>NEC {y}</option>
+                    <option key={y} value={y} style={{ backgroundColor: "#ffffff", color: "#0f172a" }}>NEC {y}</option>
                   ))}
                 </select>
               </div>

@@ -110,6 +110,33 @@
       font-size: 16px !important;
     }
   }
+
+  /* Solid dropdown surfaces everywhere — never inherit branded splash/logo art */
+  select,
+  select:focus,
+  select:active {
+    background-color: hsl(var(--card)) !important;
+    color: hsl(var(--foreground));
+  }
+
+  select option,
+  select optgroup {
+    background-color: #ffffff;
+    color: #0f172a;
+  }
+
+  .dark select,
+  .dark select:focus,
+  .dark select:active {
+    background-color: hsl(var(--card)) !important;
+    color: hsl(var(--foreground));
+  }
+
+  .dark select option,
+  .dark select optgroup {
+    background-color: #111827;
+    color: #f8fafc;
+  }
 }
 
 /* Scrollbar styles — outside @layer so they override platform defaults */

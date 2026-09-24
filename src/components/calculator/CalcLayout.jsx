@@ -339,8 +339,8 @@ export function NumInput({ value, onChange, placeholder, min, max, step }) {
 }
 
 export function Select({ value, onChange, options }) {
-  // Use a normal OS/native dropdown on all devices. Custom drawer pickers were
-  // hard to read on phones (busy branded chrome behind option rows).
+  // Native <select> everywhere. Keep solid surfaces so option lists never
+  // pick up branded splash/logo artwork from the Android window background.
   return (
     <select
       value={value}
@@ -354,7 +354,9 @@ export function Select({ value, onChange, options }) {
       }}
     >
       {options.map(o => (
-        <option key={o.value} value={o.value}>{o.label}</option>
+        <option key={o.value} value={o.value} style={{ backgroundColor: "#ffffff", color: "#0f172a" }}>
+          {o.label}
+        </option>
       ))}
     </select>
   );
