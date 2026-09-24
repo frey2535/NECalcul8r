@@ -309,6 +309,34 @@ def("generator_sizing", "Generator Sizing 445 / 702", calcGeneratorSizing, [
     inputs: { mode: "load", criticalLoadsVA: 5000, motorLoadsVA: 3000, lightingVA: 2000, otherVA: 1000, pf: 0.8 },
     expected: { totalRunningVA: 11000, totalWithStarting: 26000, recommendedGenSize: 25 },
   },
+  {
+    id: "gen_whole_house_shed",
+    description: "Residential whole-house with range/dryer shed modules",
+    inputs: {
+      occupancy: "residential",
+      mode: "whole_house",
+      lightingVA: 3000,
+      smallApplianceVA: 3000,
+      laundryVA: 1500,
+      refrigeratorVA: 1200,
+      rangeVA: 12000,
+      dryerVA: 5000,
+      waterHeaterVA: 4500,
+      hvacCoolingVA: 4000,
+      hvacHeatingVA: 0,
+      wellPumpVA: 0,
+      otherEssentialVA: 1000,
+      otherOptionalVA: 0,
+      loadSheddingEnabled: true,
+      shedRange: true,
+      shedDryer: true,
+      shedWaterHeater: false,
+      shedHvacCooling: false,
+      pf: 0.8,
+    },
+    // Connected: 3000+3000+1500+1200+4500+4000+1000 = 18200; largest motor HVAC 4000 → +20000 starting add = 38200 VA → 30.56 kW → 45 kW
+    expected: { connectedRunningVA: 18200, shedVA: 17000, recommendedGenSize: 45 },
+  },
 ]);
 
 def("transformer_sizing", "Transformer 450.3(B) 125% path", calcTransformerSizing, [

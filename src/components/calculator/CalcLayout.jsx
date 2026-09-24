@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
-import { SlidersHorizontal, BarChart3, ChevronDown, Check, Flag, AlertTriangle, XCircle, Save } from "lucide-react";
+import { SlidersHorizontal, BarChart3, Flag, AlertTriangle, XCircle, Save } from "lucide-react";
 import SaveCalculationDialog from "@/components/calculator/SaveCalculationDialog";
-import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from "@/components/ui/drawer";
-import { useIsMobile } from "@/hooks/use-mobile";
 import { getNecData } from "@/data/nec";
 import { base44 } from "@/api/base44Client";
 import ReportDiscrepancy from "@/components/calculator/ReportDiscrepancy";
@@ -341,62 +339,23 @@ export function NumInput({ value, onChange, placeholder, min, max, step }) {
 }
 
 export function Select({ value, onChange, options }) {
-  const isMobile = useIsMobile();
-  const [open, setOpen] = useState(false);
-  const selected = options.find(o => String(o.value) === String(value)) || options[0];
-
-  // Desktop: native select for best UX
-  if (!isMobile) {
-    return (
-      <select
-        value={value}
-        onChange={e => onChange(e.target.value)}
-        className="flex h-11 w-full rounded-xl border border-input bg-muted/50 px-3.5 py-1 text-sm font-medium shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:border-blue-400 focus-visible:bg-card appearance-none text-foreground"
-        style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`, backgroundRepeat: "no-repeat", backgroundPosition: "right 12px center" }}
-      >
-        {options.map(o => (
-          <option key={o.value} value={o.value}>{o.label}</option>
-        ))}
-      </select>
-    );
-  }
-
-  // Mobile: Drawer bottom sheet
+  // Use a normal OS/native dropdown on all devices. Custom drawer pickers were
+  // hard to read on phones (busy branded chrome behind option rows).
   return (
-    <Drawer open={open} onOpenChange={setOpen}>
-      <DrawerTrigger asChild>
-        <button
-          type="button"
-          className="flex h-11 w-full items-center justify-between rounded-xl border border-input bg-muted/50 px-3.5 text-sm font-medium shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 text-left text-foreground"
-        >
-          <span className="truncate">{selected?.label}</span>
-          <ChevronDown className="w-4 h-4 text-muted-foreground flex-shrink-0 ml-2" />
-        </button>
-      </DrawerTrigger>
-      <DrawerContent>
-        <DrawerHeader>
-          <DrawerTitle className="text-sm text-muted-foreground font-medium">Select an option</DrawerTitle>
-        </DrawerHeader>
-        <div className="px-4 pb-6 space-y-1 overflow-y-auto max-h-[60vh]">
-          {options.map(o => {
-            const isActive = String(o.value) === String(value);
-            return (
-              <button
-                key={o.value}
-                type="button"
-                onClick={() => { onChange(o.value); setOpen(false); }}
-                className={cn(
-                  "w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-medium transition-all text-left",
-                  isActive ? "bg-blue-600 text-white" : "bg-muted text-foreground hover:bg-muted/80"
-                )}
-              >
-                <span>{o.label}</span>
-                {isActive && <Check className="w-4 h-4 flex-shrink-0" />}
-              </button>
-            );
-          })}
-        </div>
-      </DrawerContent>
-    </Drawer>
+    <select
+      value={value}
+      onChange={e => onChange(e.target.value)}
+      className="flex h-11 w-full rounded-xl border border-input bg-card px-3.5 py-1 pr-10 text-base sm:text-sm font-medium shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:border-blue-400 appearance-none text-foreground"
+      style={{
+        backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`,
+        backgroundRepeat: "no-repeat",
+        backgroundPosition: "right 12px center",
+        backgroundColor: "hsl(var(--card))",
+      }}
+    >
+      {options.map(o => (
+        <option key={o.value} value={o.value}>{o.label}</option>
+      ))}
+    </select>
   );
 }

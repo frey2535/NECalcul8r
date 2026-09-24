@@ -12,7 +12,7 @@ export const NEC_CATEGORIES = [
   { id: "transformer_sizing", label: "Transformer Sizing", article: "NEC 450.3", description: "kVA, conductor & OCPD sizing", color: "yellow", emoji: "🔋" },
   { id: "overcurrent_protection", label: "Overcurrent Protection", article: "NEC 240.4 / 240.6", description: "Breaker/fuse sizing for conductors", color: "red", emoji: "🛡️" },
   { id: "service_sizing", label: "Service Entrance", article: "NEC 230.42", description: "Service conductor & equipment sizing", color: "slate", emoji: "🏗️" },
-  { id: "generator_sizing", label: "Generator / Standby", article: "NEC 702 / 445", description: "Generator sizing and transfer switch", color: "green", emoji: "🔦" },
+  { id: "generator_sizing", label: "Generator / Standby", article: "NEC 702 / 445", description: "Residential & commercial generator sizing, whole-house loads, and load shedding", color: "green", emoji: "🔦" },
   { id: "egc_sizing", label: "Equipment Grounding", article: "NEC 250.122", description: "EGC sizing based on OCPD rating", color: "amber", emoji: "🌍" },
   { id: "grounding_electrode", label: "Grounding Electrode", article: "NEC 250.66", description: "GEC sizing from service conductor", color: "amber", emoji: "⛏️" },
   { id: "main_bonding_jumper", label: "Main Bonding Jumper", article: "NEC 250.28(D)", description: "MBJ sizing at service entrance", color: "amber", emoji: "🔗" },
