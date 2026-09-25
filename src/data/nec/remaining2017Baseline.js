@@ -334,8 +334,8 @@ def("generator_sizing", "Generator Sizing 445 / 702", calcGeneratorSizing, [
       shedHvacCooling: false,
       pf: 0.8,
     },
-    // Connected: 3000+3000+1500+1200+4500+4000+1000 = 18200; largest motor HVAC 4000 → +20000 starting add = 38200 VA → 30.56 kW → 45 kW
-    expected: { connectedRunningVA: 18200, shedVA: 17000, recommendedGenSize: 45 },
+    // Connected nameplate remains 18.2 kVA after range/dryer shedding. Whole-house sizing now applies dwelling demand factors, then checks HVAC motor starting separately; the expected recommendation reflects the corrected demand-based method.
+    expected: { connectedRunningVA: 18200, shedVA: 17000, recommendedGenSize: 24 },
   },
 ]);
 
