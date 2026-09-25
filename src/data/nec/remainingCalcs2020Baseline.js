@@ -178,9 +178,9 @@ export function runRemainingCalcs2020Baseline() {
       tests: [
         {
           id: "gen20_shutdown_note",
-          description: "2020 same 45 kW size; dwelling generator shutdown note present",
-          inputs: { mode: "service", serviceA: 200, serviceV: 240, servicePhases: "single", demandFactor: 80, pf: 0.8 },
-          expected: { recommendedGenSize: 45, dwelling_generator_shutdown_article: "445.18" },
+          description: "2020 service mode remains reference-only; dwelling generator shutdown note present",
+          inputs: { mode: "service", serviceA: 200, serviceV: 240, servicePhases: "single", demandFactor: 80, necYear: "2020" },
+          expected: { recommendedGenSize: null, serviceSizingValid: false, dwelling_generator_shutdown_article: "445.18" },
         },
       ],
     }),
