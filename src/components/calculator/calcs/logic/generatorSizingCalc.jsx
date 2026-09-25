@@ -7,7 +7,8 @@
  * - whole_house: residential/commercial appliance inventory with optional load shedding
  */
 
-const GEN_SIZES = [7.5, 10, 14, 15, 18, 20, 22, 24, 26, 28, 30, 32, 36, 38, 40, 45, 48, 50, 60, 75, 100, 125, 150, 175, 200, 250, 300, 400, 500, 750, 1000];
+const GEN_SIZES = [7.5, 10, 15, 20, 25, 30, 45, 60, 75, 100, 125, 150, 175, 200, 250, 300, 400, 500, 750, 1000];
+const RESIDENTIAL_GEN_SIZES = [7.5, 10, 14, 15, 18, 20, 22, 24, 26, 28, 30, 32, 36, 38, 40, 45, 48, 50, 60, 75, 100, 125, 150, 175, 200, 250, 300, 400, 500, 750, 1000];
 
 function dwellingGeneralDemandVA(v) {
   const sqft = Math.max(0, num(v.squareFeet));
@@ -27,14 +28,30 @@ function cookingDemandVA(v) {
   return loads.reduce((a, b) => a + b, 0);
 }
 
-function residentialStandardDemandVA(v) {
-  const general = dwellingGeneralDemandVA(v);
-  const fixed = [num(v.refrigeratorVA), num(v.waterHeaterVA), num(v.dishwasherVA), num(v.wellPumpVA)]
-    .filter((x) => x > 0);
-  const fixedDemand = fixed.length >= 4 ? fixed.reduce((a,b)=>a+b,0) * 0.75 : fixed.reduce((a,b)=>a+b,0);
-  const dryer = Math.max(num(v.dryerVA), num(v.dryerVA) > 0 ? 5000 : 0);
-  const cooking = cookingDemandVA(v);
-  const other = num(v.otherEssentialVA) + num(v.otherOptionalVA);
+function residentialStandardDemandVA(v, loadSheddingEnabled) {
+  const general = num(v.squareFeet) > 0
+    ? dwellingGeneralDemandVA(v)
+    : (() => {
+        const connected = num(v.lightingVA) + num(v.smallApplianceVA) + num(v.laundryVA);
+        return connected <= 3000 ? connected : 3000 + (connected - 3000) * 0.35;
+      })();
+
+  const isShed = (key) => loadSheddingEnabled && truthy(v[key]);
+  const fixed = [
+    num(v.refrigeratorVA),
+    isShed("shedWaterHeater") ? 0 : num(v.waterHeaterVA),
+    isShed("shedDishwasher") ? 0 : num(v.dishwasherVA),
+    num(v.wellPumpVA),
+  ].filter((x) => x > 0);
+  const fixedDemand = fixed.length >= 4 ? fixed.reduce((a, b) => a + b, 0) * 0.75 : fixed.reduce((a, b) => a + b, 0);
+  const dryer = isShed("shedDryer") ? 0 : Math.max(num(v.dryerVA), num(v.dryerVA) > 0 ? 5000 : 0);
+  const cooking = (isShed("shedRange") && isShed("shedCooktop") && isShed("shedOven")) ? 0 : cookingDemandVA({
+    ...v,
+    rangeVA: isShed("shedRange") ? 0 : v.rangeVA,
+    cooktopVA: isShed("shedCooktop") ? 0 : v.cooktopVA,
+    ovenVA: isShed("shedOven") ? 0 : v.ovenVA,
+  });
+  const other = num(v.otherEssentialVA) + (isShed("shedOtherOptional") ? 0 : num(v.otherOptionalVA));
   return { general, fixedDemand, dryer, cooking, other, total: general + fixedDemand + dryer + cooking + other };
 }
 
@@ -47,8 +64,8 @@ function truthy(value) {
   return value === true || value === "true" || value === 1 || value === "1";
 }
 
-function nextGenSize(kw) {
-  return GEN_SIZES.find((size) => size >= kw) || GEN_SIZES[GEN_SIZES.length - 1];
+function nextGenSize(kw, sizes = GEN_SIZES) {
+  return sizes.find((size) => size >= kw) || sizes[sizes.length - 1];
 }
 
 function applianceRows(v, occupancy) {
@@ -135,10 +152,12 @@ export function calcGeneratorSizing(v, nec) {
   const connectedNameplateVA = connectedRows.reduce((sum, row) => sum + row.includedVA, 0);
   const motorCandidates = connectedRows.filter((row) => row.motor && row.includedVA > 0);
   const largestMotorVA = motorCandidates.reduce((max, row) => Math.max(max, row.includedVA), 0);
-  const standard = occupancy === "residential" ? residentialStandardDemandVA(v) : null;
+  const standard = occupancy === "residential" ? residentialStandardDemandVA(v, loadSheddingEnabled) : null;
   // Whole-house residential sizing uses an Article 220 demand calculation, not service ampacity
   // and not the sum of every nameplate load. Heating and cooling are noncoincident: use the larger.
-  const hvacDemandVA = Math.max(num(v.hvacCoolingVA), num(v.hvacHeatingVA));
+  const hvacCoolingDemandVA = loadSheddingEnabled && truthy(v.shedHvacCooling) ? 0 : num(v.hvacCoolingVA);
+  const hvacHeatingDemandVA = loadSheddingEnabled && truthy(v.shedHvacHeating) ? 0 : num(v.hvacHeatingVA);
+  const hvacDemandVA = Math.max(hvacCoolingDemandVA, hvacHeatingDemandVA);
   const baseDemandVA = standard
     ? standard.total + hvacDemandVA
     : connectedNameplateVA;
@@ -150,7 +169,7 @@ export function calcGeneratorSizing(v, nec) {
   const wholeHouseRunningVA = baseDemandVA;
   const wholeHouseWithStartingVA = startingCheckVA;
   const wholeHouseKW = wholeHouseWithStartingVA / 1000;
-  const wholeHouseGenSize = nextGenSize(wholeHouseKW);
+  const wholeHouseGenSize = nextGenSize(wholeHouseKW, occupancy === "residential" ? RESIDENTIAL_GEN_SIZES : GEN_SIZES);
   const shedVA = shedRows.reduce((sum, row) => sum + row.va, 0);
 
   let steps;
@@ -200,7 +219,7 @@ export function calcGeneratorSizing(v, nec) {
     loadGenSize,
     // Whole-house
     applianceRows: rows,
-    connectedRunningVA: Math.round(wholeHouseRunningVA),
+    connectedRunningVA: Math.round(connectedNameplateVA),
     connectedNameplateVA: Math.round(connectedNameplateVA),
     necDemandVA: Math.round(baseDemandVA),
     motorStartingVA: Math.round(motorStartingVA),
