@@ -44,7 +44,14 @@ supabase secrets set CURSOR_DEFAULT_BRANCH=main
 
 `CURSOR_API_KEY` must be a Cursor API key with access to create Cloud Agents for
 the repository. The key is used only inside the Supabase Edge Function and must
-not be exposed as a Vite/browser environment variable.
+not be exposed as a Vite/browser environment variable. The edge function authenticates
+to `https://api.cursor.com/v1/agents` with Basic auth (`API_KEY:`).
+
+After changing `create-cursor-agent`, redeploy:
+
+```bash
+supabase functions deploy create-cursor-agent --project-ref gqdxvctvufalunaaopyj
+```
 
 The frontend also needs Stripe Vite variables configured with price IDs for
 every purchase package shown in the app. If you want to override the default

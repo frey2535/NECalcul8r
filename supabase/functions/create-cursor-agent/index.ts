@@ -5,6 +5,15 @@ function optionalString(value: unknown) {
   return typeof value === "string" && value.trim() ? value.trim() : null;
 }
 
+function agentUrl(agentId: string | null | undefined) {
+  if (!agentId) return null;
+  return `https://cursor.com/agents/${agentId}`;
+}
+
+function basicAuthHeader(apiKey: string) {
+  return `Basic ${btoa(`${apiKey}:`)}`;
+}
+
 Deno.serve(async (req) => {
   const options = handleOptions(req);
   if (options) return options;
@@ -36,6 +45,7 @@ Deno.serve(async (req) => {
       name,
       repos: [{ url: repoUrl, startingRef }],
       autoCreatePR: payload.autoCreatePR !== false,
+      // Always create a new cursor/... branch from startingRef for in-app corrections.
       workOnCurrentBranch: false,
       mode: "agent",
     };
@@ -44,29 +54,49 @@ Deno.serve(async (req) => {
     const response = await fetch("https://api.cursor.com/v1/agents", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${apiKey}`,
+        // Cloud Agents API accepts Basic or Bearer; Basic matches Cursor docs examples.
+        Authorization: basicAuthHeader(apiKey),
         "Content-Type": "application/json",
       },
       body: JSON.stringify(requestBody),
     });
 
-    const result = await response.json().catch(() => ({}));
+    const result = await response.json().catch(() => ({} as Record<string, unknown>));
     if (!response.ok) {
+      const details = result as Record<string, unknown>;
+      const detailMessage =
+        (typeof details.error === "string" && details.error) ||
+        (typeof details.message === "string" && details.message) ||
+        (typeof (details.error as { message?: string } | undefined)?.message === "string"
+          ? (details.error as { message: string }).message
+          : null) ||
+        "Cursor agent creation failed.";
       return jsonResponse({
-        error: "Cursor agent creation failed.",
+        error: detailMessage,
         status: response.status,
         details: result,
-      }, response.status);
+      }, response.status >= 400 && response.status < 600 ? response.status : 502);
     }
 
-    const agent = (result.agent || result) as Record<string, unknown>;
-    const run = (result.run || {}) as Record<string, unknown>;
+    const agent = ((result as Record<string, unknown>).agent || result) as Record<string, unknown>;
+    const run = ((result as Record<string, unknown>).run || {}) as Record<string, unknown>;
+    const agentId = (typeof agent.id === "string" && agent.id)
+      || (typeof (result as Record<string, unknown>).id === "string" && (result as Record<string, unknown>).id as string)
+      || null;
+    const url =
+      (typeof agent.url === "string" && agent.url) ||
+      (typeof (result as Record<string, unknown>).url === "string" && (result as Record<string, unknown>).url as string) ||
+      agentUrl(agentId);
+
     return jsonResponse({
       ok: true,
-      agentId: agent.id || result.id || null,
-      runId: run.id || result.latestRunId || null,
-      status: agent.status || result.status || null,
-      url: agent.url || result.url || null,
+      agentId,
+      runId: (typeof run.id === "string" && run.id) || (typeof agent.latestRunId === "string" && agent.latestRunId) || null,
+      status: (typeof agent.status === "string" && agent.status) || (typeof (result as Record<string, unknown>).status === "string" && (result as Record<string, unknown>).status as string) || null,
+      url,
+      name: (typeof agent.name === "string" && agent.name) || name,
+      repoUrl,
+      startingRef,
     });
   } catch (error) {
     return jsonResponse({ error: error instanceof Error ? error.message : "Cursor agent request failed." }, 500);
