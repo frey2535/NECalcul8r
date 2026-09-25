@@ -5,7 +5,7 @@ import { getNecData } from "@/data/nec";
 import { calcGeneratorSizing } from "./logic/generatorSizingCalc";
 import FormulaBox from "../FormulaBox";
 
-const GEN_SIZES = [7.5, 10, 15, 20, 25, 30, 45, 60, 75, 100, 125, 150, 175, 200, 250, 300, 400, 500, 750, 1000];
+const GEN_SIZES = [7.5, 10, 14, 15, 18, 20, 22, 24, 26, 28, 30, 32, 36, 38, 40, 45, 48, 50, 60, 75, 100, 125, 150, 175, 200, 250, 300, 400, 500, 750, 1000];
 
 function Checkbox({ checked, onChange, label, hint }) {
   return (
@@ -34,6 +34,7 @@ export default function GeneratorSizing({ category, necYear = "2023" }) {
     // Legacy essential loads
     criticalLoadsVA: 20000, motorLoadsVA: 5000, lightingVA: 3000, otherVA: 2000,
     // Residential / whole-house inventory
+    squareFeet: 2000, kitchenCircuits: 2, laundryCircuits: 1, largestMotorLRA: 0,
     smallApplianceVA: 3000, laundryVA: 1500, refrigeratorVA: 1200,
     rangeVA: 12000, cooktopVA: 0, ovenVA: 0, dryerVA: 5000, waterHeaterVA: 4500,
     dishwasherVA: 1500, hvacCoolingVA: 4500, hvacHeatingVA: 10000, wellPumpVA: 1500,
@@ -136,7 +137,7 @@ export default function GeneratorSizing({ category, necYear = "2023" }) {
         <NoteBox>
           NEC {necYear} 702 / 445: Size the standby source for the loads that remain connected through the transfer equipment.
           Use demand factors and noncoincidence carefully — this calculator uses connected/nameplate values you enter.
-          Largest motor starting is modeled at 6× running VA. Transfer equipment is required per NEC 702.
+          Whole-house dwelling mode applies Article 220 demand logic and checks motor starting separately; actual LRA is used when entered, otherwise a conservative 6× running-VA estimate is used. Transfer equipment is required per NEC 702.
           Size continuous generator ampacity path with the 125% continuous factor where applicable (445.13).
           {loadSheddingEnabled ? " Load-shed / load-management modules reduce generator size by keeping selected loads off the standby source." : ""}
           {gr.dwelling_generator_shutdown_note ? ` ${gr.dwelling_generator_shutdown_article}: ${gr.dwelling_generator_shutdown_note}` : ""}
@@ -196,6 +197,18 @@ export default function GeneratorSizing({ category, necYear = "2023" }) {
 
       {isWholeHouse && isResidential && (
         <>
+          <Field label="Dwelling floor area" unit="ft²" hint="Used for the NEC dwelling general-lighting load">
+            <NumInput value={v.squareFeet} onChange={set("squareFeet")} placeholder="2000" min={0} />
+          </Field>
+          <Field label="Kitchen small-appliance circuits" hint="NEC minimum is typically two 1,500 VA circuits">
+            <NumInput value={v.kitchenCircuits} onChange={set("kitchenCircuits")} placeholder="2" min={0} />
+          </Field>
+          <Field label="Laundry circuits">
+            <NumInput value={v.laundryCircuits} onChange={set("laundryCircuits")} placeholder="1" min={0} />
+          </Field>
+          <Field label="Largest motor actual LRA" unit="A" hint="Preferred for generator motor-start verification; leave 0 if unknown">
+            <NumInput value={v.largestMotorLRA} onChange={set("largestMotorLRA")} placeholder="0" min={0} />
+          </Field>
           <Field label="Lighting" unit="VA">
             <NumInput value={v.lightingVA} onChange={set("lightingVA")} placeholder="3000" />
           </Field>
