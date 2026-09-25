@@ -7,7 +7,36 @@
  * - whole_house: residential/commercial appliance inventory with optional load shedding
  */
 
-const GEN_SIZES = [7.5, 10, 15, 20, 25, 30, 45, 60, 75, 100, 125, 150, 175, 200, 250, 300, 400, 500, 750, 1000];
+const GEN_SIZES = [7.5, 10, 14, 15, 18, 20, 22, 24, 26, 28, 30, 32, 36, 38, 40, 45, 48, 50, 60, 75, 100, 125, 150, 175, 200, 250, 300, 400, 500, 750, 1000];
+
+function dwellingGeneralDemandVA(v) {
+  const sqft = Math.max(0, num(v.squareFeet));
+  const kitchenCircuits = Math.max(0, num(v.kitchenCircuits, 2));
+  const laundryCircuits = Math.max(0, num(v.laundryCircuits, 1));
+  const connected = sqft * 3 + kitchenCircuits * 1500 + laundryCircuits * 1500;
+  return connected <= 3000 ? connected : 3000 + (connected - 3000) * 0.35;
+}
+
+function cookingDemandVA(v) {
+  const loads = [num(v.rangeVA), num(v.cooktopVA), num(v.ovenVA)].filter((x) => x > 1750);
+  if (!loads.length) return 0;
+  // NEC Table 220.55 Column C base values for 1-3 household cooking appliances.
+  const baseKW = [0, 8, 11, 14][Math.min(loads.length, 3)];
+  if (loads.length <= 3 && loads.every((x) => x <= 12000)) return baseKW * 1000;
+  // Conservative fallback for unusual/mixed cooking groups: connected nameplate.
+  return loads.reduce((a, b) => a + b, 0);
+}
+
+function residentialStandardDemandVA(v) {
+  const general = dwellingGeneralDemandVA(v);
+  const fixed = [num(v.refrigeratorVA), num(v.waterHeaterVA), num(v.dishwasherVA), num(v.wellPumpVA)]
+    .filter((x) => x > 0);
+  const fixedDemand = fixed.length >= 4 ? fixed.reduce((a,b)=>a+b,0) * 0.75 : fixed.reduce((a,b)=>a+b,0);
+  const dryer = Math.max(num(v.dryerVA), num(v.dryerVA) > 0 ? 5000 : 0);
+  const cooking = cookingDemandVA(v);
+  const other = num(v.otherEssentialVA) + num(v.otherOptionalVA);
+  return { general, fixedDemand, dryer, cooking, other, total: general + fixedDemand + dryer + cooking + other };
+}
 
 function num(value, fallback = 0) {
   const n = parseFloat(value);
@@ -103,12 +132,24 @@ export function calcGeneratorSizing(v, nec) {
   });
   const connectedRows = rows.filter((row) => row.includedVA > 0);
   const shedRows = rows.filter((row) => row.shed && row.va > 0);
-  const wholeHouseRunningVA = connectedRows.reduce((sum, row) => sum + row.includedVA, 0);
+  const connectedNameplateVA = connectedRows.reduce((sum, row) => sum + row.includedVA, 0);
   const motorCandidates = connectedRows.filter((row) => row.motor && row.includedVA > 0);
   const largestMotorVA = motorCandidates.reduce((max, row) => Math.max(max, row.includedVA), 0);
-  // Running VA already includes the largest motor at 1×; add 5× more so peak uses 6× LRC.
-  const wholeHouseWithStartingVA = wholeHouseRunningVA + largestMotorVA * 5;
-  const wholeHouseKW = (wholeHouseWithStartingVA / 1000) * pf;
+  const standard = occupancy === "residential" ? residentialStandardDemandVA(v) : null;
+  // Whole-house residential sizing uses an Article 220 demand calculation, not service ampacity
+  // and not the sum of every nameplate load. Heating and cooling are noncoincident: use the larger.
+  const hvacDemandVA = Math.max(num(v.hvacCoolingVA), num(v.hvacHeatingVA));
+  const baseDemandVA = standard
+    ? standard.total + hvacDemandVA
+    : connectedNameplateVA;
+  // Motor starting is a separate generator capability check. Prefer actual LRA when supplied.
+  const actualLRA = Math.max(0, num(v.largestMotorLRA));
+  const motorStartingVA = actualLRA > 0 ? actualLRA * 240 : largestMotorVA * 6;
+  const motorRunningVA = actualLRA > 0 ? largestMotorVA : largestMotorVA;
+  const startingCheckVA = Math.max(baseDemandVA, baseDemandVA - motorRunningVA + motorStartingVA);
+  const wholeHouseRunningVA = baseDemandVA;
+  const wholeHouseWithStartingVA = startingCheckVA;
+  const wholeHouseKW = wholeHouseWithStartingVA / 1000;
   const wholeHouseGenSize = nextGenSize(wholeHouseKW);
   const shedVA = shedRows.reduce((sum, row) => sum + row.va, 0);
 
@@ -129,7 +170,7 @@ export function calcGeneratorSizing(v, nec) {
       { label: "Connected running VA", formula: "Sum of loads kept on generator", expression: connectedRows.filter((r) => r.includedVA).map((r) => `${r.label} ${r.includedVA}`).join(" + ") || "0", result: Math.round(wholeHouseRunningVA), unit: "VA" },
       ...(loadSheddingEnabled ? [{ label: "Load-shed VA (off generator)", formula: "Managed loads shed by controller", expression: shedRows.map((r) => `${r.label} ${r.va}`).join(" + ") || "0", result: Math.round(shedVA), unit: "VA", note: "Excluded from standby generator sizing" }] : []),
       { label: "With largest-motor starting", formula: "Running VA + largest motor × 5 (to reach 6×)", expression: `${Math.round(wholeHouseRunningVA)} + ${Math.round(largestMotorVA)} × 5`, result: Math.round(wholeHouseWithStartingVA), unit: "VA", note: largestMotorVA ? "Largest connected motor at 6× LRC" : "No motor loads entered" },
-      { label: "Required kW", formula: "kW = VA × PF ÷ 1000", expression: `${Math.round(wholeHouseWithStartingVA / 1000 * 10) / 10} × ${pf}`, result: Math.round(wholeHouseKW * 10) / 10, unit: "kW" },
+      { label: "Required kW", formula: "kW = required VA ÷ 1000", expression: `${Math.round(wholeHouseWithStartingVA / 1000 * 10) / 10}`, result: Math.round(wholeHouseKW * 10) / 10, unit: "kW" },
       { label: "Generator Size", formula: "Size = next standard ≥ kW", expression: `next standard ≥ ${Math.round(wholeHouseKW * 10) / 10} kW`, result: wholeHouseGenSize, unit: "kW" },
     ];
   } else {
@@ -160,6 +201,9 @@ export function calcGeneratorSizing(v, nec) {
     // Whole-house
     applianceRows: rows,
     connectedRunningVA: Math.round(wholeHouseRunningVA),
+    connectedNameplateVA: Math.round(connectedNameplateVA),
+    necDemandVA: Math.round(baseDemandVA),
+    motorStartingVA: Math.round(motorStartingVA),
     shedVA: Math.round(shedVA),
     largestMotorVA: Math.round(largestMotorVA),
     wholeHouseWithStartingVA: Math.round(wholeHouseWithStartingVA),
