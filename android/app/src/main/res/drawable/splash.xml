@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Solid splash only. Density-specific splash.png logos were removed because
+     Android WebView <select> dialogs inherit the activity window background
+     and previously showed the branded artwork behind every option row. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="@color/splash_background" />
+</shape>

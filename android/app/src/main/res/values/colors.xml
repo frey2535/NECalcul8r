@@ -3,4 +3,8 @@
     <color name="colorPrimary">#1e40af</color>
     <color name="colorPrimaryDark">#010712</color>
     <color name="colorAccent">#f59e0b</color>
+    <!-- Solid colors only — never use the branded splash artwork as a lasting window background.
+         Android WebView <select> dialogs inherit the activity window background. -->
+    <color name="splash_background">#1e40af</color>
+    <color name="window_background">#F5F6F9</color>
 </resources>

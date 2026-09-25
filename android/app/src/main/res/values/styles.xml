@@ -3,13 +3,39 @@
 
     <!-- Base application theme. -->
     <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
-        <!-- Customize your theme here. -->
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
+        <item name="android:windowBackground">@color/window_background</item>
     </style>
 
+    <!-- Post-splash theme used by Capacitor BridgeActivity.setTheme(...).
+         Must be a solid color. Using @drawable/splash here makes every native
+         <select> picker show the branded logo behind option rows. -->
+    <style name="AppTheme.NoActionBar" parent="Theme.AppCompat.DayNight.NoActionBar">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+        <item name="android:background">@null</item>
+        <item name="android:windowBackground">@color/window_background</item>
+        <item name="android:colorBackground">@color/window_background</item>
+        <item name="android:colorBackgroundFloating">@color/window_background</item>
+        <item name="android:alertDialogTheme">@style/AppAlertDialogTheme</item>
+    </style>
+
+    <!-- Solid dialog surfaces for native WebView <select> / AlertDialog pickers -->
+    <style name="AppAlertDialogTheme" parent="Theme.AppCompat.DayNight.Dialog.Alert">
+        <item name="android:windowBackground">@color/window_background</item>
+        <item name="android:colorBackground">@color/window_background</item>
+        <item name="android:background">@color/window_background</item>
+        <item name="android:listDivider">@android:color/darker_gray</item>
+    </style>
+
+    <!-- Launch/splash only. Do not set android:background to the logo artwork —
+         that drawable persists into WebView select dialogs on many Android devices. -->
     <style name="AppTheme.NoActionBarLaunch" parent="Theme.SplashScreen">
-        <item name="android:background">@drawable/splash</item>
+        <item name="windowSplashScreenBackground">@color/splash_background</item>
+        <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher_foreground</item>
+        <item name="postSplashScreenTheme">@style/AppTheme.NoActionBar</item>
+        <item name="android:windowBackground">@color/splash_background</item>
     </style>
 </resources>
