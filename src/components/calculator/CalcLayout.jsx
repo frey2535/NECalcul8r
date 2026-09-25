@@ -341,10 +341,17 @@ export function NumInput({ value, onChange, placeholder, min, max, step }) {
 export function Select({ value, onChange, options }) {
   // Native <select> everywhere. Keep solid surfaces so option lists never
   // pick up branded splash/logo artwork from the Android window background.
+  // Coerce values to strings so numeric option values (120, 240, …) still
+  // match after onChange returns a string — critical on mobile WebViews.
+  const stringValue = value == null ? "" : String(value);
+  const coerce = (raw) => {
+    const match = options.find((o) => String(o.value) === String(raw));
+    return match ? match.value : raw;
+  };
   return (
     <select
-      value={value}
-      onChange={e => onChange(e.target.value)}
+      value={stringValue}
+      onChange={(e) => onChange(coerce(e.target.value))}
       className="flex h-11 w-full rounded-xl border border-input bg-card px-3.5 py-1 pr-10 text-base sm:text-sm font-medium shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:border-blue-400 appearance-none text-foreground"
       style={{
         backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`,
@@ -353,8 +360,8 @@ export function Select({ value, onChange, options }) {
         backgroundColor: "hsl(var(--card))",
       }}
     >
-      {options.map(o => (
-        <option key={o.value} value={o.value} style={{ backgroundColor: "#ffffff", color: "#0f172a" }}>
+      {options.map((o) => (
+        <option key={String(o.value)} value={String(o.value)} style={{ backgroundColor: "#ffffff", color: "#0f172a" }}>
           {o.label}
         </option>
       ))}

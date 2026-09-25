@@ -13,7 +13,7 @@
     "android:sync": "npm run build && cap sync android && node scripts/ensure-android-billing-plugin.mjs",
     "android:bundle:release": "npm run android:sync && cd android && ./gradlew bundleRelease && cd .. && mkdir -p release && cp android/app/build/outputs/bundle/release/app-release.aab \"release/NECalcul8r-${npm_package_version}.aab\" && sha256sum \"release/NECalcul8r-${npm_package_version}.aab\"",
     "verify:dwelling-optional": "node scripts/verify-dwelling-optional.mjs",
-    "verify:generator-sizing": "node scripts/verify-generator-sizing.mjs",
+    "verify:generator-sizing": "node scripts/verify-generator-sizing.mjs && node scripts/verify-generator-ui-contract.mjs",
     "verify:mutation:dwelling-optional": "node scripts/verify-mutation-dwelling-optional.mjs",
     "verify:dwelling-standard": "node scripts/verify-dwelling-standard.mjs",
     "verify:commercial-load": "node scripts/verify-commercial-load.mjs",

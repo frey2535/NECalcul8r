@@ -100,6 +100,40 @@ const MAP = {
 
 const VALID_YEARS = ["2017", "2020", "2023", "2026"];
 
+class CalculatorErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { error: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { error };
+  }
+
+  componentDidCatch(error, info) {
+    console.error(`Calculator failed to render (${this.props.calcId || "unknown"})`, error, info);
+  }
+
+  render() {
+    if (!this.state.error) return this.props.children;
+    return (
+      <div className="rounded-2xl border border-destructive/40 bg-destructive/5 p-6 text-center space-y-3">
+        <p className="text-base font-bold text-destructive">This calculator hit a loading error</p>
+        <p className="text-sm text-muted-foreground">
+          Try another calculation method or refresh the app. Other calculators should still work.
+        </p>
+        <button
+          type="button"
+          onClick={() => this.setState({ error: null })}
+          className="rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold px-4 py-2"
+        >
+          Retry calculator
+        </button>
+      </div>
+    );
+  }
+}
+
 export default function CalculatorPanel({ category, savedCalculation = null, necYearOverride = null }) {
   const { year, setYear, years } = useNECYear();
   const [searchParams] = useSearchParams();
@@ -150,7 +184,9 @@ export default function CalculatorPanel({ category, savedCalculation = null, nec
 
   return (
     <CalcRestoreContext.Provider value={restore}>
-      <Comp key={`${restore?.id || "fresh"}-${renderYear}`} category={category} necYear={renderYear} />
+      <CalculatorErrorBoundary calcId={category.id} key={`boundary-${restore?.id || "fresh"}-${renderYear}`}>
+        <Comp key={`${restore?.id || "fresh"}-${renderYear}`} category={category} necYear={renderYear} />
+      </CalculatorErrorBoundary>
     </CalcRestoreContext.Provider>
   );
 }
