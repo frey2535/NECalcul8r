@@ -81,17 +81,24 @@ function cookingDemandVA(v, isShed) {
 }
 
 function fixedApplianceSummary(v, isShed) {
+  // 220.53 applies the 75% demand only to four or more appliances
+  // fastened in place. A refrigerator is NOT assumed to qualify merely
+  // because a VA value was entered; the user must explicitly identify it
+  // as fastened/built-in.
+  const refrigeratorQualifies = truthy(v.refrigeratorFastenedInPlace);
   const entries = [
-    { va: num(v.refrigeratorVA), count: num(v.refrigeratorVA) > 0 ? 1 : 0 },
+    { va: refrigeratorQualifies ? num(v.refrigeratorVA) : 0, count: refrigeratorQualifies && num(v.refrigeratorVA) > 0 ? 1 : 0 },
     { va: isShed("shedWaterHeater") ? 0 : num(v.waterHeaterVA), count: !isShed("shedWaterHeater") && num(v.waterHeaterVA) > 0 ? 1 : 0 },
     { va: isShed("shedDishwasher") ? 0 : num(v.dishwasherVA), count: !isShed("shedDishwasher") && num(v.dishwasherVA) > 0 ? 1 : 0 },
     { va: num(v.wellPumpVA), count: num(v.wellPumpVA) > 0 ? 1 : 0 },
     { va: num(v.otherFixedApplianceVA), count: Math.max(0, Math.floor(num(v.otherFixedApplianceCount))) },
   ];
-  const connectedVA = entries.reduce((s, x) => s + x.va, 0);
+  const qualifyingConnectedVA = entries.reduce((s, x) => s + x.va, 0);
   const count = entries.reduce((s, x) => s + x.count, 0);
-  const demandVA = count >= 4 ? connectedVA * 0.75 : connectedVA;
-  return { connectedVA, count, demandVA };
+  const nonQualifyingRefrigeratorVA = refrigeratorQualifies ? 0 : num(v.refrigeratorVA);
+  const qualifyingDemandVA = count >= 4 ? qualifyingConnectedVA * 0.75 : qualifyingConnectedVA;
+  const demandVA = qualifyingDemandVA + nonQualifyingRefrigeratorVA;
+  return { connectedVA: qualifyingConnectedVA + nonQualifyingRefrigeratorVA, qualifyingConnectedVA, count, demandVA, refrigeratorQualifies };
 }
 
 function residentialStandardDemand(v, loadSheddingEnabled) {
@@ -103,7 +110,13 @@ function residentialStandardDemand(v, loadSheddingEnabled) {
   const dryerVA = isShed("shedDryer") ? 0 : (num(v.dryerVA) > 0 ? Math.max(5000, num(v.dryerVA)) : 0);
   const cookingVA = cookingDemandVA(v, isShed);
 
-  const coolingVA = isShed("shedHvacCooling") ? 0 : num(v.hvacCoolingVA);
+  // Cooling input is the sum of all outdoor condensers that can run
+  // simultaneously. Indoor blower/air-handler load is entered separately
+  // because it operates WITH the condensers during cooling; it must not be
+  // hidden inside a noncoincident heating value.
+  const coolingOutdoorVA = isShed("shedHvacCooling") ? 0 : num(v.hvacCoolingVA);
+  const coolingBlowerVA = isShed("shedHvacCooling") ? 0 : num(v.hvacBlowerVA);
+  const coolingVA = coolingOutdoorVA + coolingBlowerVA;
   const heatingVA = isShed("shedHvacHeating") ? 0 : num(v.hvacHeatingVA);
   const hvacMode = v.hvacCoincidence || "noncoincident";
   const hvacDemandVA = hvacMode === "simultaneous" ? coolingVA + heatingVA : Math.max(coolingVA, heatingVA);
@@ -111,8 +124,12 @@ function residentialStandardDemand(v, loadSheddingEnabled) {
   const otherEssentialVA = num(v.otherEssentialVA);
   const otherOptionalVA = isShed("shedOtherOptional") ? 0 : num(v.otherOptionalVA);
 
+  // Never infer one "motor" from aggregate HVAC. Multiple condensers are
+  // separate motors. If no individual largest-motor value is supplied, use
+  // other identifiable individual motors only and require explicit HVAC
+  // largest-motor entry for an accurate 25% adder.
   const inferredLargestMotorRunningVA = Math.max(
-    coolingVA,
+    0,
     num(v.wellPumpVA),
     num(v.refrigeratorVA),
     isShed("shedDishwasher") ? 0 : num(v.dishwasherVA)
@@ -138,6 +155,8 @@ function residentialStandardDemand(v, loadSheddingEnabled) {
     fixedDemandVA: fixed.demandVA,
     dryerDemandVA: dryerVA,
     cookingDemandVA: cookingVA,
+    coolingOutdoorVA,
+    coolingBlowerVA,
     coolingVA,
     heatingVA,
     hvacDemandVA,
@@ -175,7 +194,8 @@ function applianceRows(v, occupancy) {
     { key: "dryerVA", label: "Clothes dryer", va: num(v.dryerVA), motor: false, shedKey: "shedDryer" },
     { key: "waterHeaterVA", label: "Water heater", va: num(v.waterHeaterVA), motor: false, shedKey: "shedWaterHeater" },
     { key: "dishwasherVA", label: "Dishwasher", va: num(v.dishwasherVA), motor: true, shedKey: "shedDishwasher" },
-    { key: "hvacCoolingVA", label: "HVAC cooling / A/C", va: num(v.hvacCoolingVA), motor: true, shedKey: "shedHvacCooling" },
+    { key: "hvacCoolingVA", label: "HVAC outdoor condensers", va: num(v.hvacCoolingVA), motor: false, shedKey: "shedHvacCooling" },
+    { key: "hvacBlowerVA", label: "HVAC indoor blowers / air handlers", va: num(v.hvacBlowerVA), motor: false, shedKey: "shedHvacCooling" },
     { key: "hvacHeatingVA", label: "HVAC heating / heat strips", va: num(v.hvacHeatingVA), motor: false, shedKey: "shedHvacHeating" },
     { key: "wellPumpVA", label: "Well / sump pump", va: num(v.wellPumpVA), motor: true, shedKey: null },
     { key: "otherFixedApplianceVA", label: "Other fixed appliances", va: num(v.otherFixedApplianceVA), motor: false, shedKey: null },
@@ -245,11 +265,11 @@ export function calcGeneratorSizing(v, nec) {
         { label: "Fixed-appliance demand", formula: residential?.fixedCount >= 4 ? "75% of qualifying fixed appliances" : "100% (fewer than 4 qualifying appliances)", result: Math.round(residential?.fixedDemandVA || 0), unit: "VA" },
         { label: "Dryer demand", formula: "5,000 VA minimum or nameplate, whichever is larger", result: Math.round(residential?.dryerDemandVA || 0), unit: "VA" },
         { label: "Cooking demand", formula: "Table 220.55 / equivalent 2026 table logic", result: Math.round(residential?.cookingDemandVA || 0), unit: "VA" },
-        { label: "Heating / cooling demand", formula: (v.hvacCoincidence || "noncoincident") === "simultaneous" ? "simultaneous loads added" : "noncoincident: larger load used", result: Math.round(residential?.hvacDemandVA || 0), unit: "VA" },
+        { label: "Heating / cooling demand", formula: (v.hvacCoincidence || "noncoincident") === "simultaneous" ? "outdoor cooling + cooling blowers + heating loads that can operate simultaneously" : "larger of (outdoor cooling + cooling blowers) or heating", result: Math.round(residential?.hvacDemandVA || 0), unit: "VA" },
         { label: "Largest motor adder", formula: "25% of largest motor running load", result: Math.round(residential?.largestMotorAdderVA || 0), unit: "VA" },
         { label: "NEC calculated standby load", formula: "sum of applicable Article 220/120 demand components", result: Math.round(necDemandVA), unit: "VA" },
         ...(actualLRA > 0 ? [{ label: "Motor-starting check", formula: "LRA × motor voltage", expression: `${actualLRA} A × ${motorStartVoltage} V`, result: Math.round(startingKVA * 10) / 10, unit: "kVA", note: "Manufacturer/model transient capability must be verified separately." }] : []),
-        { label: "Generic nominal size", formula: "next common nominal kW ≥ larger of NEC load and starting-kVA equivalent", result: wholeHouseGenSize, unit: "kW", note: "Not a substitute for manufacturer model-specific derating and motor-starting data." },
+        { label: "Generic nominal size", formula: "next common nominal kW ≥ NEC calculated load; LRA is a separate transient check", result: wholeHouseGenSize, unit: "kW", note: "Final model must be verified against manufacturer fuel-specific continuous rating and motor-starting/transient data." },
       ]
     : mode === "service"
       ? [
