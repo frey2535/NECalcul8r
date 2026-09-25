@@ -1,59 +1,15 @@
 /**
- * Pure calculation logic for Generator Sizing (NEC 702 / 445).
+ * Generator sizing calculation logic.
  *
- * Supports:
- * - service: back-calculate from service size
- * - loads / load: essential/managed load list (legacy + commercial-friendly)
- * - whole_house: residential/commercial appliance inventory with optional load shedding
+ * Whole-house residential mode separates:
+ * 1) NEC dwelling load calculation (Article 220 in 2017/2020/2023; Article 120 in 2026)
+ * 2) Optional-standby capacity / load management (Article 702)
+ * 3) Motor-starting check, which is manufacturer/model specific
+ *
+ * Important: service ampacity alone is NOT an NEC generator-sizing method.
  */
 
-const GEN_SIZES = [7.5, 10, 15, 20, 25, 30, 45, 60, 75, 100, 125, 150, 175, 200, 250, 300, 400, 500, 750, 1000];
-const RESIDENTIAL_GEN_SIZES = [7.5, 10, 14, 15, 18, 20, 22, 24, 26, 28, 30, 32, 36, 38, 40, 45, 48, 50, 60, 75, 100, 125, 150, 175, 200, 250, 300, 400, 500, 750, 1000];
-
-function dwellingGeneralDemandVA(v) {
-  const sqft = Math.max(0, num(v.squareFeet));
-  const kitchenCircuits = Math.max(0, num(v.kitchenCircuits, 2));
-  const laundryCircuits = Math.max(0, num(v.laundryCircuits, 1));
-  const connected = sqft * 3 + kitchenCircuits * 1500 + laundryCircuits * 1500;
-  return connected <= 3000 ? connected : 3000 + (connected - 3000) * 0.35;
-}
-
-function cookingDemandVA(v) {
-  const loads = [num(v.rangeVA), num(v.cooktopVA), num(v.ovenVA)].filter((x) => x > 1750);
-  if (!loads.length) return 0;
-  // NEC Table 220.55 Column C base values for 1-3 household cooking appliances.
-  const baseKW = [0, 8, 11, 14][Math.min(loads.length, 3)];
-  if (loads.length <= 3 && loads.every((x) => x <= 12000)) return baseKW * 1000;
-  // Conservative fallback for unusual/mixed cooking groups: connected nameplate.
-  return loads.reduce((a, b) => a + b, 0);
-}
-
-function residentialStandardDemandVA(v, loadSheddingEnabled) {
-  const general = num(v.squareFeet) > 0
-    ? dwellingGeneralDemandVA(v)
-    : (() => {
-        const connected = num(v.lightingVA) + num(v.smallApplianceVA) + num(v.laundryVA);
-        return connected <= 3000 ? connected : 3000 + (connected - 3000) * 0.35;
-      })();
-
-  const isShed = (key) => loadSheddingEnabled && truthy(v[key]);
-  const fixed = [
-    num(v.refrigeratorVA),
-    isShed("shedWaterHeater") ? 0 : num(v.waterHeaterVA),
-    isShed("shedDishwasher") ? 0 : num(v.dishwasherVA),
-    num(v.wellPumpVA),
-  ].filter((x) => x > 0);
-  const fixedDemand = fixed.length >= 4 ? fixed.reduce((a, b) => a + b, 0) * 0.75 : fixed.reduce((a, b) => a + b, 0);
-  const dryer = isShed("shedDryer") ? 0 : Math.max(num(v.dryerVA), num(v.dryerVA) > 0 ? 5000 : 0);
-  const cooking = (isShed("shedRange") && isShed("shedCooktop") && isShed("shedOven")) ? 0 : cookingDemandVA({
-    ...v,
-    rangeVA: isShed("shedRange") ? 0 : v.rangeVA,
-    cooktopVA: isShed("shedCooktop") ? 0 : v.cooktopVA,
-    ovenVA: isShed("shedOven") ? 0 : v.ovenVA,
-  });
-  const other = num(v.otherEssentialVA) + (isShed("shedOtherOptional") ? 0 : num(v.otherOptionalVA));
-  return { general, fixedDemand, dryer, cooking, other, total: general + fixedDemand + dryer + cooking + other };
-}
+const GENERIC_GEN_SIZES = [7.5, 10, 14, 15, 18, 20, 22, 24, 26, 28, 30, 32, 36, 38, 40, 45, 48, 50, 60, 75, 100, 125, 150, 175, 200, 250, 300, 400, 500, 750, 1000];
 
 function num(value, fallback = 0) {
   const n = parseFloat(value);
@@ -64,174 +20,301 @@ function truthy(value) {
   return value === true || value === "true" || value === 1 || value === "1";
 }
 
-function nextGenSize(kw, sizes = GEN_SIZES) {
-  return sizes.find((size) => size >= kw) || sizes[sizes.length - 1];
+function nextGenSize(kw) {
+  return GENERIC_GEN_SIZES.find((size) => size >= kw) || GENERIC_GEN_SIZES[GENERIC_GEN_SIZES.length - 1];
+}
+
+function necYearNumber(v) {
+  const y = parseInt(v.necYear, 10);
+  return Number.isFinite(y) ? y : 2023;
+}
+
+function dwellingUnitLoadVAperFt2(v) {
+  // 2017/2020/2023: 3 VA/ft² for dwelling service/feeder calculation.
+  // 2026: 2 VA/ft² for service/feeder calculation; branch-circuit basis remains separate.
+  return necYearNumber(v) >= 2026 ? 2 : 3;
+}
+
+function dwellingGeneralConnectedVA(v) {
+  const sqft = Math.max(0, num(v.squareFeet));
+  const kitchenCircuits = Math.max(0, num(v.kitchenCircuits, 2));
+  const laundryCircuits = Math.max(0, num(v.laundryCircuits, 1));
+  return sqft * dwellingUnitLoadVAperFt2(v) + kitchenCircuits * 1500 + laundryCircuits * 1500;
+}
+
+function dwellingGeneralDemandVA(v) {
+  const connected = dwellingGeneralConnectedVA(v);
+  return connected <= 3000 ? connected : 3000 + (connected - 3000) * 0.35;
+}
+
+function singleCookingApplianceDemandVA(va) {
+  const kw = Math.max(0, num(va)) / 1000;
+  if (kw <= 0) return 0;
+  if (kw <= 1.75) return kw * 1000;
+  if (kw <= 8.75) return kw * 0.8 * 1000;
+  if (kw <= 12) return 8000;
+  if (kw <= 27) {
+    // Table 220.55 Note 1: increase Column C demand 5% for each kW
+    // or major fraction thereof over 12 kW.
+    const increments = Math.ceil(kw - 12);
+    return 8000 * (1 + increments * 0.05);
+  }
+  // Outside the common single-household-range range handled by this calculator.
+  // Use connected nameplate rather than silently understating the load.
+  return kw * 1000;
+}
+
+function cookingDemandVA(v, isShed) {
+  const range = isShed("shedRange") ? 0 : num(v.rangeVA);
+  const cooktop = isShed("shedCooktop") ? 0 : num(v.cooktopVA);
+  const oven = isShed("shedOven") ? 0 : num(v.ovenVA);
+  const loads = [range, cooktop, oven].filter((x) => x > 0);
+  if (!loads.length) return 0;
+
+  if (truthy(v.combineCookingEquipment)) {
+    return singleCookingApplianceDemandVA(loads.reduce((a, b) => a + b, 0));
+  }
+
+  // Separate devices are each calculated independently. This is conservative for
+  // a single dwelling and avoids applying Note 4 when its conditions are not met.
+  return loads.reduce((sum, va) => sum + singleCookingApplianceDemandVA(va), 0);
+}
+
+function fixedApplianceSummary(v, isShed) {
+  const entries = [
+    { va: num(v.refrigeratorVA), count: num(v.refrigeratorVA) > 0 ? 1 : 0 },
+    { va: isShed("shedWaterHeater") ? 0 : num(v.waterHeaterVA), count: !isShed("shedWaterHeater") && num(v.waterHeaterVA) > 0 ? 1 : 0 },
+    { va: isShed("shedDishwasher") ? 0 : num(v.dishwasherVA), count: !isShed("shedDishwasher") && num(v.dishwasherVA) > 0 ? 1 : 0 },
+    { va: num(v.wellPumpVA), count: num(v.wellPumpVA) > 0 ? 1 : 0 },
+    { va: num(v.otherFixedApplianceVA), count: Math.max(0, Math.floor(num(v.otherFixedApplianceCount))) },
+  ];
+  const connectedVA = entries.reduce((s, x) => s + x.va, 0);
+  const count = entries.reduce((s, x) => s + x.count, 0);
+  const demandVA = count >= 4 ? connectedVA * 0.75 : connectedVA;
+  return { connectedVA, count, demandVA };
+}
+
+function residentialStandardDemand(v, loadSheddingEnabled) {
+  const isShed = (key) => loadSheddingEnabled && truthy(v[key]);
+
+  const generalConnectedVA = dwellingGeneralConnectedVA(v);
+  const generalDemandVA = dwellingGeneralDemandVA(v);
+  const fixed = fixedApplianceSummary(v, isShed);
+  const dryerVA = isShed("shedDryer") ? 0 : (num(v.dryerVA) > 0 ? Math.max(5000, num(v.dryerVA)) : 0);
+  const cookingVA = cookingDemandVA(v, isShed);
+
+  const coolingVA = isShed("shedHvacCooling") ? 0 : num(v.hvacCoolingVA);
+  const heatingVA = isShed("shedHvacHeating") ? 0 : num(v.hvacHeatingVA);
+  const hvacMode = v.hvacCoincidence || "noncoincident";
+  const hvacDemandVA = hvacMode === "simultaneous" ? coolingVA + heatingVA : Math.max(coolingVA, heatingVA);
+
+  const otherEssentialVA = num(v.otherEssentialVA);
+  const otherOptionalVA = isShed("shedOtherOptional") ? 0 : num(v.otherOptionalVA);
+
+  const inferredLargestMotorRunningVA = Math.max(
+    coolingVA,
+    num(v.wellPumpVA),
+    num(v.refrigeratorVA),
+    isShed("shedDishwasher") ? 0 : num(v.dishwasherVA)
+  );
+  const largestMotorRunningVA = Math.max(0, num(v.largestMotorRunningVA, inferredLargestMotorRunningVA)) || inferredLargestMotorRunningVA;
+  const largestMotorAdderVA = largestMotorRunningVA * 0.25;
+
+  const necDemandVA =
+    generalDemandVA +
+    fixed.demandVA +
+    dryerVA +
+    cookingVA +
+    hvacDemandVA +
+    otherEssentialVA +
+    otherOptionalVA +
+    largestMotorAdderVA;
+
+  return {
+    generalConnectedVA,
+    generalDemandVA,
+    fixedConnectedVA: fixed.connectedVA,
+    fixedCount: fixed.count,
+    fixedDemandVA: fixed.demandVA,
+    dryerDemandVA: dryerVA,
+    cookingDemandVA: cookingVA,
+    coolingVA,
+    heatingVA,
+    hvacDemandVA,
+    otherEssentialVA,
+    otherOptionalVA,
+    largestMotorRunningVA,
+    largestMotorAdderVA,
+    necDemandVA,
+  };
 }
 
 function applianceRows(v, occupancy) {
-  const residential = [
-    { key: "lightingVA", label: "Lighting", va: num(v.lightingVA), motor: false, shedKey: null },
-    { key: "smallApplianceVA", label: "Small-appliance circuits", va: num(v.smallApplianceVA), motor: false, shedKey: null },
-    { key: "laundryVA", label: "Laundry circuit", va: num(v.laundryVA), motor: false, shedKey: null },
+  if (occupancy !== "residential") {
+    return [
+      { key: "lightingVA", label: "Lighting", va: num(v.lightingVA), motor: false, shedKey: null },
+      { key: "receptacleVA", label: "Receptacle / general", va: num(v.receptacleVA), motor: false, shedKey: "shedOtherOptional" },
+      { key: "hvacCoolingVA", label: "HVAC cooling", va: num(v.hvacCoolingVA), motor: true, shedKey: "shedHvacCooling" },
+      { key: "hvacHeatingVA", label: "HVAC heating", va: num(v.hvacHeatingVA), motor: false, shedKey: "shedHvacHeating" },
+      { key: "motorLoadsVA", label: "Motors / process", va: num(v.motorLoadsVA), motor: true, shedKey: null },
+      { key: "elevatorVA", label: "Elevator / lift", va: num(v.elevatorVA), motor: true, shedKey: "shedOtherOptional" },
+      { key: "criticalLoadsVA", label: "Critical / life-safety", va: num(v.criticalLoadsVA), motor: false, shedKey: null },
+      { key: "otherEssentialVA", label: "Other essential", va: num(v.otherEssentialVA), motor: false, shedKey: null },
+      { key: "otherOptionalVA", label: "Discretionary / shedable", va: num(v.otherOptionalVA), motor: false, shedKey: "shedOtherOptional" },
+    ];
+  }
+
+  return [
+    { key: "general", label: "General lighting/receptacles", va: Math.max(0, num(v.squareFeet)) * dwellingUnitLoadVAperFt2(v), motor: false, shedKey: null },
+    { key: "smallAppliance", label: "Small-appliance circuits", va: Math.max(0, num(v.kitchenCircuits, 2)) * 1500, motor: false, shedKey: null },
+    { key: "laundry", label: "Laundry circuits", va: Math.max(0, num(v.laundryCircuits, 1)) * 1500, motor: false, shedKey: null },
     { key: "refrigeratorVA", label: "Refrigerator", va: num(v.refrigeratorVA), motor: true, shedKey: null },
     { key: "rangeVA", label: "Range / stove", va: num(v.rangeVA), motor: false, shedKey: "shedRange" },
     { key: "cooktopVA", label: "Cooktop", va: num(v.cooktopVA), motor: false, shedKey: "shedCooktop" },
     { key: "ovenVA", label: "Wall oven", va: num(v.ovenVA), motor: false, shedKey: "shedOven" },
-    { key: "dryerVA", label: "Clothes dryer", va: num(v.dryerVA), motor: true, shedKey: "shedDryer" },
+    { key: "dryerVA", label: "Clothes dryer", va: num(v.dryerVA), motor: false, shedKey: "shedDryer" },
     { key: "waterHeaterVA", label: "Water heater", va: num(v.waterHeaterVA), motor: false, shedKey: "shedWaterHeater" },
     { key: "dishwasherVA", label: "Dishwasher", va: num(v.dishwasherVA), motor: true, shedKey: "shedDishwasher" },
     { key: "hvacCoolingVA", label: "HVAC cooling / A/C", va: num(v.hvacCoolingVA), motor: true, shedKey: "shedHvacCooling" },
-    { key: "hvacHeatingVA", label: "HVAC heating / heat strips", va: num(v.hvacHeatingVA), motor: true, shedKey: "shedHvacHeating" },
+    { key: "hvacHeatingVA", label: "HVAC heating / heat strips", va: num(v.hvacHeatingVA), motor: false, shedKey: "shedHvacHeating" },
     { key: "wellPumpVA", label: "Well / sump pump", va: num(v.wellPumpVA), motor: true, shedKey: null },
+    { key: "otherFixedApplianceVA", label: "Other fixed appliances", va: num(v.otherFixedApplianceVA), motor: false, shedKey: null },
     { key: "otherEssentialVA", label: "Other essential loads", va: num(v.otherEssentialVA), motor: false, shedKey: null },
     { key: "otherOptionalVA", label: "Other optional loads", va: num(v.otherOptionalVA), motor: false, shedKey: "shedOtherOptional" },
   ];
-
-  const commercial = [
-    { key: "lightingVA", label: "Lighting", va: num(v.lightingVA), motor: false, shedKey: null },
-    { key: "receptacleVA", label: "Receptacle / general", va: num(v.receptacleVA), motor: false, shedKey: "shedOtherOptional" },
-    { key: "hvacCoolingVA", label: "HVAC cooling", va: num(v.hvacCoolingVA), motor: true, shedKey: "shedHvacCooling" },
-    { key: "hvacHeatingVA", label: "HVAC heating", va: num(v.hvacHeatingVA), motor: true, shedKey: "shedHvacHeating" },
-    { key: "motorLoadsVA", label: "Motors / process", va: num(v.motorLoadsVA), motor: true, shedKey: null },
-    { key: "elevatorVA", label: "Elevator / lift", va: num(v.elevatorVA), motor: true, shedKey: "shedOtherOptional" },
-    { key: "criticalLoadsVA", label: "Critical / life-safety", va: num(v.criticalLoadsVA), motor: false, shedKey: null },
-    { key: "otherEssentialVA", label: "Other essential", va: num(v.otherEssentialVA), motor: false, shedKey: null },
-    { key: "otherOptionalVA", label: "Discretionary / shedable", va: num(v.otherOptionalVA), motor: false, shedKey: "shedOtherOptional" },
-  ];
-
-  return occupancy === "commercial" ? commercial : residential;
 }
 
-/**
- * @param {object} v
- * @param {object} nec
- */
 export function calcGeneratorSizing(v, nec) {
-  const pf = num(v.pf, 0.8) || 0.8;
   const occupancy = v.occupancy === "commercial" ? "commercial" : "residential";
-  const rawMode = v.mode || "service";
+  const rawMode = v.mode || "whole_house";
   const mode = rawMode === "load" ? "loads" : rawMode;
   const loadSheddingEnabled = truthy(v.loadSheddingEnabled);
-  const continuousMult = nec?.CONTINUOUS_LOAD_MULTIPLIER || 1.25;
 
-  // Service-based
-  const serviceA = num(v.serviceA, 200);
-  const serviceV = num(v.serviceV, 240);
-  const serviceFactor = v.servicePhases === "three" ? 1.732 : 1;
-  const demandPct = num(v.demandFactor, 80);
+  // SERVICE-CAPACITY REFERENCE ONLY.
+  // Service ampacity does not establish the NEC optional-standby generator load.
+  const serviceA = Math.max(0, num(v.serviceA, 200));
+  const serviceV = Math.max(0, num(v.serviceV, 240));
+  const serviceFactor = v.servicePhases === "three" ? Math.sqrt(3) : 1;
   const serviceTotalVA = serviceA * serviceV * serviceFactor;
-  const demandVA = serviceTotalVA * (demandPct / 100);
-  const demandKVA = demandVA / 1000;
-  const demandKW = demandKVA * pf;
-  const serviceKW_withStarting = demandKW * continuousMult;
-  const serviceGenSize = nextGenSize(serviceKW_withStarting);
+  const demandPct = Math.min(100, Math.max(0, num(v.demandFactor, 80)));
+  const serviceEstimateVA = serviceTotalVA * demandPct / 100;
+  const serviceEstimateKW = serviceEstimateVA / 1000;
+  const serviceGenSize = nextGenSize(serviceEstimateKW);
 
-  // Legacy essential-load path (mode loads/load)
-  const critical = num(v.criticalLoadsVA);
-  const motor = num(v.motorLoadsVA);
-  const lighting = num(v.lightingVA);
-  const other = num(v.otherVA);
-  const motorStarting = motor * 6;
+  // SELECTED-LOAD ESTIMATE.
+  const critical = Math.max(0, num(v.criticalLoadsVA));
+  const motor = Math.max(0, num(v.motorLoadsVA));
+  const lighting = Math.max(0, num(v.lightingVA));
+  const other = Math.max(0, num(v.otherVA));
   const totalRunningVA = critical + motor + lighting + other;
-  const totalWithStarting = critical + motorStarting + lighting + other;
-  const requiredKVA = totalWithStarting / 1000;
-  const requiredKW = requiredKVA * pf;
-  const loadGenSize = nextGenSize(requiredKW);
+  const selectedLoadsKW = totalRunningVA / 1000;
+  const selectedLargestMotorRunningVA = Math.max(0, num(v.largestMotorRunningVA, motor)) || motor;
+  const selectedMotorAdderVA = selectedLargestMotorRunningVA * 0.25;
+  const selectedNecEquivalentVA = totalRunningVA + selectedMotorAdderVA;
+  const loadGenSize = nextGenSize(selectedNecEquivalentVA / 1000);
 
-  // Whole-house / detailed inventory
+  // WHOLE-HOUSE / DETAILED INVENTORY.
   const rows = applianceRows(v, occupancy).map((row) => {
     const shed = loadSheddingEnabled && row.shedKey ? truthy(v[row.shedKey]) : false;
-    return {
-      ...row,
-      shed,
-      includedVA: shed ? 0 : row.va,
-    };
+    return { ...row, shed, includedVA: shed ? 0 : row.va };
   });
   const connectedRows = rows.filter((row) => row.includedVA > 0);
   const shedRows = rows.filter((row) => row.shed && row.va > 0);
   const connectedNameplateVA = connectedRows.reduce((sum, row) => sum + row.includedVA, 0);
-  const motorCandidates = connectedRows.filter((row) => row.motor && row.includedVA > 0);
-  const largestMotorVA = motorCandidates.reduce((max, row) => Math.max(max, row.includedVA), 0);
-  const standard = occupancy === "residential" ? residentialStandardDemandVA(v, loadSheddingEnabled) : null;
-  // Whole-house residential sizing uses an Article 220 demand calculation, not service ampacity
-  // and not the sum of every nameplate load. Heating and cooling are noncoincident: use the larger.
-  const hvacCoolingDemandVA = loadSheddingEnabled && truthy(v.shedHvacCooling) ? 0 : num(v.hvacCoolingVA);
-  const hvacHeatingDemandVA = loadSheddingEnabled && truthy(v.shedHvacHeating) ? 0 : num(v.hvacHeatingVA);
-  const hvacDemandVA = Math.max(hvacCoolingDemandVA, hvacHeatingDemandVA);
-  const baseDemandVA = standard
-    ? standard.total + hvacDemandVA
-    : connectedNameplateVA;
-  // Motor starting is a separate generator capability check. Prefer actual LRA when supplied.
-  const actualLRA = Math.max(0, num(v.largestMotorLRA));
-  const motorStartingVA = actualLRA > 0 ? actualLRA * 240 : largestMotorVA * 6;
-  const motorRunningVA = actualLRA > 0 ? largestMotorVA : largestMotorVA;
-  const startingCheckVA = Math.max(baseDemandVA, baseDemandVA - motorRunningVA + motorStartingVA);
-  const wholeHouseRunningVA = baseDemandVA;
-  const wholeHouseWithStartingVA = startingCheckVA;
-  const wholeHouseKW = wholeHouseWithStartingVA / 1000;
-  const wholeHouseGenSize = nextGenSize(wholeHouseKW, occupancy === "residential" ? RESIDENTIAL_GEN_SIZES : GEN_SIZES);
   const shedVA = shedRows.reduce((sum, row) => sum + row.va, 0);
 
-  let steps;
-  let recommendedGenSize;
-  if (mode === "service") {
-    recommendedGenSize = serviceGenSize;
-    steps = [
-      { label: "Service Total VA", formula: "VA = service A × V × √3", expression: `${serviceA} × ${serviceV} × ${serviceFactor}`, result: Math.round(serviceTotalVA), unit: "VA" },
-      { label: "Demand VA", expression: `${Math.round(serviceTotalVA)} × ${demandPct}%`, result: Math.round(demandVA), unit: "VA" },
-      { label: "Demand kW", formula: "kW = kVA × PF", expression: `${Math.round(demandKVA * 10) / 10} × ${pf} (PF)`, result: Math.round(demandKW * 10) / 10, unit: "kW" },
-      { label: "With Motor Starting", formula: "kW = demand kW × 125%", expression: `${Math.round(demandKW * 10) / 10} × ${continuousMult}`, result: Math.round(serviceKW_withStarting * 10) / 10, unit: "kW", note: "125% for motor starting / continuous" },
-      { label: "Generator Size", formula: "Size = next standard ≥ kW", expression: `next standard ≥ ${Math.round(serviceKW_withStarting * 10) / 10} kW`, result: serviceGenSize, unit: "kW" },
-    ];
-  } else if (mode === "whole_house") {
-    recommendedGenSize = wholeHouseGenSize;
-    steps = [
-      { label: "Connected running VA", formula: "Sum of loads kept on generator", expression: connectedRows.filter((r) => r.includedVA).map((r) => `${r.label} ${r.includedVA}`).join(" + ") || "0", result: Math.round(wholeHouseRunningVA), unit: "VA" },
-      ...(loadSheddingEnabled ? [{ label: "Load-shed VA (off generator)", formula: "Managed loads shed by controller", expression: shedRows.map((r) => `${r.label} ${r.va}`).join(" + ") || "0", result: Math.round(shedVA), unit: "VA", note: "Excluded from standby generator sizing" }] : []),
-      { label: "With largest-motor starting", formula: "Running VA + largest motor × 5 (to reach 6×)", expression: `${Math.round(wholeHouseRunningVA)} + ${Math.round(largestMotorVA)} × 5`, result: Math.round(wholeHouseWithStartingVA), unit: "VA", note: largestMotorVA ? "Largest connected motor at 6× LRC" : "No motor loads entered" },
-      { label: "Required kW", formula: "kW = required VA ÷ 1000", expression: `${Math.round(wholeHouseWithStartingVA / 1000 * 10) / 10}`, result: Math.round(wholeHouseKW * 10) / 10, unit: "kW" },
-      { label: "Generator Size", formula: "Size = next standard ≥ kW", expression: `next standard ≥ ${Math.round(wholeHouseKW * 10) / 10} kW`, result: wholeHouseGenSize, unit: "kW" },
-    ];
-  } else {
-    recommendedGenSize = loadGenSize;
-    steps = [
-      { label: "Total Running VA", formula: "VA = critical + motor + lighting + other", expression: `${critical} + ${motor} + ${lighting} + ${other}`, result: Math.round(totalRunningVA), unit: "VA" },
-      { label: "With Motor Starting", formula: "VA = critical + motor × 6 + lighting + other", expression: `${critical} + ${motor} × 6 + ${lighting} + ${other}`, result: Math.round(totalWithStarting), unit: "VA", note: "6× motor LRC for starting" },
-      { label: "Required kW", formula: "kW = VA × PF ÷ 1000", expression: `${Math.round(totalWithStarting / 1000 * 10) / 10} × ${pf}`, result: Math.round(requiredKW * 10) / 10, unit: "kW" },
-      { label: "Generator Size", formula: "Size = next standard ≥ kW", expression: `next standard ≥ ${Math.round(requiredKW * 10) / 10} kW`, result: loadGenSize, unit: "kW" },
-    ];
-  }
+  const residential = occupancy === "residential" ? residentialStandardDemand(v, loadSheddingEnabled) : null;
+  const necDemandVA = residential ? residential.necDemandVA : connectedNameplateVA;
+  const necRequiredKW = necDemandVA / 1000;
+
+  // Motor starting is not an Article 220 demand-factor calculation.
+  // Keep it separate and compare against manufacturer/model starting capability.
+  const motorStartVoltage = Math.max(1, num(v.motorStartVoltage, serviceV || 240));
+  const actualLRA = Math.max(0, num(v.largestMotorLRA));
+  const startingKVA = actualLRA > 0 ? (actualLRA * motorStartVoltage) / 1000 : 0;
+  const motorStartEquivalentKW = startingKVA > 0 ? Math.ceil(startingKVA) : 0;
+
+  // Generic model suggestion only. Final model must pass manufacturer starting/derating data.
+  const suggestedMinimumKW = Math.max(necRequiredKW, motorStartEquivalentKW);
+  const wholeHouseGenSize = nextGenSize(suggestedMinimumKW);
+
+  const steps = mode === "whole_house"
+    ? [
+        { label: "General connected load", formula: "floor area × unit load + small-appliance + laundry", result: Math.round(residential?.generalConnectedVA || 0), unit: "VA" },
+        { label: "General demand", formula: "first 3,000 VA @ 100% + remainder @ 35%", result: Math.round(residential?.generalDemandVA || 0), unit: "VA" },
+        { label: "Fixed-appliance demand", formula: residential?.fixedCount >= 4 ? "75% of qualifying fixed appliances" : "100% (fewer than 4 qualifying appliances)", result: Math.round(residential?.fixedDemandVA || 0), unit: "VA" },
+        { label: "Dryer demand", formula: "5,000 VA minimum or nameplate, whichever is larger", result: Math.round(residential?.dryerDemandVA || 0), unit: "VA" },
+        { label: "Cooking demand", formula: "Table 220.55 / equivalent 2026 table logic", result: Math.round(residential?.cookingDemandVA || 0), unit: "VA" },
+        { label: "Heating / cooling demand", formula: (v.hvacCoincidence || "noncoincident") === "simultaneous" ? "simultaneous loads added" : "noncoincident: larger load used", result: Math.round(residential?.hvacDemandVA || 0), unit: "VA" },
+        { label: "Largest motor adder", formula: "25% of largest motor running load", result: Math.round(residential?.largestMotorAdderVA || 0), unit: "VA" },
+        { label: "NEC calculated standby load", formula: "sum of applicable Article 220/120 demand components", result: Math.round(necDemandVA), unit: "VA" },
+        ...(actualLRA > 0 ? [{ label: "Motor-starting check", formula: "LRA × motor voltage", expression: `${actualLRA} A × ${motorStartVoltage} V`, result: Math.round(startingKVA * 10) / 10, unit: "kVA", note: "Manufacturer/model transient capability must be verified separately." }] : []),
+        { label: "Generic nominal size", formula: "next common nominal kW ≥ larger of NEC load and starting-kVA equivalent", result: wholeHouseGenSize, unit: "kW", note: "Not a substitute for manufacturer model-specific derating and motor-starting data." },
+      ]
+    : mode === "service"
+      ? [
+          { label: "Service capacity", formula: v.servicePhases === "three" ? "A × V × √3" : "A × V", result: Math.round(serviceTotalVA), unit: "VA" },
+          { label: "User-entered utilization estimate", expression: `${demandPct}% of service capacity`, result: Math.round(serviceEstimateVA), unit: "VA", note: "Reference estimate only; service ampacity is not an NEC generator load calculation." },
+        ]
+      : [
+          { label: "Selected running loads", formula: "critical + motor + lighting + other", result: Math.round(totalRunningVA), unit: "VA" },
+          { label: "Largest motor adder", formula: "25% of largest motor running load", result: Math.round(selectedMotorAdderVA), unit: "VA" },
+          { label: "Selected-load sizing basis", result: Math.round(selectedNecEquivalentVA), unit: "VA" },
+        ];
+
+  const recommendedGenSize = mode === "whole_house"
+    ? wholeHouseGenSize
+    : mode === "loads"
+      ? loadGenSize
+      : null;
 
   return {
     occupancy,
     mode,
     loadSheddingEnabled,
-    // Service-based
+
+    // Service reference
     serviceTotalVA: Math.round(serviceTotalVA),
-    demandKVA: Math.round(demandKVA * 10) / 10,
-    demandKW: Math.round(demandKW * 10) / 10,
-    serviceKW_withStarting: Math.round(serviceKW_withStarting * 10) / 10,
+    demandKVA: Math.round((serviceEstimateVA / 1000) * 10) / 10,
+    demandKW: Math.round(serviceEstimateKW * 10) / 10,
+    serviceKW_withStarting: null,
     serviceGenSize,
-    // Load-based (legacy)
+    serviceSizingValid: false,
+
+    // Selected loads
     totalRunningVA: Math.round(totalRunningVA),
-    totalWithStarting: Math.round(totalWithStarting),
-    requiredKW: Math.round(requiredKW * 10) / 10,
+    totalWithStarting: null,
+    requiredKW: Math.round((selectedNecEquivalentVA / 1000) * 10) / 10,
     loadGenSize,
-    // Whole-house
+
+    // Whole house
     applianceRows: rows,
     connectedRunningVA: Math.round(connectedNameplateVA),
     connectedNameplateVA: Math.round(connectedNameplateVA),
-    necDemandVA: Math.round(baseDemandVA),
-    motorStartingVA: Math.round(motorStartingVA),
     shedVA: Math.round(shedVA),
-    largestMotorVA: Math.round(largestMotorVA),
-    wholeHouseWithStartingVA: Math.round(wholeHouseWithStartingVA),
-    wholeHouseKW: Math.round(wholeHouseKW * 10) / 10,
+    necDemandVA: Math.round(necDemandVA),
+    necRequiredKW: Math.round(necRequiredKW * 10) / 10,
+    generalConnectedVA: Math.round(residential?.generalConnectedVA || 0),
+    generalDemandVA: Math.round(residential?.generalDemandVA || 0),
+    fixedApplianceConnectedVA: Math.round(residential?.fixedConnectedVA || 0),
+    fixedApplianceCount: residential?.fixedCount || 0,
+    fixedApplianceDemandVA: Math.round(residential?.fixedDemandVA || 0),
+    dryerDemandVA: Math.round(residential?.dryerDemandVA || 0),
+    cookingDemandVA: Math.round(residential?.cookingDemandVA || 0),
+    hvacDemandVA: Math.round(residential?.hvacDemandVA || 0),
+    largestMotorVA: Math.round(residential?.largestMotorRunningVA || selectedLargestMotorRunningVA || 0),
+    largestMotorAdderVA: Math.round(residential?.largestMotorAdderVA || 0),
+    motorStartingVA: Math.round(startingKVA * 1000),
+    motorStartingKVA: Math.round(startingKVA * 10) / 10,
+    motorStartEquivalentKW,
+    wholeHouseWithStartingVA: Math.round(Math.max(necDemandVA, startingKVA * 1000)),
+    wholeHouseKW: Math.round(suggestedMinimumKW * 10) / 10,
     wholeHouseGenSize,
+
     // Active
     recommendedGenSize,
-    dwelling_generator_shutdown_article: occupancy === "residential" ? (nec.DWELLING_GENERATOR_SHUTDOWN_ARTICLE || null) : null,
-    dwelling_generator_shutdown_note: occupancy === "residential" ? (nec.DWELLING_GENERATOR_SHUTDOWN_NOTE || null) : null,
+    dwelling_generator_shutdown_article: occupancy === "residential" ? (nec?.DWELLING_GENERATOR_SHUTDOWN_ARTICLE || null) : null,
+    dwelling_generator_shutdown_note: occupancy === "residential" ? (nec?.DWELLING_GENERATOR_SHUTDOWN_NOTE || null) : null,
     steps,
   };
 }

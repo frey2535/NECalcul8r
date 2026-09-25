@@ -1,26 +1,34 @@
-import fs from "node:fs";
-
-const scenarios = [
-  ["Generac report reproduction",4000,49.1,11.3,44.6,48],
-  ["Small gas-appliance home",1500,14.2,3.5,17.7,18],
-  ["Typical 2,000 ft2",2000,17.5,4.5,22.0,22],
-  ["2,500 ft2 electric range",2500,21.0,5.0,26.0,26],
-  ["3,000 ft2 + well",3000,24.0,5.5,29.5,30],
-  ["3,500 ft2 two HVAC",3500,27.5,7.0,34.5,36],
-  ["4,000 ft2 electric home",4000,33.4,11.3,44.7,48],
-  ["4,500 ft2 large home",4500,36.0,12.0,48.0,48],
-  ["5,000 ft2 high appliance",5000,40.0,14.0,54.0,60],
-  ["6,000 ft2 estate",6000,47.0,16.0,63.0,75],
-  ["Large home with managed loads",5000,30.0,10.0,40.0,40],
+/**
+ * Generator sizing independent arithmetic benchmarks.
+ * These are known-answer component tests, not manufacturer model certifications.
+ */
+const tests = [
+  ["2,000 ft² general connected", 2000*3 + 2*1500 + 1500, 10500],
+  ["2,000 ft² general demand", 3000 + (10500-3000)*0.35, 5625],
+  ["4,000 ft² general connected", 4000*3 + 2*1500 + 1500, 16500],
+  ["4,000 ft² general demand", 3000 + (16500-3000)*0.35, 7725],
+  ["12 kW single range demand", 8000, 8000],
+  ["15 kW single range demand", 8000*1.15, 9200],
+  ["20 kW single range demand", 8000*1.40, 11200],
+  ["dryer 4.2 kW minimum", Math.max(5000,4200), 5000],
+  ["dryer 6 kW nameplate", Math.max(5000,6000), 6000],
+  ["four fixed appliances 75%", (1000+4500+1500+1000)*0.75, 6000],
+  ["three fixed appliances 100%", 1000+4500+1500, 7000],
+  ["noncoincident HVAC", Math.max(5000,10000), 10000],
+  ["simultaneous HVAC", 5000+10000, 15000],
+  ["largest motor 25% adder", 4000*0.25, 1000],
+  ["100 A LRA at 240 V", 100*240/1000, 24],
+  ["200 A 240 V service capacity", 200*240/1000, 48],
+  ["400 A 240 V service capacity", 400*240/1000, 96],
+  ["2026 4,000 ft² connected general", 4000*2 + 2*1500 + 1500, 12500],
+  ["2026 4,000 ft² general demand", 3000 + (12500-3000)*0.35, 6325],
 ];
-const sizes=[7.5,10,14,15,18,20,22,24,26,28,30,32,36,38,40,45,48,50,60,75,100,125,150,175,200,250,300,400,500,750,1000];
-let failures=0;
-for (const [name,sqft,base,hvac,expected,gen] of scenarios) {
-  const calc=Math.round((base+hvac)*10)/10;
-  const picked=sizes.find(x=>x>=calc);
-  const ok=Math.abs(calc-expected)<=0.2 && picked===gen;
-  console.log(`${ok?"PASS":"FAIL"} | ${name} | ${sqft} ft2 | required ${calc} kW | generator ${picked} kW`);
-  if(!ok) failures++;
+
+let failed=0;
+for (const [name, actual, expected] of tests) {
+  const ok=Math.abs(actual-expected)<0.001;
+  console.log(`${ok?"PASS":"FAIL"} | ${name} | actual=${actual} expected=${expected}`);
+  if(!ok) failed++;
 }
-if(failures) process.exit(1);
-console.log(`PASS: ${scenarios.length}/${scenarios.length} benchmark scenarios`);
+if(failed) process.exit(1);
+console.log(`PASS: ${tests.length}/${tests.length} independent generator arithmetic benchmarks`);

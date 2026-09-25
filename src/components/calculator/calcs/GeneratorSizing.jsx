@@ -34,10 +34,11 @@ export default function GeneratorSizing({ category, necYear = "2023" }) {
     // Legacy essential loads
     criticalLoadsVA: 20000, motorLoadsVA: 5000, lightingVA: 3000, otherVA: 2000,
     // Residential / whole-house inventory
-    squareFeet: 2000, kitchenCircuits: 2, laundryCircuits: 1, largestMotorLRA: 0,
+    squareFeet: 2000, kitchenCircuits: 2, laundryCircuits: 1, largestMotorLRA: 0, largestMotorRunningVA: 0, motorStartVoltage: 240,
     smallApplianceVA: 3000, laundryVA: 1500, refrigeratorVA: 1200,
     rangeVA: 12000, cooktopVA: 0, ovenVA: 0, dryerVA: 5000, waterHeaterVA: 4500,
     dishwasherVA: 1500, hvacCoolingVA: 4500, hvacHeatingVA: 10000, wellPumpVA: 1500,
+    otherFixedApplianceVA: 0, otherFixedApplianceCount: 0, combineCookingEquipment: false, hvacCoincidence: "noncoincident",
     otherEssentialVA: 2000, otherOptionalVA: 0,
     // Commercial extras
     receptacleVA: 5000, elevatorVA: 0,
@@ -52,10 +53,10 @@ export default function GeneratorSizing({ category, necYear = "2023" }) {
   const setBool = (k) => (val) => setV((p) => ({ ...p, [k]: Boolean(val) }));
 
   const normalizedMode = mode === "load" ? "loads" : mode;
-  const gr = calcGeneratorSizing({ ...v, mode: normalizedMode, occupancy }, nec);
+  const gr = calcGeneratorSizing({ ...v, mode: normalizedMode, occupancy, necYear }, nec);
   const {
-    serviceTotalVA, demandKVA, demandKW, serviceKW_withStarting, serviceGenSize,
-    totalRunningVA, totalWithStarting, requiredKW, loadGenSize,
+    serviceTotalVA, demandKVA, demandKW, serviceGenSize,
+    totalRunningVA, requiredKW, loadGenSize,
     connectedRunningVA, shedVA, largestMotorVA, wholeHouseWithStartingVA, wholeHouseKW, wholeHouseGenSize,
     applianceRows, loadSheddingEnabled, recommendedGenSize, steps,
   } = gr;
@@ -85,9 +86,9 @@ export default function GeneratorSizing({ category, necYear = "2023" }) {
               <ResultRow label="Demand kW" value={demandKW.toFixed(1)} unit="kW" sub={`at PF = ${pf}`} />
             </ResultSection>
             <ResultSection title="Generator Requirements">
-              <ResultRow label="With 25% Motor Starting" value={serviceKW_withStarting.toFixed(1)} unit="kW" highlight />
-              <ResultRow label="Recommended Generator" value={`${serviceGenSize} kW`} highlight
-                sub="Next standard size above requirement" />
+              <ResultRow label="Utilization Estimate" value={demandKW.toFixed(1)} unit="kW" highlight />
+              <ResultRow label="Generator Recommendation" value="Not determined" highlight
+                sub="Service ampacity alone is not an NEC generator load calculation. Use Whole-house or Selected loads mode." />
             </ResultSection>
             <ResultSection title="Standard Generator Sizes">
               {GEN_SIZES.filter((s) => s >= demandKW * 0.8 && s <= serviceKW_withStarting * 2).map((s) => (
@@ -137,7 +138,7 @@ export default function GeneratorSizing({ category, necYear = "2023" }) {
         <NoteBox>
           NEC {necYear} 702 / 445: Size the standby source for the loads that remain connected through the transfer equipment.
           Use demand factors and noncoincidence carefully — this calculator uses connected/nameplate values you enter.
-          Whole-house dwelling mode applies Article 220 demand logic and checks motor starting separately; actual LRA is used when entered, otherwise a conservative 6× running-VA estimate is used. Transfer equipment is required per NEC 702.
+          Whole-house dwelling mode applies the selected NEC-year dwelling load rules. Motor starting is checked separately using actual LRA when provided and must be verified against the selected generator manufacturer/model transient capability. Service ampacity alone is not used as the NEC generator load.
           Size continuous generator ampacity path with the 125% continuous factor where applicable (445.13).
           {loadSheddingEnabled ? " Load-shed / load-management modules reduce generator size by keeping selected loads off the standby source." : ""}
           {gr.dwelling_generator_shutdown_note ? ` ${gr.dwelling_generator_shutdown_article}: ${gr.dwelling_generator_shutdown_note}` : ""}
@@ -206,8 +207,14 @@ export default function GeneratorSizing({ category, necYear = "2023" }) {
           <Field label="Laundry circuits">
             <NumInput value={v.laundryCircuits} onChange={set("laundryCircuits")} placeholder="1" min={0} />
           </Field>
-          <Field label="Largest motor actual LRA" unit="A" hint="Preferred for generator motor-start verification; leave 0 if unknown">
+          <Field label="Largest motor running load" unit="VA" hint="Used for the NEC 25% largest-motor adder. Use nameplate running VA.">
+            <NumInput value={v.largestMotorRunningVA} onChange={set("largestMotorRunningVA")} placeholder="0" min={0} />
+          </Field>
+          <Field label="Largest motor actual LRA" unit="A" hint="Used only for the separate manufacturer motor-starting check.">
             <NumInput value={v.largestMotorLRA} onChange={set("largestMotorLRA")} placeholder="0" min={0} />
+          </Field>
+          <Field label="Motor starting voltage" unit="V">
+            <NumInput value={v.motorStartVoltage} onChange={set("motorStartVoltage")} placeholder="240" min={1} />
           </Field>
           <Field label="Lighting" unit="VA">
             <NumInput value={v.lightingVA} onChange={set("lightingVA")} placeholder="3000" />
@@ -230,6 +237,9 @@ export default function GeneratorSizing({ category, necYear = "2023" }) {
           <Field label="Wall oven" unit="VA">
             <NumInput value={v.ovenVA} onChange={set("ovenVA")} placeholder="0" />
           </Field>
+          <Checkbox checked={Boolean(v.combineCookingEquipment)} onChange={setBool("combineCookingEquipment")}
+            label="Cooktop and wall oven qualify as one combined cooking appliance"
+            hint="Use only when the installation qualifies for the applicable household cooking-equipment table note." />
           <Field label="Clothes dryer" unit="VA">
             <NumInput value={v.dryerVA} onChange={set("dryerVA")} placeholder="5000" />
           </Field>
@@ -247,6 +257,18 @@ export default function GeneratorSizing({ category, necYear = "2023" }) {
           </Field>
           <Field label="Well / sump pump" unit="VA">
             <NumInput value={v.wellPumpVA} onChange={set("wellPumpVA")} placeholder="1500" />
+          </Field>
+          <Field label="Other qualifying fixed appliances" unit="VA">
+            <NumInput value={v.otherFixedApplianceVA} onChange={set("otherFixedApplianceVA")} placeholder="0" />
+          </Field>
+          <Field label="Number of other qualifying fixed appliances" hint="Needed to determine whether the four-or-more fixed-appliance demand factor applies">
+            <NumInput value={v.otherFixedApplianceCount} onChange={set("otherFixedApplianceCount")} placeholder="0" min={0} />
+          </Field>
+          <Field label="Heating / cooling operation" hint="Use simultaneous only when the loads can operate at the same time.">
+            <Select value={v.hvacCoincidence} onChange={set("hvacCoincidence")} options={[
+              { value: "noncoincident", label: "Noncoincident — use larger load" },
+              { value: "simultaneous", label: "Can operate simultaneously — add both" },
+            ]} />
           </Field>
           <Field label="Other essential loads" unit="VA">
             <NumInput value={v.otherEssentialVA} onChange={set("otherEssentialVA")} placeholder="2000" />
@@ -295,7 +317,7 @@ export default function GeneratorSizing({ category, necYear = "2023" }) {
             checked={Boolean(v.loadSheddingEnabled === true || v.loadSheddingEnabled === "true")}
             onChange={setBool("loadSheddingEnabled")}
             label="Use load-shedding / load-management modules"
-            hint="Keeps selected loads off the standby generator so you can downsize the machine."
+            hint="Excludes selected loads only when the transfer/load-management system prevents them from being connected while on generator."
           />
           {loadSheddingEnabled && (
             <div className="grid gap-2 sm:grid-cols-2 pt-1">
@@ -323,9 +345,9 @@ export default function GeneratorSizing({ category, necYear = "2023" }) {
         </div>
       )}
 
-      <Field label="Power Factor" unit="PF" hint="Typical: 0.8 for motors, 1.0 for resistive">
+      {!isWholeHouse && <Field label="Power Factor" unit="PF" hint="Reference only in legacy estimate modes">
         <NumInput value={v.pf} onChange={set("pf")} placeholder="0.8" min={0.1} max={1} step={0.01} />
-      </Field>
+      </Field>}
     </CalcLayout>
   );
 }
