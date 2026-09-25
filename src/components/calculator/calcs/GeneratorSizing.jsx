@@ -35,9 +35,9 @@ export default function GeneratorSizing({ category, necYear = "2023" }) {
     criticalLoadsVA: 20000, motorLoadsVA: 5000, lightingVA: 3000, otherVA: 2000,
     // Residential / whole-house inventory
     squareFeet: 2000, kitchenCircuits: 2, laundryCircuits: 1, largestMotorLRA: 0, largestMotorRunningVA: 0, motorStartVoltage: 240,
-    smallApplianceVA: 3000, laundryVA: 1500, refrigeratorVA: 1200,
+    smallApplianceVA: 3000, laundryVA: 1500, refrigeratorVA: 1200, refrigeratorFastenedInPlace: false,
     rangeVA: 12000, cooktopVA: 0, ovenVA: 0, dryerVA: 5000, waterHeaterVA: 4500,
-    dishwasherVA: 1500, hvacCoolingVA: 4500, hvacHeatingVA: 10000, wellPumpVA: 1500,
+    dishwasherVA: 1500, hvacCoolingVA: 4500, hvacBlowerVA: 0, hvacHeatingVA: 10000, wellPumpVA: 1500,
     otherFixedApplianceVA: 0, otherFixedApplianceCount: 0, combineCookingEquipment: false, hvacCoincidence: "noncoincident",
     otherEssentialVA: 2000, otherOptionalVA: 0,
     // Commercial extras
@@ -245,6 +245,9 @@ export default function GeneratorSizing({ category, necYear = "2023" }) {
           <Field label="Refrigerator" unit="VA">
             <NumInput value={v.refrigeratorVA} onChange={set("refrigeratorVA")} placeholder="1200" />
           </Field>
+          <Checkbox checked={Boolean(v.refrigeratorFastenedInPlace)} onChange={setBool("refrigeratorFastenedInPlace")}
+            label="Refrigerator is fastened in place / built-in"
+            hint="Only check when it qualifies as a fastened-in-place appliance for the applicable fixed-appliance demand rule." />
           <Field label="Range / stove" unit="VA">
             <NumInput value={v.rangeVA} onChange={set("rangeVA")} placeholder="12000" />
           </Field>
@@ -266,8 +269,11 @@ export default function GeneratorSizing({ category, necYear = "2023" }) {
           <Field label="Dishwasher" unit="VA">
             <NumInput value={v.dishwasherVA} onChange={set("dishwasherVA")} placeholder="1500" />
           </Field>
-          <Field label="HVAC cooling / A/C" unit="VA" hint="Use compressor load; treated as motor for starting">
+          <Field label="HVAC outdoor condensers" unit="VA" hint="Enter the sum of all condenser running VA that can operate simultaneously. Do NOT include the 25% largest-motor adder here.">
             <NumInput value={v.hvacCoolingVA} onChange={set("hvacCoolingVA")} placeholder="4500" />
+          </Field>
+          <Field label="HVAC indoor blowers / air handlers" unit="VA" hint="Enter the electrical load of indoor blowers that operate with cooling. These are added to condenser load during cooling.">
+            <NumInput value={v.hvacBlowerVA} onChange={set("hvacBlowerVA")} placeholder="0" />
           </Field>
           <Field label="HVAC heating / heat strips" unit="VA">
             <NumInput value={v.hvacHeatingVA} onChange={set("hvacHeatingVA")} placeholder="10000" />
