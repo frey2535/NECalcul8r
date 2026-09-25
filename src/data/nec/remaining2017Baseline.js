@@ -336,14 +336,20 @@ def("generator_sizing", "Generator Sizing 445 / 702", calcGeneratorSizing, [
   {
     id: "gen_fixed_3",
     description: "Three qualifying fixed appliances remain at 100%",
-    inputs: { occupancy: "residential", mode: "whole_house", necYear: "2017", squareFeet: 0, kitchenCircuits: 0, laundryCircuits: 0, refrigeratorVA: 1000, waterHeaterVA: 4500, dishwasherVA: 1500 },
+    inputs: { occupancy: "residential", mode: "whole_house", necYear: "2017", squareFeet: 0, kitchenCircuits: 0, laundryCircuits: 0, refrigeratorVA: 1000, refrigeratorFastenedInPlace: true, waterHeaterVA: 4500, dishwasherVA: 1500 },
     expected: { fixedApplianceCount: 3, fixedApplianceConnectedVA: 7000, fixedApplianceDemandVA: 7000 },
   },
   {
     id: "gen_fixed_4",
     description: "Four qualifying fixed appliances receive 75% demand factor",
-    inputs: { occupancy: "residential", mode: "whole_house", necYear: "2017", squareFeet: 0, kitchenCircuits: 0, laundryCircuits: 0, refrigeratorVA: 1000, waterHeaterVA: 4500, dishwasherVA: 1500, wellPumpVA: 1000 },
+    inputs: { occupancy: "residential", mode: "whole_house", necYear: "2017", squareFeet: 0, kitchenCircuits: 0, laundryCircuits: 0, refrigeratorVA: 1000, refrigeratorFastenedInPlace: true, waterHeaterVA: 4500, dishwasherVA: 1500, wellPumpVA: 1000 },
     expected: { fixedApplianceCount: 4, fixedApplianceConnectedVA: 8000, fixedApplianceDemandVA: 6000 },
+  },
+  {
+    id: "gen_fixed_fridge_not_fastened",
+    description: "Portable refrigerator VA is excluded from 220.53 qualifying fixed-appliance count",
+    inputs: { occupancy: "residential", mode: "whole_house", necYear: "2017", squareFeet: 0, kitchenCircuits: 0, laundryCircuits: 0, refrigeratorVA: 1000, refrigeratorFastenedInPlace: false, waterHeaterVA: 4500, dishwasherVA: 1500, wellPumpVA: 1000 },
+    expected: { fixedApplianceCount: 3, fixedApplianceConnectedVA: 8000, fixedApplianceDemandVA: 8000 },
   },
   {
     id: "gen_hvac_noncoincident",
@@ -356,6 +362,12 @@ def("generator_sizing", "Generator Sizing 445 / 702", calcGeneratorSizing, [
     description: "Heating/cooling that can operate simultaneously are added",
     inputs: { occupancy: "residential", mode: "whole_house", necYear: "2017", squareFeet: 0, kitchenCircuits: 0, laundryCircuits: 0, hvacCoolingVA: 5000, hvacHeatingVA: 10000, hvacCoincidence: "simultaneous" },
     expected: { hvacDemandVA: 15000 },
+  },
+  {
+    id: "gen_hvac_blowers_with_cooling",
+    description: "Indoor blowers are added to outdoor condenser load for the cooling condition",
+    inputs: { occupancy: "residential", mode: "whole_house", necYear: "2017", squareFeet: 0, kitchenCircuits: 0, laundryCircuits: 0, hvacCoolingVA: 11592, hvacBlowerVA: 2880, hvacHeatingVA: 10000, hvacCoincidence: "noncoincident" },
+    expected: { hvacDemandVA: 14472 },
   },
   {
     id: "gen_motor_25pct",

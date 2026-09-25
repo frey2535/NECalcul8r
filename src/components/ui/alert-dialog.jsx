@@ -36,9 +36,9 @@ const AlertDialogContent = React.forwardRef(({ className, children, ...props }, 
       <AlertDialogPrimitive.Cancel
         type="button"
         aria-label="Close dialog"
-        className="absolute right-3 top-3 z-20 inline-flex h-10 w-10 touch-manipulation items-center justify-center rounded-full border border-border/60 bg-background/95 text-foreground shadow-sm transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+        className="absolute right-3 top-3 z-[100] inline-flex h-11 w-11 touch-manipulation items-center justify-center rounded-full border border-border/60 bg-background text-foreground shadow-md transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
       >
-        <X className="h-5 w-5" aria-hidden="true" />
+        <X className="h-5 w-5 pointer-events-none" aria-hidden="true" />
         <span className="sr-only">Close</span>
       </AlertDialogPrimitive.Cancel>
     </AlertDialogPrimitive.Content>

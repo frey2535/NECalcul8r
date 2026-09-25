@@ -1,22 +1,25 @@
 import React, { useState } from "react";
 import { Bot, ExternalLink, Play, ShieldAlert } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import { useAuth } from "@/lib/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/ui/use-toast";
 
-const DEFAULT_PROMPT = `Full Repository Path: NECalcul8r
+const DEFAULT_PROMPT = `Fix the issue described below in NECalcul8r.
 
 Task:
 
+
 Requirements:
-- Create a new branch.
+- Create a new branch from main using the cursor/<name>-d22c pattern.
 - Make the requested code changes.
-- Run focused validation.
-- Commit, push, and create a new draft PR.`;
+- Run focused validation for touched calculators/scripts.
+- Commit, push, and create a draft PR against main.`;
 
 export default function CursorAgent() {
+  const { user } = useAuth();
   const [name, setName] = useState("");
   const [startingRef, setStartingRef] = useState("main");
   const [modelId, setModelId] = useState("");
@@ -29,6 +32,10 @@ export default function CursorAgent() {
   const createAgent = async () => {
     setError("");
     setResult(null);
+    if (!user?.is_platform_admin) {
+      setError("Platform admin access is required to start Cursor agents.");
+      return;
+    }
     if (!prompt.trim()) {
       setError("Enter a task for Cursor first.");
       return;
@@ -43,11 +50,18 @@ export default function CursorAgent() {
         prompt: prompt.trim(),
         autoCreatePR,
       });
-      setResult(response?.data || response);
+      const payload = response?.data || response || {};
+      const agentId = payload.agentId || payload.id || null;
+      const url = payload.url || (agentId ? `https://cursor.com/agents/${agentId}` : null);
+      const normalized = { ...payload, agentId, url };
+      setResult(normalized);
       toast({
         title: "Cursor agent started",
-        description: "The agent was created and can now work from Cursor Cloud.",
+        description: url ? "Open the agent link to follow progress and send follow-ups." : "Agent created.",
       });
+      if (url && typeof window !== "undefined") {
+        window.open(url, "_blank", "noopener,noreferrer");
+      }
     } catch (nextError) {
       setError(nextError?.message || "Could not start Cursor agent.");
     } finally {
@@ -66,8 +80,8 @@ export default function CursorAgent() {
             <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Platform owner</p>
             <h1 className="text-2xl font-black text-foreground">Cursor Agent</h1>
             <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-              Start a secure Cursor Cloud Agent from inside the app. Your Cursor API key stays
-              server-side in Supabase secrets and is never sent to the browser.
+              Start a secure Cursor Cloud Agent from inside the app for calculator corrections and other code fixes.
+              Your Cursor API key stays server-side in Supabase secrets and is never sent to the browser.
             </p>
           </div>
         </div>
@@ -80,7 +94,7 @@ export default function CursorAgent() {
             <Input
               value={name}
               onChange={(event) => setName(event.target.value)}
-              placeholder="e.g. Fix purchase button"
+              placeholder="e.g. Fix generator blower demand"
             />
           </div>
           <div className="space-y-1.5">
@@ -127,18 +141,22 @@ export default function CursorAgent() {
             <ShieldAlert className="mt-0.5 h-4 w-4 flex-shrink-0" />
             <div>
               <p className="font-bold">Cursor agent could not start</p>
-              <p>{error}</p>
+              <p className="whitespace-pre-wrap break-words">{error}</p>
               <p className="mt-2 text-xs">
                 Confirm Supabase secrets `CURSOR_API_KEY` and `CURSOR_REPO_URL` are set,
-                then deploy `create-cursor-agent`.
+                then redeploy `create-cursor-agent`. The API key must have Cloud Agents access
+                for `https://github.com/frey2535/NECalcul8r`.
               </p>
             </div>
           </div>
         )}
 
         {result?.url && (
-          <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800">
+          <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800 space-y-1">
             <p className="font-bold">Cursor agent created</p>
+            {result.name && <p className="text-xs">Name: {result.name}</p>}
+            {result.agentId && <p className="text-xs font-mono">ID: {result.agentId}</p>}
+            {result.status && <p className="text-xs">Status: {result.status}</p>}
             <a
               className="mt-1 inline-flex items-center gap-1 font-semibold underline underline-offset-2"
               href={result.url}
@@ -150,7 +168,7 @@ export default function CursorAgent() {
           </div>
         )}
 
-        <Button onClick={createAgent} disabled={loading} className="gap-2">
+        <Button onClick={createAgent} disabled={loading || !user?.is_platform_admin} className="gap-2">
           <Play className="h-4 w-4" />
           {loading ? "Starting Cursor..." : "Start Cursor agent"}
         </Button>

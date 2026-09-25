@@ -227,7 +227,6 @@ export function calcGeneratorSizing(v, nec) {
   const lighting = Math.max(0, num(v.lightingVA));
   const other = Math.max(0, num(v.otherVA));
   const totalRunningVA = critical + motor + lighting + other;
-  const selectedLoadsKW = totalRunningVA / 1000;
   const selectedLargestMotorRunningVA = Math.max(0, num(v.largestMotorRunningVA, motor)) || motor;
   const selectedMotorAdderVA = selectedLargestMotorRunningVA * 0.25;
   const selectedNecEquivalentVA = totalRunningVA + selectedMotorAdderVA;
