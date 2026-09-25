@@ -57,10 +57,11 @@ export default function GeneratorSizing({ category, necYear = "2023" }) {
   const {
     serviceTotalVA, demandKVA, demandKW, serviceGenSize,
     totalRunningVA, requiredKW, loadGenSize,
-    connectedRunningVA, shedVA, largestMotorVA, wholeHouseWithStartingVA, wholeHouseKW, wholeHouseGenSize,
+    connectedRunningVA, shedVA, largestMotorVA, largestMotorAdderVA,
+    necDemandVA, motorStartingKVA,
+    wholeHouseKW, wholeHouseGenSize,
     applianceRows, loadSheddingEnabled, recommendedGenSize, steps,
   } = gr;
-  const pf = parseFloat(v.pf) || 0.8;
   const serviceA = parseFloat(v.serviceA) || 200;
   const demandPct = parseFloat(v.demandFactor) || 80;
   const isResidential = occupancy === "residential";
@@ -71,7 +72,7 @@ export default function GeneratorSizing({ category, necYear = "2023" }) {
   const methodOptions = [
     { value: "whole_house", label: isResidential ? "Whole-house / appliance inventory" : "Facility load inventory" },
     { value: "loads", label: "Essential loads only (simple)" },
-    { value: "service", label: "From service size (back-calculate)" },
+    { value: "service", label: "From service size (reference only)" },
   ];
 
   return (
@@ -79,22 +80,33 @@ export default function GeneratorSizing({ category, necYear = "2023" }) {
       <div className="space-y-2">
         {isService ? (
           <>
-            <ResultSection title="Service Load">
+            <ResultSection title="Service Capacity (Reference)">
               <ResultRow label="Service Size" value={serviceA} unit="A" />
-              <ResultRow label="Total Service VA" value={(serviceTotalVA / 1000).toFixed(1)} unit="kVA" />
-              <ResultRow label={`Demand Load (${demandPct}%)`} value={demandKVA.toFixed(1)} unit="kVA" />
-              <ResultRow label="Demand kW" value={demandKW.toFixed(1)} unit="kW" sub={`at PF = ${pf}`} />
-            </ResultSection>
-            <ResultSection title="Generator Requirements">
+              <ResultRow label="Service Capacity" value={(serviceTotalVA / 1000).toFixed(1)} unit="kVA" />
+              <ResultRow label={`Utilization Estimate (${demandPct}%)`} value={demandKVA.toFixed(1)} unit="kVA" highlight />
               <ResultRow label="Utilization Estimate" value={demandKW.toFixed(1)} unit="kW" highlight />
-              <ResultRow label="Generator Recommendation" value="Not determined" highlight
-                sub="Service ampacity alone is not an NEC generator load calculation. Use Whole-house or Selected loads mode." />
             </ResultSection>
-            <ResultSection title="Standard Generator Sizes">
-              {GEN_SIZES.filter((s) => s >= demandKW * 0.8 && s <= serviceKW_withStarting * 2).map((s) => (
-                <ResultRow key={s} label={`${s} kW`}
-                  value={s >= serviceKW_withStarting ? "✓ Suitable" : "Too small"}
-                  highlight={s === serviceGenSize} />
+            <ResultSection title="Generator Recommendation">
+              <ResultRow
+                label="NEC Generator Load"
+                value="Not determined"
+                highlight
+                sub="Service ampacity alone is not an NEC optional-standby load calculation. Switch to Whole-house or Essential loads."
+              />
+              <ResultRow
+                label="Nearest common size at utilization"
+                value={`${serviceGenSize} kW`}
+                sub="Informational only — not a code-compliant generator size from service ampacity"
+              />
+            </ResultSection>
+            <ResultSection title="Nearby Standard Generator Sizes">
+              {GEN_SIZES.filter((s) => s >= Math.max(7.5, demandKW * 0.5) && s <= Math.max(demandKW * 2.5, serviceGenSize * 1.5)).map((s) => (
+                <ResultRow
+                  key={s}
+                  label={`${s} kW`}
+                  value={s >= demandKW ? "≥ utilization estimate" : "Below estimate"}
+                  highlight={s === serviceGenSize}
+                />
               ))}
             </ResultSection>
           </>
@@ -104,16 +116,22 @@ export default function GeneratorSizing({ category, necYear = "2023" }) {
               {(applianceRows || []).filter((row) => row.includedVA > 0).map((row) => (
                 <ResultRow key={row.key} label={row.label} value={(row.includedVA / 1000).toFixed(2)} unit="kVA" />
               ))}
-              <ResultRow label="Connected running total" value={(connectedRunningVA / 1000).toFixed(2)} unit="kVA" highlight />
+              <ResultRow label="Connected nameplate total" value={(connectedRunningVA / 1000).toFixed(2)} unit="kVA" highlight />
               {loadSheddingEnabled && (
                 <ResultRow label="Load-shed (off generator)" value={(shedVA / 1000).toFixed(2)} unit="kVA"
                   sub="Excluded by load-management / shed modules" />
               )}
             </ResultSection>
-            <ResultSection title="Generator Requirements">
-              <ResultRow label="Largest motor (running)" value={(largestMotorVA / 1000).toFixed(2)} unit="kVA" />
-              <ResultRow label="With largest-motor starting (6×)" value={(wholeHouseWithStartingVA / 1000).toFixed(2)} unit="kVA" highlight />
-              <ResultRow label="Required kW" value={wholeHouseKW.toFixed(1)} unit="kW" highlight sub={`at PF = ${pf}`} />
+            <ResultSection title="NEC Calculated Standby Load">
+              <ResultRow label="NEC demand load" value={(necDemandVA / 1000).toFixed(2)} unit="kVA" highlight />
+              <ResultRow label="Largest motor running" value={(largestMotorVA / 1000).toFixed(2)} unit="kVA" />
+              <ResultRow label="Largest motor 25% adder" value={(largestMotorAdderVA / 1000).toFixed(2)} unit="kVA" />
+              {motorStartingKVA > 0 && (
+                <ResultRow label="Motor-starting check (LRA)" value={motorStartingKVA.toFixed(1)} unit="kVA"
+                  sub="Verify against manufacturer/model transient capability" />
+              )}
+              <ResultRow label="Required kW" value={wholeHouseKW.toFixed(1)} unit="kW" highlight
+                sub={isResidential ? "NEC dwelling demand basis" : "Connected inventory basis"} />
               <ResultRow label="Recommended Generator" value={`${wholeHouseGenSize} kW`} highlight />
             </ResultSection>
           </>
@@ -122,14 +140,13 @@ export default function GeneratorSizing({ category, necYear = "2023" }) {
             <ResultSection title="Load Summary">
               <ResultRow label="Critical Loads" value={((parseFloat(v.criticalLoadsVA) || 0) / 1000).toFixed(1)} unit="kVA" />
               <ResultRow label="Motor (running)" value={((parseFloat(v.motorLoadsVA) || 0) / 1000).toFixed(1)} unit="kVA" />
-              <ResultRow label="Motor Starting (6×)" value={(((parseFloat(v.motorLoadsVA) || 0) * 6) / 1000).toFixed(1)} unit="kVA" />
               <ResultRow label="Lighting" value={((parseFloat(v.lightingVA) || 0) / 1000).toFixed(1)} unit="kVA" />
               <ResultRow label="Other" value={((parseFloat(v.otherVA) || 0) / 1000).toFixed(1)} unit="kVA" />
             </ResultSection>
             <ResultSection title="Generator Requirements">
               <ResultRow label="Total Running Load" value={(totalRunningVA / 1000).toFixed(1)} unit="kVA" />
-              <ResultRow label="With Motor Starting" value={(totalWithStarting / 1000).toFixed(1)} unit="kVA" highlight />
-              <ResultRow label="Required kW" value={requiredKW.toFixed(1)} unit="kW" highlight sub={`at PF = ${pf}`} />
+              <ResultRow label="Largest motor 25% adder" value={(largestMotorAdderVA / 1000).toFixed(2)} unit="kVA" />
+              <ResultRow label="Required kW" value={requiredKW.toFixed(1)} unit="kW" highlight />
               <ResultRow label="Recommended Generator" value={`${loadGenSize} kW`} highlight />
             </ResultSection>
           </>
@@ -142,7 +159,7 @@ export default function GeneratorSizing({ category, necYear = "2023" }) {
           Size continuous generator ampacity path with the 125% continuous factor where applicable (445.13).
           {loadSheddingEnabled ? " Load-shed / load-management modules reduce generator size by keeping selected loads off the standby source." : ""}
           {gr.dwelling_generator_shutdown_note ? ` ${gr.dwelling_generator_shutdown_article}: ${gr.dwelling_generator_shutdown_note}` : ""}
-          {" "}Recommended size shown: {recommendedGenSize} kW.
+          {recommendedGenSize != null ? ` Recommended size shown: ${recommendedGenSize} kW.` : " Service mode does not produce a code generator size — use Whole-house or Essential loads."}
         </NoteBox>
       </div>
     }>

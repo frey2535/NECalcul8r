@@ -302,8 +302,16 @@ export function calcGeneratorSizing(v, nec) {
     dryerDemandVA: Math.round(residential?.dryerDemandVA || 0),
     cookingDemandVA: Math.round(residential?.cookingDemandVA || 0),
     hvacDemandVA: Math.round(residential?.hvacDemandVA || 0),
-    largestMotorVA: Math.round(residential?.largestMotorRunningVA || selectedLargestMotorRunningVA || 0),
-    largestMotorAdderVA: Math.round(residential?.largestMotorAdderVA || 0),
+    largestMotorVA: Math.round(
+      mode === "whole_house" && residential
+        ? (residential.largestMotorRunningVA || 0)
+        : (selectedLargestMotorRunningVA || 0)
+    ),
+    largestMotorAdderVA: Math.round(
+      mode === "whole_house" && residential
+        ? (residential.largestMotorAdderVA || 0)
+        : selectedMotorAdderVA
+    ),
     motorStartingVA: Math.round(startingKVA * 1000),
     motorStartingKVA: Math.round(startingKVA * 10) / 10,
     motorStartEquivalentKW,

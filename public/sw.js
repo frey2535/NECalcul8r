@@ -1,4 +1,4 @@
-const CACHE = "necalcul8r-shell-v6";
+const CACHE = "necalcul8r-shell-v7";
 const SHELL_ASSETS = ["/logo.png", "/icon-192.png", "/icon-512.png", "/apple-touch-icon.png"];
 
 self.addEventListener("install", (event) => {
