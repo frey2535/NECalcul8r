@@ -55,9 +55,9 @@ export default function GeneratorSizing({ category, necYear = "2023" }) {
   const normalizedMode = mode === "load" ? "loads" : mode;
   const gr = calcGeneratorSizing({ ...v, mode: normalizedMode, occupancy, necYear }, nec);
   const {
-    serviceTotalVA, demandKVA, demandKW, serviceKW_withStarting, serviceGenSize,
-    totalRunningVA, totalWithStarting, requiredKW, loadGenSize,
-    connectedRunningVA, shedVA, largestMotorVA, wholeHouseWithStartingVA, wholeHouseKW, wholeHouseGenSize, necDemandVA, necRequiredKW, motorStartingKVA, serviceSizingValid,
+    serviceTotalVA, demandKVA, demandKW, serviceGenSize,
+    totalRunningVA, requiredKW, loadGenSize,
+    connectedRunningVA, shedVA, largestMotorVA, wholeHouseWithStartingVA, wholeHouseKW, wholeHouseGenSize,
     applianceRows, loadSheddingEnabled, recommendedGenSize, steps,
   } = gr;
   const pf = parseFloat(v.pf) || 0.8;
