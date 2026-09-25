@@ -5,7 +5,7 @@ import { getNecData } from "@/data/nec";
 import { calcGeneratorSizing } from "./logic/generatorSizingCalc";
 import FormulaBox from "../FormulaBox";
 
-const GEN_SIZES = [7.5, 10, 14, 15, 18, 20, 22, 24, 26, 28, 30, 32, 36, 38, 40, 45, 48, 50, 60, 75, 100, 125, 150, 175, 200, 250, 300, 400, 500, 750, 1000];
+const GEN_SIZES = [7.5, 10, 15, 20, 25, 30, 45, 60, 75, 100, 125, 150, 175, 200, 250, 300, 400, 500, 750, 1000];
 
 function Checkbox({ checked, onChange, label, hint }) {
   return (
