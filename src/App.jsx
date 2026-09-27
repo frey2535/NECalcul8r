@@ -212,6 +212,8 @@ const AuthenticatedApp = () => {
             <Route path="/results" element={<Results />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/purchase" element={<Purchase />} />
+            <Route path="/accuracy-assistant" element={<CursorAgent />} />
+            <Route path="/admin/cursor-agent" element={<CursorAgent />} />
             <Route element={<AdminRoute allowOrgOwner />}>
               <Route path="/admin/users" element={<UserManagement />} />
             </Route>
@@ -223,7 +225,6 @@ const AuthenticatedApp = () => {
               <Route path="/admin/verification" element={<CalculatorVerification />} />
               <Route path="/admin/calculator-tiers" element={<CalculatorTierManager />} />
               <Route path="/admin/revenue" element={<RevenueDashboard />} />
-              <Route path="/admin/cursor-agent" element={<CursorAgent />} />
             </Route>
           </Route>
         </Route>

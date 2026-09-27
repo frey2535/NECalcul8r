@@ -18,7 +18,7 @@ import {
 import Profile from "@/pages/Profile";
 import { useNECYear } from "@/context/NECYearContext";
 import { useTheme } from "@/context/ThemeContext";
-import { getResolvedEntitlement } from "@/lib/pricing";
+import { getResolvedEntitlement, canUseNecAccuracyAssistant } from "@/lib/pricing";
 import { isGooglePlayBillingPluginMissing, openPlayStoreListing } from "@/lib/googlePlayBilling";
 
 // Each tab remembers its last visited path independently
@@ -33,6 +33,7 @@ export default function AppLayout({ trialStatus }) {
   const isPlatformAdmin = Boolean(user?.is_platform_admin);
   const canManageUsers = isPlatformAdmin || user?.org_role === 'owner';
   const entitlement = getResolvedEntitlement(user);
+  const canUseAssistant = canUseNecAccuracyAssistant(user);
   const { year, setYear, years } = useNECYear();
   const { theme, toggleTheme } = useTheme();
   const location = useLocation();
@@ -192,6 +193,22 @@ export default function AppLayout({ trialStatus }) {
                 })}
               </nav>
 
+              {/* Accuracy assistant — paid upgrades + platform admin */}
+              {(canUseAssistant || isPlatformAdmin) && (
+                <Link to="/accuracy-assistant">
+                  <div className={cn(
+                    "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all",
+                    location.pathname === "/accuracy-assistant" || location.pathname === "/admin/cursor-agent"
+                      ? "bg-blue-600 text-white shadow-md shadow-blue-200"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                  )}>
+                    <Bot className="w-3.5 h-3.5" />
+                    Assistant
+                    {isPlatformAdmin ? scanBadge : null}
+                  </div>
+                </Link>
+              )}
+
               {/* Admin links — desktop only */}
               {(canManageUsers || isPlatformAdmin) && (
                 <>
@@ -225,18 +242,6 @@ export default function AppLayout({ trialStatus }) {
                     )}>
                       <DollarSign className="w-3.5 h-3.5" />
                       Revenue
-                    </div>
-                  </Link>
-                  <Link to="/admin/cursor-agent">
-                    <div className={cn(
-                      "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all",
-                      location.pathname === "/admin/cursor-agent"
-                        ? "bg-blue-600 text-white shadow-md shadow-blue-200"
-                        : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                    )}>
-                      <Bot className="w-3.5 h-3.5" />
-                      Cursor
-                      {scanBadge}
                     </div>
                   </Link>
                   <Link to="/admin/codebook">

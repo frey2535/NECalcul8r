@@ -208,32 +208,31 @@ Important tables:
 
 ## Platform-owner Cursor Agent
 
-Platform admins can open `/admin/cursor-agent` to start the **NEC Accuracy Guardian**
-and related Cloud Agent missions. Conversation stays **inside the app**: status,
-results, and follow-ups use the `cursor-agent-session` Edge Function. The page never
-auto-opens cursor.com (optional external link only).
+Platform admins and **paid subscribers** can open `/accuracy-assistant` (also
+`/admin/cursor-agent`) for the **NEC Accuracy Assistant** — an in-app chat that
+works like an AI coding assistant without Cursor Cloud Agents or cursor.com.
+It is gated like NEC Tables (paid upgrade or platform admin) and uses server-side
+`OPENAI_API_KEY` via the `nec-accuracy-chat` Edge Function.
 
-The guardian treats frozen known-answer baseline suites (`npm run verify:nec-accuracy`)
-as the correctness source of truth: any miss is a critical defect and the agent is
-instructed to fix it to match expected values and open a draft PR.
+Optional advanced: platform admins can still launch Cursor Cloud Agents (billed
+separately on Cursor). Prefer the in-app assistant for everyday accuracy help.
 
 A **daily reliability scan** (GitHub Actions cron + `daily-reliability-scan` Edge
-Function) probes Edge Functions, runs NEC accuracy suites, notifies platform admins
-in-app (`platform_notifications`), optionally emails via Resend, and can launch a
-correction agent into the same in-app session panel. Apply
-`supabase/fixes/add-reliability-scans.sql` and deploy the functions before enabling
-the cron.
-
-The browser sends only the task prompt to Supabase; the Cursor API key stays
-server-side in Edge Function secrets.
+Function) probes Edge Functions, runs NEC accuracy suites, and notifies platform
+admins in-app. Apply `supabase/fixes/add-reliability-scans.sql` and deploy the
+functions before enabling the cron.
 
 Deploy the functions and set secrets (project `gqdxvctvufalunaaopyj`):
 
 ```bash
+supabase functions deploy nec-accuracy-chat --project-ref gqdxvctvufalunaaopyj
 supabase functions deploy create-cursor-agent --project-ref gqdxvctvufalunaaopyj
 supabase functions deploy cursor-agent-session --project-ref gqdxvctvufalunaaopyj
 supabase functions deploy daily-reliability-scan --project-ref gqdxvctvufalunaaopyj
 # SQL: supabase/fixes/add-reliability-scans.sql
+supabase secrets set OPENAI_API_KEY=... --project-ref gqdxvctvufalunaaopyj
+supabase secrets set OPENAI_MODEL=gpt-4o-mini --project-ref gqdxvctvufalunaaopyj
+# Optional Cloud Agents only:
 supabase secrets set CURSOR_API_KEY=... --project-ref gqdxvctvufalunaaopyj
 supabase secrets set CURSOR_REPO_URL=https://github.com/frey2535/NECalcul8r --project-ref gqdxvctvufalunaaopyj
 supabase secrets set CURSOR_DEFAULT_BRANCH=main --project-ref gqdxvctvufalunaaopyj
@@ -248,7 +247,8 @@ network/CORS failure instead of a clear 404. Deploy first, then set secrets. You
 also add GitHub secret `SUPABASE_ACCESS_TOKEN` and run the
 `Deploy create-cursor-agent` workflow.
 
-Only profiles with `is_platform_admin = true` can launch a Cursor agent.
+Paid users and profiles with `is_platform_admin = true` can use the in-app assistant.
+Only platform admins can launch optional Cursor Cloud Agents.
 
 ## Access model
 

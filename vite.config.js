@@ -42,6 +42,7 @@ const spaFallbackRoutes = [
   "admin/verification",
   "admin/calculator-tiers",
   "admin/revenue",
+  "accuracy-assistant",
   "admin/cursor-agent",
 ];
 
