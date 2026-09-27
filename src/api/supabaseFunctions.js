@@ -30,27 +30,35 @@ async function extractFunctionError(error) {
 /**
  * Undeployed Edge Functions return gateway 404 whose CORS allow-list omits
  * content-type, so browsers report "Failed to send a request..." instead of
- * NOT_FOUND. Probe OPTIONS (ACAO *) to detect that case clearly.
+ * NOT_FOUND. Probe with a plain GET (no Access-Control-Request-Headers) so
+ * the 404 body stays readable under ACAO *.
  */
 export async function probeEdgeFunctionDeployed(name) {
   if (!SUPABASE_URL || typeof fetch !== "function") return null;
+  const url = `${SUPABASE_URL.replace(/\/$/, "")}/functions/v1/${name}`;
   try {
-    const response = await fetch(`${SUPABASE_URL.replace(/\/$/, "")}/functions/v1/${name}`, {
-      method: "OPTIONS",
+    const response = await fetch(url, {
+      method: "GET",
       headers: {
-        Origin: typeof window !== "undefined" ? window.location.origin : "https://localhost",
-        "Access-Control-Request-Method": "POST",
-        "Access-Control-Request-Headers": "authorization,apikey,content-type,x-client-info",
+        Accept: "application/json",
       },
     });
     if (response.status === 404) return false;
-    if (response.ok) return true;
     const body = await response.json().catch(() => null);
     if (body?.code === "NOT_FOUND") return false;
+    // Deployed functions reject GET with 405/401/etc — anything but gateway NOT_FOUND counts as present.
+    if (response.status !== 404) return true;
     return null;
   } catch {
     return null;
   }
+}
+
+function notDeployedMessage(name) {
+  return (
+    `${name} is not deployed in Supabase (gateway 404). ` +
+    `Deploy with: supabase functions deploy ${name} --project-ref gqdxvctvufalunaaopyj`
+  );
 }
 
 export async function invokeSupabaseFunction(name, payload = {}) {
@@ -60,19 +68,17 @@ export async function invokeSupabaseFunction(name, payload = {}) {
     let message = await extractFunctionError(error);
     if (/failed to send a request to the edge function/i.test(message)) {
       const deployed = await probeEdgeFunctionDeployed(name);
-      if (deployed === false) {
-        message =
-          `${name} is not deployed in Supabase (gateway 404). ` +
-          `Deploy with: supabase functions deploy ${name} --project-ref gqdxvctvufalunaaopyj`;
+      // Undeployed functions commonly surface as opaque CORS failures; treat
+      // unknown probe results the same as confirmed 404 for actionable guidance.
+      if (deployed !== true) {
+        message = notDeployedMessage(name);
       } else {
         message =
           `${name} could not be reached (network/CORS). ` +
-          `Confirm the function is deployed and CORS allows authorization, apikey, content-type, and x-client-info.`;
+          `Confirm CORS allows authorization, apikey, content-type, and x-client-info.`;
       }
     } else if (/not found/i.test(message) || /NOT_FOUND/.test(message)) {
-      message =
-        `${name} is not deployed in Supabase yet. ` +
-        `Deploy with: supabase functions deploy ${name} --project-ref gqdxvctvufalunaaopyj`;
+      message = notDeployedMessage(name);
     }
     const enriched = new Error(message);
     enriched.cause = error;
