@@ -209,16 +209,20 @@ Important tables:
 ## Platform-owner Cursor Agent
 
 Platform admins can open `/admin/cursor-agent` to start the **NEC Accuracy Guardian**
-and related Cloud Agent missions. The guardian treats frozen known-answer baseline
-suites (`npm run verify:nec-accuracy`) as the correctness source of truth: any miss
-is a critical defect and the agent is instructed to fix it to match expected values
-and open a draft PR.
+and related Cloud Agent missions. Conversation stays **inside the app**: status,
+results, and follow-ups use the `cursor-agent-session` Edge Function. The page never
+auto-opens cursor.com (optional external link only).
+
+The guardian treats frozen known-answer baseline suites (`npm run verify:nec-accuracy`)
+as the correctness source of truth: any miss is a critical defect and the agent is
+instructed to fix it to match expected values and open a draft PR.
 
 A **daily reliability scan** (GitHub Actions cron + `daily-reliability-scan` Edge
 Function) probes Edge Functions, runs NEC accuracy suites, notifies platform admins
 in-app (`platform_notifications`), optionally emails via Resend, and can launch a
-correction agent. Apply `supabase/fixes/add-reliability-scans.sql` and deploy the
-new function before enabling the cron.
+correction agent into the same in-app session panel. Apply
+`supabase/fixes/add-reliability-scans.sql` and deploy the functions before enabling
+the cron.
 
 The browser sends only the task prompt to Supabase; the Cursor API key stays
 server-side in Edge Function secrets.
@@ -227,6 +231,7 @@ Deploy the functions and set secrets (project `gqdxvctvufalunaaopyj`):
 
 ```bash
 supabase functions deploy create-cursor-agent --project-ref gqdxvctvufalunaaopyj
+supabase functions deploy cursor-agent-session --project-ref gqdxvctvufalunaaopyj
 supabase functions deploy daily-reliability-scan --project-ref gqdxvctvufalunaaopyj
 # SQL: supabase/fixes/add-reliability-scans.sql
 supabase secrets set CURSOR_API_KEY=... --project-ref gqdxvctvufalunaaopyj
@@ -238,9 +243,9 @@ supabase secrets set RELIABILITY_SCAN_SECRET=... --project-ref gqdxvctvufalunaao
 Also add GitHub secrets `RELIABILITY_SCAN_SECRET` (same value) and `VITE_SUPABASE_URL`
 so `.github/workflows/daily-reliability-scan.yml` can call the Edge Function daily.
 
-If `create-cursor-agent` is not deployed, the app reports a generic Edge Function
-network/CORS failure instead of a clear 404. Deploy the function first, then set
-secrets. You can also add GitHub secret `SUPABASE_ACCESS_TOKEN` and run the
+If these functions are not deployed, the app reports a generic Edge Function
+network/CORS failure instead of a clear 404. Deploy first, then set secrets. You can
+also add GitHub secret `SUPABASE_ACCESS_TOKEN` and run the
 `Deploy create-cursor-agent` workflow.
 
 Only profiles with `is_platform_admin = true` can launch a Cursor agent.

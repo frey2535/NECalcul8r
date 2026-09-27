@@ -16,6 +16,7 @@ supabase functions deploy activate-license-key
 supabase functions deploy generate-license-key
 supabase functions deploy verify-apple-purchase
 supabase functions deploy create-cursor-agent
+supabase functions deploy cursor-agent-session
 supabase functions deploy daily-reliability-scan
 ```
 
@@ -63,12 +64,17 @@ plus the Cursor secrets above. Optional: `RESEND_API_KEY`,
 
 Apply SQL first: `supabase/fixes/add-reliability-scans.sql`.
 
-**Required before the in-app Cursor Agent page works:** deploy the function.
-If it is missing, the browser shows `Failed to send a request to the Edge Function`
+**Required before the in-app Cursor Agent page works:** deploy the functions.
+If they are missing, the browser shows `Failed to send a request to the Edge Function`
 because the Supabase gateway 404 CORS allow-list omits `content-type`.
+
+`create-cursor-agent` starts a Cloud Agent. `cursor-agent-session` keeps the conversation
+**inside NECalcul8r** (status polling + follow-ups) so the app does not navigate away to
+cursor.com. Optional “Open on Cursor.com” links remain available but are never auto-opened.
 
 ```bash
 supabase functions deploy create-cursor-agent --project-ref gqdxvctvufalunaaopyj
+supabase functions deploy cursor-agent-session --project-ref gqdxvctvufalunaaopyj
 supabase functions deploy daily-reliability-scan --project-ref gqdxvctvufalunaaopyj
 ```
 

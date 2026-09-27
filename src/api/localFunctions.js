@@ -219,6 +219,11 @@ async function createCursorAgent() {
   throw new Error("Cursor Agent requires Supabase commercial mode and the create-cursor-agent Edge Function.");
 }
 
+async function cursorAgentSession() {
+  requireAdmin();
+  throw new Error("In-app Cursor chat requires Supabase commercial mode and the cursor-agent-session Edge Function.");
+}
+
 async function dailyReliabilityScan() {
   requireAdmin();
   throw new Error("Daily reliability scan requires Supabase commercial mode and the daily-reliability-scan Edge Function.");
@@ -231,6 +236,7 @@ const HANDLERS = {
   seedArticleVerifications,
   seedArticleVerificationsComplete,
   "create-cursor-agent": createCursorAgent,
+  "cursor-agent-session": cursorAgentSession,
   "daily-reliability-scan": dailyReliabilityScan,
 };
 
