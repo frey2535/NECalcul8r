@@ -295,7 +295,6 @@ export default function CursorAgent() {
                       agentId: item.agent_id || agentIdFromLink(item.link),
                       url: item.link,
                       name: item.title || "Cloud Agent",
-                      prompt: item.body || null,
                     });
                     if (!openedInApp && item.link && !agentIdFromLink(item.link)) {
                       window.open(item.link, "_blank", "noopener,noreferrer");
@@ -343,7 +342,6 @@ export default function CursorAgent() {
                       agentId: scan.agent_id || agentIdFromLink(scan.agent_url),
                       url: scan.agent_url,
                       name: "Daily reliability scan",
-                      prompt: scan.summary || "Daily NEC reliability scan",
                     })}
                   >
                     Open scan agent in-app
