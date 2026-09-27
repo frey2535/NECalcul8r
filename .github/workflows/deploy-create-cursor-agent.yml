@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - "supabase/functions/create-cursor-agent/**"
+      - "supabase/functions/cursor-agent-session/**"
       - "supabase/functions/daily-reliability-scan/**"
       - "supabase/functions/_shared/**"
       - ".github/workflows/deploy-create-cursor-agent.yml"
@@ -34,9 +35,10 @@ jobs:
         with:
           version: latest
 
-      - name: Deploy create-cursor-agent
+      - name: Deploy Cursor Edge Functions
         run: |
           supabase functions deploy create-cursor-agent --project-ref "$PROJECT_REF" --use-api
+          supabase functions deploy cursor-agent-session --project-ref "$PROJECT_REF" --use-api
           supabase functions deploy daily-reliability-scan --project-ref "$PROJECT_REF" --use-api
 
       - name: Reminder for Cursor secrets

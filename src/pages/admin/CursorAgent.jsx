@@ -14,6 +14,7 @@ import {
   markAllPlatformNotificationsRead,
   markPlatformNotificationRead,
 } from "@/api/platformNotifications";
+import CursorAgentChat, { buildInitialChatSession } from "@/components/admin/CursorAgentChat";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -23,13 +24,19 @@ function toggleId(list, id) {
   return list.includes(id) ? list.filter((item) => item !== id) : [...list, id];
 }
 
+function agentIdFromLink(link) {
+  if (!link || typeof link !== "string") return null;
+  const match = link.match(/cursor\.com\/agents\/([A-Za-z0-9_-]+)/i);
+  return match?.[1] || null;
+}
+
 function cursorAgentErrorHint(error) {
   const message = String(error || "");
   if (/hard limit|increase your hard limit|\$2 remaining|billing|usage limit|spend limit/i.test(message)) {
     return "This is a Cursor account billing limit, not a Supabase deploy problem. Open https://www.cursor.com/dashboard?tab=settings and raise your hard limit (Cloud Agents need at least $2 remaining), then retry.";
   }
   if (/not deployed|gateway 404|could not be reached|failed to send/i.test(message)) {
-    return "Deploy create-cursor-agent and daily-reliability-scan (add GitHub secret SUPABASE_ACCESS_TOKEN and re-run the deploy workflow, or deploy locally). Set CURSOR_API_KEY / CURSOR_REPO_URL / RELIABILITY_SCAN_SECRET, and apply supabase/fixes/add-reliability-scans.sql.";
+    return "Deploy create-cursor-agent, cursor-agent-session, and daily-reliability-scan (add GitHub secret SUPABASE_ACCESS_TOKEN and re-run the deploy workflow, or deploy locally). Set CURSOR_API_KEY / CURSOR_REPO_URL / RELIABILITY_SCAN_SECRET, and apply supabase/fixes/add-reliability-scans.sql.";
   }
   if (/unauthorized|forbidden|api key|invalid key|cloud agents access/i.test(message)) {
     return "Confirm Supabase secrets CURSOR_API_KEY and CURSOR_REPO_URL. The API key needs Cloud Agents access for https://github.com/frey2535/NECalcul8r.";
@@ -60,6 +67,7 @@ export default function CursorAgent() {
   const [loading, setLoading] = useState(false);
   const [scanLoading, setScanLoading] = useState(false);
   const [result, setResult] = useState(null);
+  const [chatSession, setChatSession] = useState(null);
   const [error, setError] = useState("");
   const [scans, setScans] = useState([]);
   const [notifications, setNotifications] = useState([]);
@@ -106,6 +114,26 @@ export default function CursorAgent() {
     setPrompt(buildCursorAgentPrompt({ missionId, focusIds, notes }));
   };
 
+  const openAgentInApp = useCallback((options = {}) => {
+    const agentId = options.agentId || agentIdFromLink(options.url);
+    if (!agentId) return false;
+    setChatSession(buildInitialChatSession({
+      agentId,
+      runId: options.runId || null,
+      name: options.name || "Cloud Agent",
+      url: options.url || `https://cursor.com/agents/${agentId}`,
+      prompt: options.prompt || null,
+      status: options.status || "ACTIVE",
+    }));
+    window.requestAnimationFrame(() => {
+      document.getElementById("cursor-in-app-session")?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    });
+    return true;
+  }, []);
+
   const createAgent = async () => {
     setError("");
     setResult(null);
@@ -134,15 +162,19 @@ export default function CursorAgent() {
       const url = payload.url || (agentId ? `https://cursor.com/agents/${agentId}` : null);
       const normalized = { ...payload, agentId, url };
       setResult(normalized);
+      openAgentInApp({
+        agentId,
+        runId: payload.runId || null,
+        name: payload.name || name.trim() || mission.defaultName,
+        url,
+        prompt: prompt.trim(),
+        status: payload.status || "ACTIVE",
+      });
       toast({
         title: "NEC Accuracy Guardian started",
-        description: url
-          ? "Open the agent link to follow baseline fixes and suggested corrections."
-          : "Agent created.",
+        description: "Stay in the app — status and follow-ups appear in the session panel.",
       });
-      if (url && typeof window !== "undefined") {
-        window.open(url, "_blank", "noopener,noreferrer");
-      }
+      // Do not navigate away to cursor.com; conversation stays in-app.
     } catch (nextError) {
       setError(nextError?.message || "Could not start Cursor agent.");
     } finally {
@@ -163,15 +195,22 @@ export default function CursorAgent() {
         startAgent: true,
       });
       const payload = response?.data || response || {};
+      if (payload.agent?.agentId || payload.agent?.url) {
+        openAgentInApp({
+          agentId: payload.agent.agentId || payload.agentId,
+          runId: payload.agent.runId || null,
+          name: payload.agent.name || "Daily reliability scan",
+          url: payload.agent.url,
+          prompt: "Daily NEC reliability scan",
+          status: payload.agent.status || "ACTIVE",
+        });
+      }
       toast({
         title: "Daily NEC scan started",
-        description: payload.agent?.url
-          ? "Owner notification created and deep scan agent launched."
+        description: payload.agent?.agentId
+          ? "Scan agent is running in the in-app session panel."
           : `Probe findings: ${payload.findingCount ?? 0}.`,
       });
-      if (payload.agent?.url && typeof window !== "undefined") {
-        window.open(payload.agent.url, "_blank", "noopener,noreferrer");
-      }
       await refreshOwnerFeed();
     } catch (nextError) {
       setError(nextError?.message || "Could not run daily reliability scan.");
@@ -191,9 +230,9 @@ export default function CursorAgent() {
             <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Platform owner</p>
             <h1 className="text-2xl font-black text-foreground">NEC Accuracy Guardian</h1>
             <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-              This agent is programmed to treat frozen NEC known-answer baselines as the source of truth.
-              If a calculator drifts, the guardian identifies the miss immediately from those suites and
-              suggests/ships corrections. Daily scans notify you in-app (and by email when Resend is configured).
+              Start and chat with a Cursor Cloud Agent <span className="font-semibold text-foreground">inside NECalcul8r</span>.
+              The guardian treats frozen NEC known-answer baselines as the source of truth, reports misses immediately,
+              and lets you send follow-ups without leaving the app. Your Cursor API key stays server-side in Supabase.
             </p>
           </div>
         </div>
@@ -252,7 +291,15 @@ export default function CursorAgent() {
                   }`}
                   onClick={async () => {
                     if (!item.read_at) await markPlatformNotificationRead(item.id);
-                    if (item.link) window.open(item.link, "_blank", "noopener,noreferrer");
+                    const openedInApp = openAgentInApp({
+                      agentId: item.agent_id || agentIdFromLink(item.link),
+                      url: item.link,
+                      name: item.title || "Cloud Agent",
+                      prompt: item.body || null,
+                    });
+                    if (!openedInApp && item.link && !agentIdFromLink(item.link)) {
+                      window.open(item.link, "_blank", "noopener,noreferrer");
+                    }
                     await refreshOwnerFeed();
                   }}
                 >
@@ -288,20 +335,34 @@ export default function CursorAgent() {
                     ))}
                   </ul>
                 )}
-                {scan.agent_url && (
-                  <a
+                {(scan.agent_id || scan.agent_url) && (
+                  <button
+                    type="button"
                     className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-blue-600 underline"
-                    href={scan.agent_url}
-                    target="_blank"
-                    rel="noreferrer"
+                    onClick={() => openAgentInApp({
+                      agentId: scan.agent_id || agentIdFromLink(scan.agent_url),
+                      url: scan.agent_url,
+                      name: "Daily reliability scan",
+                      prompt: scan.summary || "Daily NEC reliability scan",
+                    })}
                   >
-                    Open scan agent <ExternalLink className="h-3 w-3" />
-                  </a>
+                    Open scan agent in-app
+                  </button>
                 )}
               </div>
             ))}
           </div>
         )}
+      </div>
+
+      <div id="cursor-in-app-session">
+        <CursorAgentChat
+          initialSession={chatSession}
+          onClear={() => {
+            setChatSession(null);
+            setResult(null);
+          }}
+        />
       </div>
 
       <div className="rounded-2xl border border-border bg-card p-5 shadow-sm space-y-4">
@@ -441,20 +502,23 @@ export default function CursorAgent() {
           </div>
         )}
 
-        {result?.url && (
+        {result?.agentId && (
           <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800 space-y-1">
-            <p className="font-bold">Cursor agent created</p>
+            <p className="font-bold">Cursor agent created in-app</p>
             {result.name && <p className="text-xs">Name: {result.name}</p>}
-            {result.agentId && <p className="text-xs font-mono">ID: {result.agentId}</p>}
+            <p className="text-xs font-mono">ID: {result.agentId}</p>
             {result.status && <p className="text-xs">Status: {result.status}</p>}
-            <a
-              className="mt-1 inline-flex items-center gap-1 font-semibold underline underline-offset-2"
-              href={result.url}
-              target="_blank"
-              rel="noreferrer"
-            >
-              Open Cursor agent <ExternalLink className="h-3.5 w-3.5" />
-            </a>
+            <p className="text-xs">Use the session panel above for status and follow-ups. Optional: open on Cursor.com if you want the full web UI.</p>
+            {result.url && (
+              <a
+                className="mt-1 inline-flex items-center gap-1 font-semibold underline underline-offset-2"
+                href={result.url}
+                target="_blank"
+                rel="noreferrer"
+              >
+                Optional: open on Cursor.com <ExternalLink className="h-3.5 w-3.5" />
+              </a>
+            )}
           </div>
         )}
 
