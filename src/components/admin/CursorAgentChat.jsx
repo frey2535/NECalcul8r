@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ExternalLink, MessageSquare, RefreshCw, Send, X } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import { askAssistant } from "@/components/NecAccuracyChat";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 
@@ -33,17 +34,20 @@ function saveStoredSession(session) {
 }
 
 /**
- * In-app Cursor Cloud Agent console: status, results, and follow-ups without leaving NECalcul8r.
+ * In-app Cloud Agent session + conversational discussion.
+ * Default send = discuss immediately (like this chat). Optional = dispatch follow-up to the Cloud Agent.
  */
 export default function CursorAgentChat({
   initialSession = null,
   onClear,
+  discussAllowed = true,
 }) {
   const [session, setSession] = useState(() => initialSession || loadStoredSession());
-  const [followUp, setFollowUp] = useState("");
+  const [draft, setDraft] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [live, setLive] = useState(null);
+  const [mode, setMode] = useState("discuss"); // discuss | agent
   const bottomRef = useRef(null);
 
   useEffect(() => {
@@ -85,6 +89,7 @@ export default function CursorAgentChat({
           nextMessages.push({
             id: `assistant-${run.runId}`,
             role: "assistant",
+            kind: "agent",
             text: resultText,
             runId: run.runId,
             at: run.updatedAt || new Date().toISOString(),
@@ -126,25 +131,81 @@ export default function CursorAgentChat({
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-  }, [messages.length, live?.run?.status]);
+  }, [messages.length, live?.run?.status, busy]);
+
+  if (!session?.agentId) return null;
+
+  const runStatus = live?.run?.status || session.runStatus || "UNKNOWN";
+  const agentStatus = live?.agent?.status || session.status || "UNKNOWN";
+  const waiting = isActiveRunStatus(runStatus)
+    || (String(agentStatus).toUpperCase() === "ACTIVE" && isActiveRunStatus(runStatus));
+  const branches = live?.run?.git?.branches || session.git?.branches || [];
+  const agentContext = [
+    `agentId=${session.agentId}`,
+    `name=${session.name || ""}`,
+    `agentStatus=${agentStatus}`,
+    `runStatus=${runStatus}`,
+    branches.length ? `branches=${branches.map((b) => b.branch || b.prUrl).filter(Boolean).join(", ")}` : null,
+  ].filter(Boolean).join("\n");
+
+  const appendMessage = (message) => {
+    setSession((current) => current ? {
+      ...current,
+      messages: [...(current.messages || []), message],
+    } : current);
+  };
+
+  const sendDiscuss = async () => {
+    const text = draft.trim();
+    if (!text || busy || !discussAllowed) return;
+    setBusy(true);
+    setError("");
+    const userMessage = {
+      id: `user-discuss-${Date.now()}`,
+      role: "user",
+      kind: "discuss",
+      text,
+      at: new Date().toISOString(),
+    };
+    appendMessage(userMessage);
+    setDraft("");
+    try {
+      const history = [...messages, userMessage]
+        .filter((item) => item.role === "user" || item.role === "assistant")
+        .slice(-30)
+        .map((item) => ({ role: item.role, content: item.text }));
+      const reply = await askAssistant({
+        messages: history,
+        agentContext,
+      });
+      appendMessage({
+        id: `assistant-discuss-${Date.now()}`,
+        role: "assistant",
+        kind: "discuss",
+        text: reply,
+        at: new Date().toISOString(),
+      });
+    } catch (nextError) {
+      setError(nextError?.message || "Discussion reply failed.");
+    } finally {
+      setBusy(false);
+    }
+  };
 
   const sendFollowUp = async () => {
-    const text = followUp.trim();
-    if (!text || !session?.agentId) return;
+    const text = draft.trim();
+    if (!text || !session?.agentId || waiting) return;
     setBusy(true);
     setError("");
     try {
-      const optimistic = {
-        id: `user-${Date.now()}`,
+      appendMessage({
+        id: `user-agent-${Date.now()}`,
         role: "user",
+        kind: "agent",
         text,
         at: new Date().toISOString(),
-      };
-      setSession((current) => current ? {
-        ...current,
-        messages: [...(current.messages || []), optimistic],
-      } : current);
-      setFollowUp("");
+      });
+      setDraft("");
 
       const response = await base44.functions.invoke("cursor-agent-session", {
         action: "followup",
@@ -167,18 +228,16 @@ export default function CursorAgentChat({
     }
   };
 
-  if (!session?.agentId) return null;
-
-  const runStatus = live?.run?.status || session.runStatus || "UNKNOWN";
-  const agentStatus = live?.agent?.status || session.status || "UNKNOWN";
-  const waiting = isActiveRunStatus(runStatus) || String(agentStatus).toUpperCase() === "ACTIVE" && isActiveRunStatus(runStatus);
-  const branches = live?.run?.git?.branches || session.git?.branches || [];
+  const onSend = () => {
+    if (mode === "agent") return sendFollowUp();
+    return sendDiscuss();
+  };
 
   return (
     <div className="rounded-2xl border border-border bg-card p-5 shadow-sm space-y-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="text-xs font-bold uppercase tracking-wide text-blue-600">In-app Cursor session</p>
+          <p className="text-xs font-bold uppercase tracking-wide text-blue-600">Cloud Agent + discussion</p>
           <h2 className="text-lg font-black text-foreground flex items-center gap-2">
             <MessageSquare className="h-5 w-5 text-blue-600" />
             {session.name || "Cloud Agent"}
@@ -188,7 +247,11 @@ export default function CursorAgentChat({
             Agent: <span className="font-semibold text-foreground">{agentStatus}</span>
             {" · "}
             Run: <span className="font-semibold text-foreground">{runStatus}</span>
-            {waiting ? " · working inside the app…" : " · ready for follow-up"}
+            {waiting ? " · agent working…" : " · ready"}
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Use <span className="font-semibold text-foreground">Discuss</span> for immediate back-and-forth (like this chat).
+            Use <span className="font-semibold text-foreground">Send to agent</span> only when you want another Cloud Agent run.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -238,9 +301,11 @@ export default function CursorAgentChat({
         </div>
       )}
 
-      <div className="max-h-[28rem] overflow-y-auto rounded-xl border border-border bg-background p-3 space-y-3">
+      <div className="min-h-[16rem] max-h-[min(70vh,36rem)] overflow-y-auto rounded-xl border border-border bg-background p-3 space-y-3">
         {messages.length === 0 && (
-          <p className="text-sm text-muted-foreground">Session started. Waiting for the first assistant reply…</p>
+          <p className="text-sm text-muted-foreground">
+            Session started. Discuss anytime — or wait for the agent result, then keep talking.
+          </p>
         )}
         {messages.map((message) => (
           <div
@@ -252,13 +317,20 @@ export default function CursorAgentChat({
             }`}
           >
             <p className="mb-1 text-[10px] font-bold uppercase tracking-wide opacity-70">
-              {message.role === "user" ? "You" : "Cursor agent"}
+              {message.role === "user"
+                ? (message.kind === "agent" ? "You → agent" : "You")
+                : (message.kind === "discuss" ? "Assistant" : "Cloud Agent")}
             </p>
             {message.text}
           </div>
         ))}
         {waiting && (
-          <p className="text-xs font-semibold text-muted-foreground animate-pulse">Agent is working…</p>
+          <p className="text-xs font-semibold text-muted-foreground animate-pulse">
+            Cloud Agent is working… you can still Discuss below.
+          </p>
+        )}
+        {busy && mode === "discuss" && (
+          <p className="text-xs font-semibold text-muted-foreground animate-pulse">Assistant is thinking…</p>
         )}
         <div ref={bottomRef} />
       </div>
@@ -268,25 +340,61 @@ export default function CursorAgentChat({
       )}
 
       <div className="space-y-2">
-        <label className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
-          Follow-up inside the app
-        </label>
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            className={`rounded-lg border px-2.5 py-1 text-xs font-semibold ${
+              mode === "discuss" ? "border-blue-500 bg-blue-50 text-blue-700" : "border-border text-muted-foreground"
+            }`}
+            onClick={() => setMode("discuss")}
+          >
+            Discuss (immediate)
+          </button>
+          <button
+            type="button"
+            className={`rounded-lg border px-2.5 py-1 text-xs font-semibold ${
+              mode === "agent" ? "border-blue-500 bg-blue-50 text-blue-700" : "border-border text-muted-foreground"
+            }`}
+            onClick={() => setMode("agent")}
+          >
+            Send to Cloud Agent
+          </button>
+        </div>
         <Textarea
-          value={followUp}
-          onChange={(event) => setFollowUp(event.target.value)}
+          value={draft}
+          onChange={(event) => setDraft(event.target.value)}
           rows={3}
-          placeholder="e.g. Also fix the dwelling optional heat overcount and re-run verify:dwelling-optional"
+          placeholder={
+            mode === "agent"
+              ? "Task for the Cloud Agent (runs after current job finishes)…"
+              : "Discuss here like a normal agent chat — ask, clarify, iterate…"
+          }
           className="text-sm"
           disabled={busy}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" && !event.shiftKey) {
+              event.preventDefault();
+              onSend();
+            }
+          }}
         />
         <Button
           type="button"
           className="gap-2"
-          disabled={busy || !followUp.trim() || waiting}
-          onClick={sendFollowUp}
+          disabled={
+            busy
+            || !draft.trim()
+            || (mode === "agent" && waiting)
+            || (mode === "discuss" && !discussAllowed)
+          }
+          onClick={onSend}
         >
           <Send className="h-4 w-4" />
-          {busy ? "Sending…" : waiting ? "Wait for current run" : "Send follow-up"}
+          {busy
+            ? "Sending…"
+            : mode === "agent"
+              ? (waiting ? "Wait for current agent run" : "Send to Cloud Agent")
+              : "Send discussion"}
         </Button>
       </div>
     </div>
@@ -306,6 +414,7 @@ export function buildInitialChatSession({ agentId, runId, name, url, prompt, sta
       ? [{
         id: `user-initial-${Date.now()}`,
         role: "user",
+        kind: "agent",
         text: prompt,
         at: new Date().toISOString(),
       }]

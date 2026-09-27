@@ -8,11 +8,13 @@ import { Textarea } from "@/components/ui/textarea";
 const STORAGE_KEY = "necalcul8r-nec-accuracy-assistant-v1";
 
 const STARTERS = [
-  "Generator From Service Size blanks out on mobile — what usually causes that?",
-  "Walk me through verifying dwelling optional heat against the 2020 NEC baseline.",
-  "Commercial kitchen load looks high — which demand factors should I double-check?",
-  "How do I confirm a voltage-drop result against the known-answer suite?",
+  "Let's talk through the generator From Service Size blank on mobile — what should we check first?",
+  "I want to verify dwelling optional heat against the 2020 NEC baseline. Walk with me.",
+  "Commercial kitchen load looks high. Help me reason through the demand factors.",
+  "How would you approach a suspected NEC calculator miss the same way a coding agent would?",
 ];
+
+const DISCUSSION_SYSTEM = `You are the in-app NECalcul8r assistant. Hold a normal multi-turn discussion like a coding agent chat. Be direct, stay inside the app, and help with NEC accuracy, product, UX, and verification. Do not send the user to cursor.com.`;
 
 function loadMessages() {
   try {
@@ -25,13 +27,40 @@ function loadMessages() {
   }
 }
 
+async function askAssistant({ messages, focusHint, agentContext }) {
+  try {
+    const response = await base44.functions.invoke("nec-accuracy-chat", {
+      messages,
+      missionHint: focusHint || undefined,
+      agentContext: agentContext || undefined,
+    });
+    const payload = response?.data || response || {};
+    const reply = payload.reply || payload.text || "";
+    if (!reply && payload.error) throw new Error(payload.error);
+    if (reply) return reply;
+    throw new Error("Empty assistant reply.");
+  } catch (edgeError) {
+    const message = String(edgeError?.message || "");
+    const canFallback = /OPENAI_API_KEY|not configured|503|AI is not configured|Unknown function|failed to send|gateway 404|not found/i.test(message);
+    if (!canFallback) throw edgeError;
+    const transcript = messages
+      .map((item) => `${item.role === "assistant" ? "Assistant" : "User"}: ${item.content}`)
+      .join("\n\n");
+    const fallback = await base44.integrations.Core.InvokeLLM({
+      prompt: `${DISCUSSION_SYSTEM}${focusHint ? `\nFocus: ${focusHint}` : ""}${agentContext ? `\nAgent context:\n${agentContext}` : ""}\n\nConversation:\n${transcript}\n\nAssistant:`,
+    });
+    return typeof fallback === "string" ? fallback : JSON.stringify(fallback);
+  }
+}
+
 /**
- * In-app NEC Accuracy Assistant — OpenAI via Edge Function / local InvokeLLM.
- * No Cursor Cloud Agents, no cursor.com handoff.
+ * Conversational in-app chat — multi-turn discussion like Cursor Agent chat.
+ * Immediate replies; not blocked by Cloud Agent runs.
  */
 export default function NecAccuracyChat({
   allowed = false,
   focusHint = "",
+  agentContext = "",
   disabledReason = "",
 }) {
   const [messages, setMessages] = useState(() => loadMessages());
@@ -39,10 +68,11 @@ export default function NecAccuracyChat({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const bottomRef = useRef(null);
+  const composerRef = useRef(null);
 
   useEffect(() => {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(messages.slice(-40)));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(messages.slice(-60)));
     } catch {
       // ignore quota
     }
@@ -72,29 +102,11 @@ export default function NecAccuracyChat({
     setMessages(nextMessages);
     setDraft("");
     try {
-      let reply = "";
-      try {
-        const response = await base44.functions.invoke("nec-accuracy-chat", {
-          messages: [...apiMessages, { role: "user", content: text }],
-          missionHint: focusHint || undefined,
-        });
-        const payload = response?.data || response || {};
-        reply = payload.reply || payload.text || "";
-        if (!reply && payload.error) throw new Error(payload.error);
-      } catch (edgeError) {
-        const message = String(edgeError?.message || "");
-        const canFallback = /OPENAI_API_KEY|not configured|503|AI is not configured|Unknown function|failed to send|gateway 404|not found/i.test(message);
-        if (!canFallback) throw edgeError;
-        // Fall back to the same OpenAI path already used for blueprint analysis (no Cursor Cloud Agents).
-        const system = `You are the NECalcul8r NEC Accuracy Assistant. Stay inside the app. Help with NEC calculator accuracy, baselines, and practical verification. Do not send users to cursor.com.${focusHint ? ` Focus: ${focusHint}.` : ""}`;
-        const transcript = [...apiMessages, { role: "user", content: text }]
-          .map((item) => `${item.role === "assistant" ? "Assistant" : "User"}: ${item.content}`)
-          .join("\n\n");
-        const fallback = await base44.integrations.Core.InvokeLLM({
-          prompt: `${system}\n\nConversation:\n${transcript}\n\nAssistant:`,
-        });
-        reply = typeof fallback === "string" ? fallback : JSON.stringify(fallback);
-      }
+      const reply = await askAssistant({
+        messages: [...apiMessages, { role: "user", content: text }],
+        focusHint,
+        agentContext,
+      });
       if (!reply) throw new Error("Empty assistant reply.");
       setMessages((current) => [
         ...current,
@@ -105,6 +117,7 @@ export default function NecAccuracyChat({
           at: new Date().toISOString(),
         },
       ]);
+      window.requestAnimationFrame(() => composerRef.current?.focus());
     } catch (nextError) {
       setError(nextError?.message || "Assistant request failed.");
       setMessages(nextMessages);
@@ -119,9 +132,9 @@ export default function NecAccuracyChat({
         <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-100">
           <Lock className="h-6 w-6 text-amber-700" />
         </div>
-        <h2 className="text-lg font-black text-foreground">NEC Accuracy Assistant</h2>
+        <h2 className="text-lg font-black text-foreground">In-app chat</h2>
         <p className="text-sm text-muted-foreground max-w-md mx-auto">
-          {disabledReason || "Included with paid upgrades — same plan boundary as NEC Tables. Chat stays inside the app; no Cursor Cloud Agents or extra Cursor billing."}
+          {disabledReason || "Discuss product and NEC accuracy in chat inside the app — included with paid upgrades."}
         </p>
         <Button asChild className="gap-2">
           <Link to="/purchase">
@@ -137,13 +150,14 @@ export default function NecAccuracyChat({
     <div className="rounded-2xl border border-border bg-card p-5 shadow-sm space-y-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="text-xs font-bold uppercase tracking-wide text-blue-600">In-app assistant</p>
+          <p className="text-xs font-bold uppercase tracking-wide text-blue-600">Discuss in-app</p>
           <h2 className="text-lg font-black text-foreground flex items-center gap-2">
             <MessageSquare className="h-5 w-5 text-blue-600" />
-            NEC Accuracy Assistant
+            Conversation
           </h2>
-          <p className="mt-1 text-xs text-muted-foreground">
-            Works like a coding assistant inside NECalcul8r. Included with your upgrade — not billed through Cursor Cloud Agents.
+          <p className="mt-1 text-sm text-muted-foreground">
+            Chat back and forth here the same way you would with a coding agent — ask, clarify, iterate.
+            Replies are immediate. Cloud Agent runs (if any) stay optional and do not block this discussion.
           </p>
         </div>
         {messages.length > 0 && (
@@ -159,7 +173,7 @@ export default function NecAccuracyChat({
             }}
           >
             <Trash2 className="h-3.5 w-3.5" />
-            Clear chat
+            New chat
           </Button>
         )}
       </div>
@@ -181,10 +195,10 @@ export default function NecAccuracyChat({
         </div>
       )}
 
-      <div className="max-h-[28rem] overflow-y-auto rounded-xl border border-border bg-background p-3 space-y-3">
+      <div className="min-h-[18rem] max-h-[min(70vh,36rem)] overflow-y-auto rounded-xl border border-border bg-background p-3 space-y-3">
         {messages.length === 0 && (
           <p className="text-sm text-muted-foreground">
-            Ask about a calculator result, a suspected miss, or how to verify against baselines.
+            Start a discussion — bugs, NEC results, upgrades, mobile quirks, verification. Keep going turn by turn.
           </p>
         )}
         {messages.map((message) => (
@@ -216,10 +230,11 @@ export default function NecAccuracyChat({
 
       <div className="space-y-2">
         <Textarea
+          ref={composerRef}
           value={draft}
           onChange={(event) => setDraft(event.target.value)}
-          rows={3}
-          placeholder="e.g. Dwelling optional heat overcounts on 2020 NEC — what should I check?"
+          rows={4}
+          placeholder="Message the assistant… (Enter to send, Shift+Enter for a new line)"
           className="text-sm"
           disabled={busy}
           onKeyDown={(event) => {
@@ -229,11 +244,18 @@ export default function NecAccuracyChat({
             }
           }}
         />
-        <Button type="button" className="gap-2" disabled={busy || !draft.trim()} onClick={() => send()}>
-          <Send className="h-4 w-4" />
-          {busy ? "Sending…" : "Send"}
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button type="button" className="gap-2" disabled={busy || !draft.trim()} onClick={() => send()}>
+            <Send className="h-4 w-4" />
+            {busy ? "Sending…" : "Send"}
+          </Button>
+          <p className="text-xs text-muted-foreground">
+            Continuous discussion thread — not a one-shot Cloud Agent task.
+          </p>
+        </div>
       </div>
     </div>
   );
 }
+
+export { askAssistant };
