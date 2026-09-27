@@ -72,13 +72,30 @@ export default function NecAccuracyChat({
     setMessages(nextMessages);
     setDraft("");
     try {
-      const response = await base44.functions.invoke("nec-accuracy-chat", {
-        messages: [...apiMessages, { role: "user", content: text }],
-        missionHint: focusHint || undefined,
-      });
-      const payload = response?.data || response || {};
-      const reply = payload.reply || payload.text || "";
-      if (!reply) throw new Error(payload.error || "Empty assistant reply.");
+      let reply = "";
+      try {
+        const response = await base44.functions.invoke("nec-accuracy-chat", {
+          messages: [...apiMessages, { role: "user", content: text }],
+          missionHint: focusHint || undefined,
+        });
+        const payload = response?.data || response || {};
+        reply = payload.reply || payload.text || "";
+        if (!reply && payload.error) throw new Error(payload.error);
+      } catch (edgeError) {
+        const message = String(edgeError?.message || "");
+        const canFallback = /OPENAI_API_KEY|not configured|503|AI is not configured|Unknown function|failed to send|gateway 404|not found/i.test(message);
+        if (!canFallback) throw edgeError;
+        // Fall back to the same OpenAI path already used for blueprint analysis (no Cursor Cloud Agents).
+        const system = `You are the NECalcul8r NEC Accuracy Assistant. Stay inside the app. Help with NEC calculator accuracy, baselines, and practical verification. Do not send users to cursor.com.${focusHint ? ` Focus: ${focusHint}.` : ""}`;
+        const transcript = [...apiMessages, { role: "user", content: text }]
+          .map((item) => `${item.role === "assistant" ? "Assistant" : "User"}: ${item.content}`)
+          .join("\n\n");
+        const fallback = await base44.integrations.Core.InvokeLLM({
+          prompt: `${system}\n\nConversation:\n${transcript}\n\nAssistant:`,
+        });
+        reply = typeof fallback === "string" ? fallback : JSON.stringify(fallback);
+      }
+      if (!reply) throw new Error("Empty assistant reply.");
       setMessages((current) => [
         ...current,
         {
