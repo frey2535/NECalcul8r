@@ -424,13 +424,8 @@ export default function CursorAgent() {
               <p className="whitespace-pre-wrap break-words">{error}</p>
               <p className="mt-2 text-xs">
                 {/not deployed|gateway 404|could not be reached|failed to send/i.test(error)
-<<<<<<< HEAD
-                  ? "Deploy create-cursor-agent and daily-reliability-scan, set CURSOR_API_KEY / CURSOR_REPO_URL / RELIABILITY_SCAN_SECRET, and apply supabase/fixes/add-reliability-scans.sql."
+                  ? "Deploy create-cursor-agent and daily-reliability-scan (add GitHub secret SUPABASE_ACCESS_TOKEN and re-run the deploy workflow, or deploy locally). Set CURSOR_API_KEY / CURSOR_REPO_URL / RELIABILITY_SCAN_SECRET, and apply supabase/fixes/add-reliability-scans.sql."
                   : "Confirm Supabase secrets CURSOR_API_KEY and CURSOR_REPO_URL. The API key needs Cloud Agents access for https://github.com/frey2535/NECalcul8r."}
-=======
-                  ? "Add GitHub secret SUPABASE_ACCESS_TOKEN and re-run the Deploy create-cursor-agent workflow, or run the deploy command above locally. Then set CURSOR_API_KEY and CURSOR_REPO_URL on the Supabase project."
-                  : "If the function is already deployed, confirm Supabase secrets CURSOR_API_KEY and CURSOR_REPO_URL are set. The API key must have Cloud Agents access for https://github.com/frey2535/NECalcul8r."}
->>>>>>> origin/main
               </p>
             </div>
           </div>
