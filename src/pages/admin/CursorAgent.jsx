@@ -23,6 +23,20 @@ function toggleId(list, id) {
   return list.includes(id) ? list.filter((item) => item !== id) : [...list, id];
 }
 
+function cursorAgentErrorHint(error) {
+  const message = String(error || "");
+  if (/hard limit|increase your hard limit|\$2 remaining|billing|usage limit|spend limit/i.test(message)) {
+    return "This is a Cursor account billing limit, not a Supabase deploy problem. Open https://www.cursor.com/dashboard?tab=settings and raise your hard limit (Cloud Agents need at least $2 remaining), then retry.";
+  }
+  if (/not deployed|gateway 404|could not be reached|failed to send/i.test(message)) {
+    return "Deploy create-cursor-agent and daily-reliability-scan (add GitHub secret SUPABASE_ACCESS_TOKEN and re-run the deploy workflow, or deploy locally). Set CURSOR_API_KEY / CURSOR_REPO_URL / RELIABILITY_SCAN_SECRET, and apply supabase/fixes/add-reliability-scans.sql.";
+  }
+  if (/unauthorized|forbidden|api key|invalid key|cloud agents access/i.test(message)) {
+    return "Confirm Supabase secrets CURSOR_API_KEY and CURSOR_REPO_URL. The API key needs Cloud Agents access for https://github.com/frey2535/NECalcul8r.";
+  }
+  return "If this keeps failing, check Cursor dashboard billing/limits and Supabase secrets CURSOR_API_KEY / CURSOR_REPO_URL.";
+}
+
 const DEFAULT_MISSION = "nec_accuracy_guardian";
 const DEFAULT_FOCUS = ["generator", "dwelling", "commercial"];
 
@@ -422,11 +436,7 @@ export default function CursorAgent() {
             <div>
               <p className="font-bold">Cursor agent could not start</p>
               <p className="whitespace-pre-wrap break-words">{error}</p>
-              <p className="mt-2 text-xs">
-                {/not deployed|gateway 404|could not be reached|failed to send/i.test(error)
-                  ? "Deploy create-cursor-agent and daily-reliability-scan (add GitHub secret SUPABASE_ACCESS_TOKEN and re-run the deploy workflow, or deploy locally). Set CURSOR_API_KEY / CURSOR_REPO_URL / RELIABILITY_SCAN_SECRET, and apply supabase/fixes/add-reliability-scans.sql."
-                  : "Confirm Supabase secrets CURSOR_API_KEY and CURSOR_REPO_URL. The API key needs Cloud Agents access for https://github.com/frey2535/NECalcul8r."}
-              </p>
+              <p className="mt-2 text-xs">{cursorAgentErrorHint(error)}</p>
             </div>
           </div>
         )}
