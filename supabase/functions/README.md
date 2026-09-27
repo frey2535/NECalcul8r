@@ -17,6 +17,7 @@ supabase functions deploy generate-license-key
 supabase functions deploy verify-apple-purchase
 supabase functions deploy create-cursor-agent
 supabase functions deploy cursor-agent-session
+supabase functions deploy nec-accuracy-chat
 supabase functions deploy daily-reliability-scan
 ```
 
@@ -49,6 +50,18 @@ the repository. The key is used only inside the Supabase Edge Function and must
 not be exposed as a Vite/browser environment variable. The edge function authenticates
 to `https://api.cursor.com/v1/agents` with Basic auth (`API_KEY:`).
 
+**Primary in-app assistant (recommended — no Cursor Cloud Agents billing):**
+
+```bash
+supabase secrets set OPENAI_API_KEY=... --project-ref gqdxvctvufalunaaopyj
+supabase secrets set OPENAI_MODEL=gpt-4o-mini --project-ref gqdxvctvufalunaaopyj
+supabase functions deploy nec-accuracy-chat --project-ref gqdxvctvufalunaaopyj
+```
+
+`nec-accuracy-chat` powers `/accuracy-assistant`. It is included with paid upgrades
+(same boundary as NEC Tables) and for platform admins. It never opens cursor.com and
+does not use Cursor hard limits.
+
 `create-cursor-agent` accepts optional `missionId` (`nec_accuracy_guardian`,
 `daily_full_scan`, `proactive_audit`, `fix_known`, `suggest_only`,
 `calculator_hardening`, `mobile_pwa`, `commerce_access`) and wraps the operator
@@ -64,15 +77,13 @@ plus the Cursor secrets above. Optional: `RESEND_API_KEY`,
 
 Apply SQL first: `supabase/fixes/add-reliability-scans.sql`.
 
-**Required before the in-app Cursor Agent page works:** deploy the functions.
-If they are missing, the browser shows `Failed to send a request to the Edge Function`
-because the Supabase gateway 404 CORS allow-list omits `content-type`.
+**Required before the in-app NEC Accuracy Assistant works:** deploy `nec-accuracy-chat`
+and set `OPENAI_API_KEY`. This is the default assistant path — no Cursor Cloud Agents.
 
-`create-cursor-agent` starts a Cloud Agent. `cursor-agent-session` keeps the conversation
-**inside NECalcul8r** (status polling + follow-ups) so the app does not navigate away to
-cursor.com. Optional “Open on Cursor.com” links remain available but are never auto-opened.
+`create-cursor-agent` / `cursor-agent-session` remain optional (advanced, Cursor-billed).
 
 ```bash
+supabase functions deploy nec-accuracy-chat --project-ref gqdxvctvufalunaaopyj
 supabase functions deploy create-cursor-agent --project-ref gqdxvctvufalunaaopyj
 supabase functions deploy cursor-agent-session --project-ref gqdxvctvufalunaaopyj
 supabase functions deploy daily-reliability-scan --project-ref gqdxvctvufalunaaopyj

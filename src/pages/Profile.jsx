@@ -15,6 +15,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { canUseNecAccuracyAssistant } from "@/lib/pricing";
 
 const ORG_ROLE_LABELS = {
   owner: "Company Owner",
@@ -42,6 +43,7 @@ export default function Profile() {
   const [refreshing, setRefreshing] = useState(false);
   const isPlatformAdmin = Boolean(user?.is_platform_admin);
   const canManageUsers = isPlatformAdmin || user?.org_role === "owner";
+  const canUseAssistant = canUseNecAccuracyAssistant(user);
   const profileBadgeLabel = getProfileBadgeLabel(user);
   const isGooglePlayBillingUser = user?.purchase_source === "google_play" || user?.access_type === "google_play";
   const isAndroidNative = isAndroidNativeApp();
@@ -163,6 +165,13 @@ export default function Profile() {
           <ShoppingCart className="w-4 h-4 text-muted-foreground" />
           Purchase Now
         </Link>
+        <Link
+          to="/accuracy-assistant"
+          className="w-full flex items-center gap-3 px-5 py-4 text-sm font-semibold text-foreground hover:bg-muted active:bg-muted/80 transition-colors border-t border-border/40"
+        >
+          <Bot className="w-4 h-4 text-muted-foreground" />
+          {canUseAssistant ? "NEC Accuracy Assistant" : "NEC Accuracy Assistant (upgrade)"}
+        </Link>
         {canManageBilling && (
           <button
             type="button"
@@ -204,12 +213,6 @@ export default function Profile() {
                 <div className="w-full flex items-center gap-3 px-5 py-4 text-sm font-semibold text-foreground hover:bg-muted active:bg-muted/80 transition-colors border-b border-border/40">
                   <DollarSign className="w-4 h-4 text-muted-foreground" />
                   Revenue Dashboard
-                </div>
-              </Link>
-              <Link to="/admin/cursor-agent" className="block">
-                <div className="w-full flex items-center gap-3 px-5 py-4 text-sm font-semibold text-foreground hover:bg-muted active:bg-muted/80 transition-colors border-b border-border/40">
-                  <Bot className="w-4 h-4 text-muted-foreground" />
-                  Cursor Agent
                 </div>
               </Link>
               <Link to="/admin/reports" className="block">

@@ -224,6 +224,19 @@ async function cursorAgentSession() {
   throw new Error("In-app Cursor chat requires Supabase commercial mode and the cursor-agent-session Edge Function.");
 }
 
+async function necAccuracyChat(payload = {}) {
+  const messages = Array.isArray(payload.messages) ? payload.messages : [];
+  const system = `You are the NECalcul8r NEC Accuracy Assistant. Stay inside the app. Help with NEC calculator accuracy, baselines, and practical verification. Do not send users to cursor.com.`;
+  const transcript = messages
+    .filter((item) => item?.content || item?.text)
+    .map((item) => `${item.role === "assistant" ? "Assistant" : "User"}: ${item.content || item.text}`)
+    .join("\n\n");
+  const focus = payload.missionHint || payload.focus || "";
+  const prompt = `${system}${focus ? `\n\nFocus: ${focus}` : ""}\n\nConversation:\n${transcript}\n\nAssistant:`;
+  const reply = await localIntegrations.Core.InvokeLLM({ prompt });
+  return { ok: true, reply: typeof reply === "string" ? reply : JSON.stringify(reply), provider: "openai-local" };
+}
+
 async function dailyReliabilityScan() {
   requireAdmin();
   throw new Error("Daily reliability scan requires Supabase commercial mode and the daily-reliability-scan Edge Function.");
@@ -237,6 +250,7 @@ const HANDLERS = {
   seedArticleVerificationsComplete,
   "create-cursor-agent": createCursorAgent,
   "cursor-agent-session": cursorAgentSession,
+  "nec-accuracy-chat": necAccuracyChat,
   "daily-reliability-scan": dailyReliabilityScan,
 };
 
