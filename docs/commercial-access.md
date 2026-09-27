@@ -212,14 +212,19 @@ Platform admins can open `/admin/cursor-agent` to start a Cursor Cloud Agent
 from inside NECalcul8r. The browser sends only the task prompt to Supabase; the
 Cursor API key stays server-side in Edge Function secrets.
 
-Deploy the function and set secrets:
+Deploy the function and set secrets (project `gqdxvctvufalunaaopyj`):
 
 ```bash
-supabase functions deploy create-cursor-agent
-supabase secrets set CURSOR_API_KEY=...
-supabase secrets set CURSOR_REPO_URL=https://github.com/frey2535/NECalcul8r
-supabase secrets set CURSOR_DEFAULT_BRANCH=main
+supabase functions deploy create-cursor-agent --project-ref gqdxvctvufalunaaopyj
+supabase secrets set CURSOR_API_KEY=... --project-ref gqdxvctvufalunaaopyj
+supabase secrets set CURSOR_REPO_URL=https://github.com/frey2535/NECalcul8r --project-ref gqdxvctvufalunaaopyj
+supabase secrets set CURSOR_DEFAULT_BRANCH=main --project-ref gqdxvctvufalunaaopyj
 ```
+
+If `create-cursor-agent` is not deployed, the app reports a generic Edge Function
+network/CORS failure instead of a clear 404. Deploy the function first, then set
+secrets. You can also add GitHub secret `SUPABASE_ACCESS_TOKEN` and run the
+`Deploy create-cursor-agent` workflow.
 
 Only profiles with `is_platform_admin = true` can launch a Cursor agent.
 
