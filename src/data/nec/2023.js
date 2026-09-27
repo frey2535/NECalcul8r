@@ -218,3 +218,48 @@ export const OCCUPANCY_UNIT_LOAD_ARTICLES = {
 export const DWELLING_MIN_SERVICE_AMPS = 100;  // 230.79(C)
 
 export const VERIFIED = true;
+
+// ─── Generator Sizing / Dwelling Load Rules (NEC 2023) ─────────────
+export const GENERATOR_SIZING_RULES = {
+  codeYear: "2023",
+  loadCalculationArticle: "Article 220",
+  dwellingGeneral: {
+    unitLoadArticle: "220.41",
+    vaPerSqFt: 3,
+    smallApplianceArticle: "220.52(A)",
+    smallApplianceVA: 1500,
+    minimumSmallApplianceCircuits: 2,
+    laundryArticle: "220.52(B)",
+    laundryVA: 1500,
+    minimumLaundryCircuits: 1,
+    demandTableArticle: "Table 220.45",
+    demandTiers: [
+      { bandVA: 3000, factor: 1.00 },
+      { bandVA: 117000, factor: 0.35 },
+      { bandVA: Infinity, factor: 0.25 },
+    ],
+  },
+  fixedAppliances: {
+    article: "220.53",
+    minimumCountForDemandFactor: 4,
+    demandFactor: 0.75,
+    excludedCategories: ["ranges", "clothes dryers", "space heating", "air-conditioning"],
+  },
+  dryer: { article: "220.54", tableArticle: "Table 220.54", singleDryerMinimumVA: 5000 },
+  cooking: {
+    article: "220.55",
+    tableArticle: "Table 220.55",
+    singleRangeUpTo12kWDemandKW: 8,
+    note1MaxRangeKW: 27,
+    note1IncreasePerKW: 0.05,
+  },
+  noncoincident: { article: "220.60", method: "largest_applicable_load" },
+  motor: { article: "220.50 / 430.24", largestMotorAdderFactor: 0.25 },
+  standby: {
+    article: "702.4",
+    automaticTransferArticle: "702.4(A)(2)",
+    fullLoadArticle: "702.4(A)(2)(a)",
+    loadManagementArticle: "702.4(A)(2)(b)",
+  },
+  sourceStatus: "NEC-year-owned",
+};
