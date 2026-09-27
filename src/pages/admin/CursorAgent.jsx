@@ -143,9 +143,9 @@ export default function CursorAgent() {
               <p className="font-bold">Cursor agent could not start</p>
               <p className="whitespace-pre-wrap break-words">{error}</p>
               <p className="mt-2 text-xs">
-                Confirm Supabase secrets `CURSOR_API_KEY` and `CURSOR_REPO_URL` are set,
-                then redeploy `create-cursor-agent`. The API key must have Cloud Agents access
-                for `https://github.com/frey2535/NECalcul8r`.
+                {/not deployed|gateway 404|could not be reached|failed to send/i.test(error)
+                  ? "Production is missing the Edge Function itself (not just secrets). Deploy create-cursor-agent to project gqdxvctvufalunaaopyj, then set CURSOR_API_KEY and CURSOR_REPO_URL."
+                  : "If the function is already deployed, confirm Supabase secrets CURSOR_API_KEY and CURSOR_REPO_URL are set. The API key must have Cloud Agents access for https://github.com/frey2535/NECalcul8r."}
               </p>
             </div>
           </div>

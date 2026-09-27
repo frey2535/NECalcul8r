@@ -1,0 +1,44 @@
+name: Deploy create-cursor-agent
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "supabase/functions/create-cursor-agent/**"
+      - "supabase/functions/_shared/**"
+      - ".github/workflows/deploy-create-cursor-agent.yml"
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      PROJECT_REF: gqdxvctvufalunaaopyj
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Require Supabase access token
+        run: |
+          if [ -z "$SUPABASE_ACCESS_TOKEN" ]; then
+            echo "::error::Add repository secret SUPABASE_ACCESS_TOKEN (Supabase Account → Access Tokens), then re-run this workflow."
+            exit 1
+          fi
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Deploy create-cursor-agent
+        run: supabase functions deploy create-cursor-agent --project-ref "$PROJECT_REF" --use-api
+
+      - name: Reminder for Cursor secrets
+        run: |
+          echo "After first deploy, set project secrets if missing:"
+          echo "  supabase secrets set CURSOR_API_KEY=... --project-ref $PROJECT_REF"
+          echo "  supabase secrets set CURSOR_REPO_URL=https://github.com/frey2535/NECalcul8r --project-ref $PROJECT_REF"
+          echo "  supabase secrets set CURSOR_DEFAULT_BRANCH=main --project-ref $PROJECT_REF"

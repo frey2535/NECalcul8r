@@ -37,9 +37,9 @@ supabase secrets set STRIPE_WEBHOOK_SECRET=whsec_...
 Required secrets for the platform-owner Cursor Agent tool:
 
 ```bash
-supabase secrets set CURSOR_API_KEY=...
-supabase secrets set CURSOR_REPO_URL=https://github.com/frey2535/NECalcul8r
-supabase secrets set CURSOR_DEFAULT_BRANCH=main
+supabase secrets set CURSOR_API_KEY=... --project-ref gqdxvctvufalunaaopyj
+supabase secrets set CURSOR_REPO_URL=https://github.com/frey2535/NECalcul8r --project-ref gqdxvctvufalunaaopyj
+supabase secrets set CURSOR_DEFAULT_BRANCH=main --project-ref gqdxvctvufalunaaopyj
 ```
 
 `CURSOR_API_KEY` must be a Cursor API key with access to create Cloud Agents for
@@ -47,11 +47,16 @@ the repository. The key is used only inside the Supabase Edge Function and must
 not be exposed as a Vite/browser environment variable. The edge function authenticates
 to `https://api.cursor.com/v1/agents` with Basic auth (`API_KEY:`).
 
-After changing `create-cursor-agent`, redeploy:
+**Required before the in-app Cursor Agent page works:** deploy the function.
+If it is missing, the browser shows `Failed to send a request to the Edge Function`
+because the Supabase gateway 404 CORS allow-list omits `content-type`.
 
 ```bash
 supabase functions deploy create-cursor-agent --project-ref gqdxvctvufalunaaopyj
 ```
+
+Or add GitHub secret `SUPABASE_ACCESS_TOKEN` and run the
+`Deploy create-cursor-agent` workflow (`.github/workflows/deploy-create-cursor-agent.yml`).
 
 The frontend also needs Stripe Vite variables configured with price IDs for
 every purchase package shown in the app. If you want to override the default
