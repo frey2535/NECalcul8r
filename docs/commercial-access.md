@@ -208,18 +208,35 @@ Important tables:
 
 ## Platform-owner Cursor Agent
 
-Platform admins can open `/admin/cursor-agent` to start a Cursor Cloud Agent
-from inside NECalcul8r. The browser sends only the task prompt to Supabase; the
-Cursor API key stays server-side in Edge Function secrets.
+Platform admins can open `/admin/cursor-agent` to start the **NEC Accuracy Guardian**
+and related Cloud Agent missions. The guardian treats frozen known-answer baseline
+suites (`npm run verify:nec-accuracy`) as the correctness source of truth: any miss
+is a critical defect and the agent is instructed to fix it to match expected values
+and open a draft PR.
 
-Deploy the function and set secrets (project `gqdxvctvufalunaaopyj`):
+A **daily reliability scan** (GitHub Actions cron + `daily-reliability-scan` Edge
+Function) probes Edge Functions, runs NEC accuracy suites, notifies platform admins
+in-app (`platform_notifications`), optionally emails via Resend, and can launch a
+correction agent. Apply `supabase/fixes/add-reliability-scans.sql` and deploy the
+new function before enabling the cron.
+
+The browser sends only the task prompt to Supabase; the Cursor API key stays
+server-side in Edge Function secrets.
+
+Deploy the functions and set secrets (project `gqdxvctvufalunaaopyj`):
 
 ```bash
 supabase functions deploy create-cursor-agent --project-ref gqdxvctvufalunaaopyj
+supabase functions deploy daily-reliability-scan --project-ref gqdxvctvufalunaaopyj
+# SQL: supabase/fixes/add-reliability-scans.sql
 supabase secrets set CURSOR_API_KEY=... --project-ref gqdxvctvufalunaaopyj
 supabase secrets set CURSOR_REPO_URL=https://github.com/frey2535/NECalcul8r --project-ref gqdxvctvufalunaaopyj
 supabase secrets set CURSOR_DEFAULT_BRANCH=main --project-ref gqdxvctvufalunaaopyj
+supabase secrets set RELIABILITY_SCAN_SECRET=... --project-ref gqdxvctvufalunaaopyj
 ```
+
+Also add GitHub secrets `RELIABILITY_SCAN_SECRET` (same value) and `VITE_SUPABASE_URL`
+so `.github/workflows/daily-reliability-scan.yml` can call the Edge Function daily.
 
 If `create-cursor-agent` is not deployed, the app reports a generic Edge Function
 network/CORS failure instead of a clear 404. Deploy the function first, then set

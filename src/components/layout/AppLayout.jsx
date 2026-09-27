@@ -7,6 +7,7 @@ import { base44 } from "@/api/base44Client";
 import { cn } from "@/lib/utils";
 import AppLogo from "@/components/branding/AppLogo";
 import { refreshApp } from "@/lib/pwa";
+import { countUnreadPlatformNotifications } from "@/api/platformNotifications";
 import {
   Drawer,
   DrawerClose,
@@ -38,6 +39,7 @@ export default function AppLayout({ trialStatus }) {
   const navigate = useNavigate();
   const [profileOpen, setProfileOpen] = useState(false);
   const [openReportCount, setOpenReportCount] = useState(0);
+  const [unreadScanCount, setUnreadScanCount] = useState(0);
   const [refreshingApp, setRefreshingApp] = useState(false);
   // Store saved scroll positions per tab key
   const scrollPositions = useRef({ calculators: 0, tables: 0, projects: 0 });
@@ -84,26 +86,52 @@ export default function AppLayout({ trialStatus }) {
     }
   }, [isPlatformAdmin]);
 
+  const refreshUnreadScanCount = useCallback(async () => {
+    if (!isPlatformAdmin) {
+      setUnreadScanCount(0);
+      return;
+    }
+    try {
+      setUnreadScanCount(await countUnreadPlatformNotifications());
+    } catch {
+      setUnreadScanCount(0);
+    }
+  }, [isPlatformAdmin]);
+
   useEffect(() => {
     refreshOpenReportCount();
-  }, [location.pathname, refreshOpenReportCount]);
+    refreshUnreadScanCount();
+  }, [location.pathname, refreshOpenReportCount, refreshUnreadScanCount]);
 
   useEffect(() => {
     if (!isPlatformAdmin) return undefined;
     window.addEventListener("focus", refreshOpenReportCount);
     window.addEventListener("necalcul8r-reports-updated", refreshOpenReportCount);
-    const interval = window.setInterval(refreshOpenReportCount, 60 * 1000);
+    window.addEventListener("focus", refreshUnreadScanCount);
+    const interval = window.setInterval(() => {
+      refreshOpenReportCount();
+      refreshUnreadScanCount();
+    }, 60 * 1000);
     return () => {
       window.removeEventListener("focus", refreshOpenReportCount);
       window.removeEventListener("necalcul8r-reports-updated", refreshOpenReportCount);
+      window.removeEventListener("focus", refreshUnreadScanCount);
       window.clearInterval(interval);
     };
-  }, [isPlatformAdmin, refreshOpenReportCount]);
+  }, [isPlatformAdmin, refreshOpenReportCount, refreshUnreadScanCount]);
 
   const reportBadge = openReportCount > 0
     ? (
       <span className="min-w-4 h-4 rounded-full bg-rose-500 px-1 text-[9px] leading-4 text-white font-extrabold text-center shadow-sm">
         {openReportCount > 99 ? "99+" : openReportCount}
+      </span>
+    )
+    : null;
+
+  const scanBadge = unreadScanCount > 0
+    ? (
+      <span className="min-w-4 h-4 rounded-full bg-amber-500 px-1 text-[9px] leading-4 text-white font-extrabold text-center shadow-sm">
+        {unreadScanCount > 99 ? "99+" : unreadScanCount}
       </span>
     )
     : null;
@@ -208,6 +236,7 @@ export default function AppLayout({ trialStatus }) {
                     )}>
                       <Bot className="w-3.5 h-3.5" />
                       Cursor
+                      {scanBadge}
                     </div>
                   </Link>
                   <Link to="/admin/codebook">

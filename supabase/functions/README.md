@@ -16,6 +16,7 @@ supabase functions deploy activate-license-key
 supabase functions deploy generate-license-key
 supabase functions deploy verify-apple-purchase
 supabase functions deploy create-cursor-agent
+supabase functions deploy daily-reliability-scan
 ```
 
 Required secrets for Google Play:
@@ -47,16 +48,33 @@ the repository. The key is used only inside the Supabase Edge Function and must
 not be exposed as a Vite/browser environment variable. The edge function authenticates
 to `https://api.cursor.com/v1/agents` with Basic auth (`API_KEY:`).
 
+`create-cursor-agent` accepts optional `missionId` (`nec_accuracy_guardian`,
+`daily_full_scan`, `proactive_audit`, `fix_known`, `suggest_only`,
+`calculator_hardening`, `mobile_pwa`, `commerce_access`) and wraps the operator
+prompt with a server-side NEC Accuracy Guardian doctrine so agents treat baseline
+failures as critical and prioritize high-confidence calculator corrections.
+
+`daily-reliability-scan` is invoked by GitHub Actions cron (or manually by a
+platform admin). It probes Edge Function deploys, accepts CI/NEC findings,
+notifies platform admins, optionally emails via Resend, and can start a Cursor
+agent. Required secrets: `RELIABILITY_SCAN_SECRET` (shared with GitHub Actions),
+plus the Cursor secrets above. Optional: `RESEND_API_KEY`,
+`PLATFORM_OWNER_NOTIFY_EMAIL`, `APP_ORIGIN`.
+
+Apply SQL first: `supabase/fixes/add-reliability-scans.sql`.
+
 **Required before the in-app Cursor Agent page works:** deploy the function.
 If it is missing, the browser shows `Failed to send a request to the Edge Function`
 because the Supabase gateway 404 CORS allow-list omits `content-type`.
 
 ```bash
 supabase functions deploy create-cursor-agent --project-ref gqdxvctvufalunaaopyj
+supabase functions deploy daily-reliability-scan --project-ref gqdxvctvufalunaaopyj
 ```
 
 Or add GitHub secret `SUPABASE_ACCESS_TOKEN` and run the
 `Deploy create-cursor-agent` workflow (`.github/workflows/deploy-create-cursor-agent.yml`).
+Also set GitHub `RELIABILITY_SCAN_SECRET` for `.github/workflows/daily-reliability-scan.yml`.
 
 The frontend also needs Stripe Vite variables configured with price IDs for
 every purchase package shown in the app. If you want to override the default

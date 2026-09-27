@@ -1,0 +1,126 @@
+name: Daily reliability scan
+
+on:
+  schedule:
+    # Every day at 14:00 UTC
+    - cron: "0 14 * * *"
+  workflow_dispatch:
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    env:
+      PROJECT_REF: gqdxvctvufalunaaopyj
+      SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+      RELIABILITY_SCAN_SECRET: ${{ secrets.RELIABILITY_SCAN_SECRET }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Collect CI + NEC accuracy findings
+        id: findings
+        continue-on-error: true
+        run: |
+          node <<'NODE'
+          const { execSync, spawnSync } = require("node:child_process");
+          const fs = require("node:fs");
+          const findings = [];
+
+          function run(label, cmd, severity = "warning", area = "ci") {
+            try {
+              execSync(cmd, { stdio: "pipe", encoding: "utf8" });
+            } catch (error) {
+              const detail = [error.stdout, error.stderr].filter(Boolean).join("\n").slice(0, 1500);
+              findings.push({
+                id: `ci-${label}`,
+                severity,
+                area,
+                title: `${label} failed on daily scan`,
+                detail: detail || String(error.message || error),
+              });
+            }
+          }
+
+          run("lint", "npm run lint -- --quiet");
+          run("typecheck", "npm run typecheck");
+
+          // NEC Accuracy Guardian: each failed baseline suite is critical.
+          const nec = spawnSync("node", ["scripts/run-nec-accuracy-guardian.mjs", "--json"], {
+            encoding: "utf8",
+          });
+          try {
+            const report = JSON.parse(nec.stdout || "{}");
+            if (Array.isArray(report.findings)) {
+              for (const finding of report.findings) findings.push(finding);
+            } else if (nec.status !== 0) {
+              findings.push({
+                id: "nec-accuracy-guardian",
+                severity: "critical",
+                area: "nec_accuracy",
+                title: "NEC accuracy guardian failed",
+                detail: (nec.stderr || nec.stdout || "verify:nec-accuracy failed").slice(0, 1500),
+              });
+            }
+            fs.writeFileSync("nec-accuracy-report.json", JSON.stringify(report, null, 2));
+          } catch (error) {
+            findings.push({
+              id: "nec-accuracy-parse",
+              severity: "critical",
+              area: "nec_accuracy",
+              title: "NEC accuracy guardian did not return JSON",
+              detail: String(error.message || error),
+            });
+          }
+
+          fs.writeFileSync("daily-scan-findings.json", JSON.stringify(findings, null, 2));
+          console.log(`Collected ${findings.length} finding(s); NEC exit=${nec.status}`);
+          NODE
+
+      - name: Require scan credentials
+        run: |
+          if [ -z "$SUPABASE_URL" ]; then
+            echo "::error::Missing VITE_SUPABASE_URL repository secret."
+            exit 1
+          fi
+          if [ -z "$RELIABILITY_SCAN_SECRET" ]; then
+            echo "::error::Add repository secret RELIABILITY_SCAN_SECRET (same value as Supabase secret RELIABILITY_SCAN_SECRET)."
+            exit 1
+          fi
+
+      - name: Trigger daily-reliability-scan Edge Function
+        run: |
+          node <<'NODE'
+          const fs = require("node:fs");
+          const findings = JSON.parse(fs.readFileSync("daily-scan-findings.json", "utf8"));
+          const body = JSON.stringify({
+            source: "github_actions",
+            startAgent: true,
+            findings,
+          });
+          const url = `${process.env.SUPABASE_URL.replace(/\/$/, "")}/functions/v1/daily-reliability-scan`;
+          fetch(url, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "x-reliability-scan-secret": process.env.RELIABILITY_SCAN_SECRET,
+            },
+            body,
+          }).then(async (response) => {
+            const text = await response.text();
+            console.log(text);
+            if (!response.ok) process.exit(1);
+          }).catch((error) => {
+            console.error(error);
+            process.exit(1);
+          });
+          NODE

@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - "supabase/functions/create-cursor-agent/**"
+      - "supabase/functions/daily-reliability-scan/**"
       - "supabase/functions/_shared/**"
       - ".github/workflows/deploy-create-cursor-agent.yml"
   workflow_dispatch:
@@ -34,7 +35,9 @@ jobs:
           version: latest
 
       - name: Deploy create-cursor-agent
-        run: supabase functions deploy create-cursor-agent --project-ref "$PROJECT_REF" --use-api
+        run: |
+          supabase functions deploy create-cursor-agent --project-ref "$PROJECT_REF" --use-api
+          supabase functions deploy daily-reliability-scan --project-ref "$PROJECT_REF" --use-api
 
       - name: Reminder for Cursor secrets
         run: |
@@ -42,3 +45,5 @@ jobs:
           echo "  supabase secrets set CURSOR_API_KEY=... --project-ref $PROJECT_REF"
           echo "  supabase secrets set CURSOR_REPO_URL=https://github.com/frey2535/NECalcul8r --project-ref $PROJECT_REF"
           echo "  supabase secrets set CURSOR_DEFAULT_BRANCH=main --project-ref $PROJECT_REF"
+          echo "  supabase secrets set RELIABILITY_SCAN_SECRET=... --project-ref $PROJECT_REF"
+          echo "Also apply SQL: supabase/fixes/add-reliability-scans.sql"
