@@ -1,7 +1,7 @@
-import { createServer } from "vite";
+import { createVerifierServer } from "./_viteVerifier.mjs";
 
 async function main() {
-  const server = await createServer({ server: { middlewareMode: true }, logLevel: "error" });
+  const server = await createVerifierServer();
   try {
     const { runRVParkLoadBaseline } = await server.ssrLoadModule("/src/data/nec/rvParkLoadBaseline.js");
     const results = runRVParkLoadBaseline();

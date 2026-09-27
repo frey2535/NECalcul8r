@@ -14,7 +14,7 @@
  * ═══════════════════════════════════════════════════════════════════════════
  */
 
-import { createServer } from "vite";
+import { createVerifierServer } from "./_viteVerifier.mjs";
 import { readFileSync } from "fs";
 import { fileURLToPath } from "url";
 import { dirname, resolve } from "path";
@@ -25,10 +25,7 @@ const pkgPath = resolve(__dirname, "..", "package.json");
 const APP_VERSION = JSON.parse(readFileSync(pkgPath, "utf-8")).version;
 
 async function main() {
-  const server = await createServer({
-    server: { middlewareMode: true },
-    logLevel: "error",
-  });
+  const server = await createVerifierServer();
 
   try {
     const { runDwellingOptionalBaseline } = await server.ssrLoadModule(

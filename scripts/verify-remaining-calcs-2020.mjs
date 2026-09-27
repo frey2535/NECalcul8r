@@ -1,7 +1,7 @@
-import { createServer } from "vite";
+import { createVerifierServer } from "./_viteVerifier.mjs";
 
 async function main() {
-  const server = await createServer({ server: { middlewareMode: true }, logLevel: "error" });
+  const server = await createVerifierServer();
   try {
     const { runRemainingCalcs2020Baseline } = await server.ssrLoadModule("/src/data/nec/remainingCalcs2020Baseline.js");
     const results = runRemainingCalcs2020Baseline();

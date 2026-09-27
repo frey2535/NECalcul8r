@@ -3,7 +3,7 @@
  * Usage: npm run verify:dwelling-standard
  */
 
-import { createServer } from "vite";
+import { createVerifierServer } from "./_viteVerifier.mjs";
 import { readFileSync } from "fs";
 import { fileURLToPath } from "url";
 import { dirname, resolve } from "path";
@@ -13,10 +13,7 @@ const __dirname = dirname(__filename);
 const APP_VERSION = JSON.parse(readFileSync(resolve(__dirname, "..", "package.json"), "utf-8")).version;
 
 async function main() {
-  const server = await createServer({
-    server: { middlewareMode: true },
-    logLevel: "error",
-  });
+  const server = await createVerifierServer();
 
   try {
     const { runDwellingStandardBaseline } = await server.ssrLoadModule(

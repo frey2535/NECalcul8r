@@ -1,7 +1,7 @@
-import { createServer } from "vite";
+import { createVerifierServer } from "./_viteVerifier.mjs";
 
 async function main() {
-  const server = await createServer({ server: { middlewareMode: true }, logLevel: "error" });
+  const server = await createVerifierServer();
   try {
     const { runConductorAmpacity2020Baseline } = await server.ssrLoadModule("/src/data/nec/conductorAmpacity2020Baseline.js");
     const results = runConductorAmpacity2020Baseline();

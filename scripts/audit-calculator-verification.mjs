@@ -1,13 +1,10 @@
-import { createServer } from "vite";
+import { createVerifierServer } from "./_viteVerifier.mjs";
 
 const strict = process.argv.includes("--strict");
 
 async function main() {
-  const server = await createServer({
-    appType: "custom",
-    logLevel: "error",
+  const server = await createVerifierServer({
     optimizeDeps: { entries: [], noDiscovery: true },
-    server: { middlewareMode: true },
   });
 
   try {

@@ -1,7 +1,7 @@
-import { createServer } from "vite";
+import { createVerifierServer } from "./_viteVerifier.mjs";
 
 async function main() {
-  const server = await createServer({ server: { middlewareMode: true }, logLevel: "error" });
+  const server = await createVerifierServer();
   try {
     const { runCommercialLoad2020Baseline } = await server.ssrLoadModule("/src/data/nec/commercialLoad2020Baseline.js");
     const results = runCommercialLoad2020Baseline();
