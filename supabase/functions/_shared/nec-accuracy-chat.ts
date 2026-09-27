@@ -1,21 +1,22 @@
-/** System prompt + OpenAI helpers for the in-app NEC Accuracy Assistant (no Cursor Cloud Agents). */
+/** System prompt + OpenAI helpers for the in-app NECalcul8r chat (conversational, like Cursor Agent chat). */
 
-export const NEC_ASSISTANT_SYSTEM = `You are the NECalcul8r NEC Accuracy Assistant — an in-app expert that stays inside the product.
+export const NEC_ASSISTANT_SYSTEM = `You are the in-app NECalcul8r assistant — a conversational partner for the product owner and paid users, similar to chatting with a coding agent inside the app.
 
-You help electricians and platform operators with:
+How to talk:
+- Hold a normal multi-turn discussion. Remember prior messages in this thread.
+- Be direct and concise. Prefer short, useful answers; expand when asked.
+- Ask clarifying questions when needed. Iterate with the user the way a pair-programming chat would.
+- You can discuss product decisions, UX, NEC calculator correctness, mobile/PWA issues, billing/access, deployments, and how to verify fixes.
+
+Domain focus:
 - NEC calculator results, article references, and edge cases (generator, dwelling, commercial, motor, voltage drop, etc.)
-- Why a result may look wrong and how to verify it against known-answer baselines
-- Clear, step-by-step guidance to correct inputs or interpret outputs
-- Mobile / WebView UI quirks when they affect calculator use
+- Frozen known-answer baselines (verify:nec-accuracy / verify:*) are the correctness source of truth — treat baseline misses as critical.
+- Prefer citing calculator names and NEC articles used in the app. Do not invent NEC rules.
 
-Rules:
-- Stay inside NECalcul8r; never tell the user to open cursor.com or Cloud Agents.
-- Do not invent NEC rules. Prefer citing article numbers and calculator names used in the app.
-- Calculator correctness is judged against frozen known-answer baselines (verify:nec-accuracy / verify:*). Treat baseline misses as critical.
-- Be concise and practical. Prefer actionable next steps over long essays.
-- If the user asks you to change production code or open a PR, explain the fix clearly and what to verify; you cannot push to GitHub from this chat.
-- Never weaken auth, billing, or admin checks. Never ask for or expose API keys or secrets.
-- If information is missing, ask one focused clarifying question.`;
+Boundaries:
+- Stay inside NECalcul8r. Do not tell the user they must leave the app to continue this conversation.
+- You cannot push to GitHub, open PRs, or control Cursor Cloud Agents from this chat. If the user wants a repo change implemented by a Cloud Agent, explain what to send as a follow-up task — but keep discussing here.
+- Never weaken auth, billing, or admin checks. Never ask for or expose API keys or secrets.`;
 
 export type ChatMessage = {
   role: "user" | "assistant" | "system";
@@ -30,21 +31,24 @@ function optionalEnv(name: string) {
 export async function completeNecAccuracyChat(options: {
   messages: ChatMessage[];
   missionHint?: string | null;
+  agentContext?: string | null;
 }) {
   const apiKey = optionalEnv("OPENAI_API_KEY");
   if (!apiKey) {
     throw Object.assign(
       new Error(
-        "OPENAI_API_KEY is not set on Supabase. Set it once (same key used for blueprint AI) — this assistant does not use Cursor Cloud Agents or Cursor billing.",
+        "OPENAI_API_KEY is not set on Supabase. Set it once (same key used for blueprint AI) — this chat does not use Cursor Cloud Agents or Cursor billing.",
       ),
       { status: 503 },
     );
   }
 
   const model = optionalEnv("OPENAI_MODEL") || "gpt-4o-mini";
-  const system = options.missionHint
-    ? `${NEC_ASSISTANT_SYSTEM}\n\nFocus for this session: ${options.missionHint}`
-    : NEC_ASSISTANT_SYSTEM;
+  const extras = [
+    options.missionHint ? `Session focus: ${options.missionHint}` : null,
+    options.agentContext ? `Active Cloud Agent context (for discussion only):\n${options.agentContext}` : null,
+  ].filter(Boolean).join("\n\n");
+  const system = extras ? `${NEC_ASSISTANT_SYSTEM}\n\n${extras}` : NEC_ASSISTANT_SYSTEM;
 
   const messages = [
     { role: "system", content: system },
@@ -68,7 +72,7 @@ export async function completeNecAccuracyChat(options: {
     },
     body: JSON.stringify({
       model,
-      temperature: 0.2,
+      temperature: 0.35,
       messages,
     }),
   });

@@ -16,6 +16,7 @@ import {
   markPlatformNotificationRead,
 } from "@/api/platformNotifications";
 import NecAccuracyChat from "@/components/NecAccuracyChat";
+import CursorAgentChat, { buildInitialChatSession } from "@/components/admin/CursorAgentChat";
 import { canUseNecAccuracyAssistant } from "@/lib/pricing";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -61,6 +62,7 @@ export default function CursorAgent() {
   const [loading, setLoading] = useState(false);
   const [scanLoading, setScanLoading] = useState(false);
   const [result, setResult] = useState(null);
+  const [chatSession, setChatSession] = useState(null);
   const [error, setError] = useState("");
   const [scans, setScans] = useState([]);
   const [notifications, setNotifications] = useState([]);
@@ -70,6 +72,14 @@ export default function CursorAgent() {
     () => CURSOR_FOCUS_AREAS.filter((area) => focusIds.includes(area.id)).map((area) => area.label).join(", "),
     [focusIds],
   );
+  const agentContext = useMemo(() => {
+    if (!chatSession?.agentId && !result?.agentId) return "";
+    return [
+      `activeAgentId=${chatSession?.agentId || result?.agentId || ""}`,
+      `activeAgentName=${chatSession?.name || result?.name || ""}`,
+      `activeAgentStatus=${chatSession?.status || result?.status || ""}`,
+    ].filter(Boolean).join("\n");
+  }, [chatSession, result]);
 
   useEffect(() => {
     if (promptTouched) return;
@@ -136,10 +146,22 @@ export default function CursorAgent() {
       const payload = response?.data || response || {};
       const agentId = payload.agentId || payload.id || null;
       const url = payload.url || (agentId ? `https://cursor.com/agents/${agentId}` : null);
-      setResult({ ...payload, agentId, url });
+      const normalized = { ...payload, agentId, url };
+      setResult(normalized);
+      setChatSession(buildInitialChatSession({
+        agentId,
+        runId: payload.runId || null,
+        name: payload.name || name.trim() || mission.defaultName,
+        url,
+        prompt: prompt.trim(),
+        status: payload.status || "ACTIVE",
+      }));
       toast({
-        title: "Cloud Agent started (optional)",
-        description: "This uses Cursor billing. Prefer the in-app assistant for everyday help.",
+        title: "Cloud Agent started",
+        description: "Discuss anytime in chat. Use Send to agent only for another Cloud Agent run.",
+      });
+      window.requestAnimationFrame(() => {
+        document.getElementById("cursor-in-app-session")?.scrollIntoView({ behavior: "smooth", block: "start" });
       });
     } catch (nextError) {
       setError(nextError?.message || "Could not start Cursor Cloud Agent.");
@@ -182,11 +204,11 @@ export default function CursorAgent() {
           </div>
           <div>
             <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Inside NECalcul8r</p>
-            <h1 className="text-2xl font-black text-foreground">NEC Accuracy Assistant</h1>
+            <h1 className="text-2xl font-black text-foreground">In-app Agent Chat</h1>
             <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-              Chat with an accuracy expert <span className="font-semibold text-foreground">inside the app</span> —
-              same idea as an AI coding assistant, included with paid upgrades. No Cursor Cloud Agents, no jump to cursor.com,
-              no extra Cursor spend limit.
+              Discuss here turn-by-turn <span className="font-semibold text-foreground">exactly like a Cursor agent chat</span> —
+              ask, clarify, iterate. Replies are immediate and stay in the app. Optional Cloud Agent runs can implement repo work;
+              they do not replace this conversation.
             </p>
           </div>
         </div>
@@ -195,9 +217,20 @@ export default function CursorAgent() {
       <NecAccuracyChat
         allowed={assistantAllowed}
         focusHint={focusHint}
-        disabledReason="Upgrade to a paid plan to unlock the in-app NEC Accuracy Assistant (same boundary as NEC Tables). Platform admins always have access."
+        agentContext={agentContext}
+        disabledReason="Upgrade to a paid plan to unlock in-app discussion chat (same boundary as NEC Tables). Platform admins always have access."
       />
 
+      <div id="cursor-in-app-session">
+        <CursorAgentChat
+          initialSession={chatSession}
+          discussAllowed={assistantAllowed}
+          onClear={() => {
+            setChatSession(null);
+            setResult(null);
+          }}
+        />
+      </div>
       <div className="space-y-2">
         <label className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Optional focus for this chat</label>
         <div className="flex flex-wrap gap-2">
