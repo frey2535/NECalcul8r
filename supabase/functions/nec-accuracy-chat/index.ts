@@ -80,6 +80,8 @@ Deno.serve(async (req) => {
         reply: result.text,
         model: result.model,
         provider: result.provider || "openai",
+        agent: result.agent || "cursor-in-app",
+        toolTrace: result.toolTrace || [],
       });
     } catch (error) {
       const err = error as Error & { status?: number; details?: unknown };

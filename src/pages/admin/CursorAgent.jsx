@@ -203,11 +203,11 @@ export default function CursorAgent() {
             <Bot className="h-6 w-6 text-blue-600" />
           </div>
           <div>
-            <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Inside NECalcul8r</p>
-            <h1 className="text-2xl font-black text-foreground">In-app Agent Chat</h1>
+            <p className="text-xs font-bold uppercase tracking-widest text-blue-600">In-app Cursor Agent</p>
+            <h1 className="text-2xl font-black text-foreground">Cursor chat inside NECalcul8r</h1>
             <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-              Discuss here turn-by-turn <span className="font-semibold text-foreground">exactly like a Cursor agent chat</span> —
-              ask, clarify, iterate. Replies are immediate, stay in the app, and do not use Cursor credits.
+              Same job as Cursor app chat: discuss, inspect the repo, and implement. Access is gated by NECalcul8r upgrades.
+              This path does <span className="font-semibold text-foreground">not</span> use Cursor Cloud Agents or Cursor credits.
             </p>
           </div>
         </div>

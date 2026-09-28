@@ -14,7 +14,7 @@ const STARTERS = [
   "How would you approach a suspected NEC calculator miss the same way a coding agent would?",
 ];
 
-const DISCUSSION_SYSTEM = `You are the in-app NECalcul8r assistant. Hold a normal multi-turn discussion like a coding agent chat. Be direct, stay inside the app, and help with NEC accuracy, product, UX, and verification. Do not send the user to cursor.com.`;
+const DISCUSSION_SYSTEM = `You are Auto — Cursor's AI coding agent — embedded inside NECalcul8r. Work exactly like Cursor chat (upgrade-gated). Never claim you cannot act like Cursor. Stay in-app; no Cloud Agents billing.`;
 
 function loadMessages() {
   try {
@@ -37,7 +37,14 @@ async function askAssistant({ messages, focusHint, agentContext }) {
     const payload = response?.data || response || {};
     const reply = payload.reply || payload.text || "";
     if (!reply && payload.error) throw new Error(payload.error);
-    if (reply) return reply;
+    if (reply) {
+      const tools = Array.isArray(payload.toolTrace) ? payload.toolTrace : [];
+      if (tools.length) {
+        const summary = tools.map((item) => item?.name).filter(Boolean).join(", ");
+        return summary ? `${reply}\n\n_Tools used: ${summary}_` : reply;
+      }
+      return reply;
+    }
     throw new Error("Empty assistant reply.");
   } catch (edgeError) {
     const message = String(edgeError?.message || "");
@@ -66,8 +73,8 @@ async function askAssistant({ messages, focusHint, agentContext }) {
 }
 
 /**
- * Conversational in-app chat — multi-turn discussion like Cursor Agent chat.
- * Immediate replies; not blocked by Cloud Agent runs.
+ * In-app Cursor agent chat — same role as Cursor app chat, upgrade-gated.
+ * Immediate replies via nec-accuracy-chat (OpenRouter free); not Cloud Agents.
  */
 export default function NecAccuracyChat({
   allowed = false,
@@ -174,17 +181,17 @@ export default function NecAccuracyChat({
           )}
           <h2 className={`font-black text-foreground flex items-center gap-2 ${compact ? "text-base" : "text-lg"}`}>
             <MessageSquare className="h-5 w-5 text-blue-600" />
-            Conversation
+            Cursor Agent
           </h2>
           {!compact && (
-          <p className="mt-1 text-sm text-muted-foreground">
-            Chat back and forth here the same way you would with a coding agent — ask, clarify, iterate.
-            Replies are immediate and do not use Cursor Cloud Agent credits.
-          </p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Same role as Cursor chat — ask, clarify, inspect code, implement. Access is via NECalcul8r upgrades.
+              No Cursor Cloud Agent credits.
+            </p>
           )}
           {compact && (
             <p className="mt-0.5 text-xs text-muted-foreground">
-              Stay on this screen — chat while you work. No Cursor credits.
+              In-app Cursor agent — stay on this screen. Upgrade-gated, no Cloud Agent credits.
             </p>
           )}
         </div>
@@ -245,13 +252,13 @@ export default function NecAccuracyChat({
             }`}
           >
             <p className="mb-1 text-[10px] font-bold uppercase tracking-wide opacity-70">
-              {message.role === "user" ? "You" : "Assistant"}
+              {message.role === "user" ? "You" : "Cursor Agent"}
             </p>
             {message.text}
           </div>
         ))}
         {busy && (
-          <p className="text-xs font-semibold text-muted-foreground animate-pulse">Assistant is thinking…</p>
+          <p className="text-xs font-semibold text-muted-foreground animate-pulse">Cursor Agent is working…</p>
         )}
         <div ref={bottomRef} />
       </div>
