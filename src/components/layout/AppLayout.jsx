@@ -238,7 +238,7 @@ export default function AppLayout({ trialStatus }) {
                       : "text-muted-foreground hover:text-foreground hover:bg-muted"
                   )}>
                     <Bot className="w-3.5 h-3.5" />
-                    Assistant
+                    Cursor
                     {isPlatformAdmin ? scanBadge : null}
                   </div>
                 </button>
@@ -389,8 +389,8 @@ export default function AppLayout({ trialStatus }) {
           >
             <div className="flex items-center justify-between gap-2 border-b border-border/60 px-4 py-3 shrink-0">
               <div>
-                <p className="text-xs font-bold uppercase tracking-wide text-blue-600">In-app chat</p>
-                <h2 className="text-sm font-bold text-foreground">Assistant</h2>
+                <p className="text-xs font-bold uppercase tracking-wide text-blue-600">In-app Cursor</p>
+                <h2 className="text-sm font-bold text-foreground">Cursor Agent</h2>
               </div>
               <button
                 type="button"
@@ -511,9 +511,9 @@ export default function AppLayout({ trialStatus }) {
             className="flex w-full max-w-full flex-col gap-0 p-0 sm:max-w-md"
           >
             <SheetHeader className="shrink-0 border-b border-border/60 px-4 py-3 pr-14 text-left">
-              <SheetTitle className="text-base font-bold">Assistant</SheetTitle>
+              <SheetTitle className="text-base font-bold">Cursor Agent</SheetTitle>
               <SheetDescription className="text-xs">
-                Chat without leaving this screen.
+                Same role as Cursor chat — stay on this screen.
               </SheetDescription>
             </SheetHeader>
             <div className="min-h-0 flex-1 overflow-hidden px-3 py-3">

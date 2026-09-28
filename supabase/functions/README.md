@@ -66,9 +66,16 @@ supabase secrets set OPENAI_MODEL=openrouter/free --project-ref gqdxvctvufalunaa
 supabase functions deploy nec-accuracy-chat --project-ref gqdxvctvufalunaaopyj
 ```
 
-`nec-accuracy-chat` powers `/accuracy-assistant`. It is included with paid upgrades
-(same boundary as NEC Tables) and for platform admins. It never opens cursor.com and
-does not use Cursor hard limits. Do **not** rely on `VITE_OPENAI_API_KEY` for production chat.
+`nec-accuracy-chat` powers the in-app Cursor Agent (`/accuracy-assistant` and the side panel).
+It is included with paid upgrades (same boundary as NEC Tables) and for platform admins.
+It uses OpenRouter free models (no Cursor Cloud Agents billing) and can read the public GitHub repo
+with tools. Optional write/commit support:
+
+```bash
+supabase secrets set GITHUB_TOKEN=ghp_... --project-ref gqdxvctvufalunaaopyj
+```
+
+Do **not** rely on `VITE_OPENAI_API_KEY` for production chat.
 
 `create-cursor-agent` accepts optional `missionId` (`nec_accuracy_guardian`,
 `daily_full_scan`, `proactive_audit`, `fix_known`, `suggest_only`,
