@@ -1,8 +1,9 @@
 import React, { useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, ArrowLeft, Zap, ChevronRight, Lock, ShoppingCart } from "lucide-react";
+import { Search, ArrowLeft, Zap, ChevronRight, Lock, Eye } from "lucide-react";
 import { useParams, useNavigate } from "react-router-dom";
 import CalculatorPanel from "@/components/calculator/CalculatorPanel";
+import ViewOnlyCalculatorShield from "@/components/calculator/ViewOnlyCalculatorShield";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
@@ -89,11 +90,7 @@ export default function NECCalculator() {
   const filteredCount = visibleTierSections.reduce((total, section) => total + section.categories.length, 0);
 
   const handleSelect = (id) => {
-    if (!calculatorAccess.isAllowed(id)) {
-      navigate("/purchase");
-      window.scrollTo({ top: 0, behavior: "smooth" });
-      return;
-    }
+    // Locked calculators open in view-only; interaction redirects to purchase.
     navigate(`/calculator/${id}`);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -128,24 +125,12 @@ export default function NECCalculator() {
           </button>
 
           {selectedLocked ? (
-            <div className="rounded-3xl border border-border bg-card p-6 shadow-xl text-center">
-              <div className="mx-auto w-14 h-14 rounded-2xl bg-amber-100 dark:bg-amber-950/40 flex items-center justify-center">
-                <Lock className="w-7 h-7 text-amber-600" />
-              </div>
-              <h1 className="mt-4 text-2xl font-extrabold text-foreground">{selectedCat.label} requires an upgrade</h1>
-              <p className="mt-2 text-sm text-muted-foreground max-w-xl mx-auto">
-                Your current plan is {calculatorAccess.entitlement.label}, which includes {calculatorAccess.includedCount} of {calculatorAccess.totalCount} calculators.
-                Upgrade to {selectedTier?.label || "a higher tier"} to unlock this calculator and any higher-tier tools.
-              </p>
-              <button
-                type="button"
-                onClick={() => navigate("/purchase")}
-                className="mt-5 inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold px-5 py-3 transition-colors"
-              >
-                <ShoppingCart className="w-4 h-4" />
-                View purchase options
-              </button>
-            </div>
+            <ViewOnlyCalculatorShield
+              planLabel={calculatorAccess.entitlement.label}
+              requiredTierLabel={selectedTier?.label}
+            >
+              <CalculatorPanel category={selectedCat} />
+            </ViewOnlyCalculatorShield>
           ) : (
             <CalculatorPanel category={selectedCat} />
           )}
@@ -181,7 +166,7 @@ export default function NECCalculator() {
             <p className="text-sm text-blue-100 mt-1">
               {calculatorAccess.isFullAccess
                 ? `${NEC_CATEGORIES.length} calculators · Tap to start`
-                : `${calculatorAccess.includedCount} of ${NEC_CATEGORIES.length} calculators included · Upgrade anytime`}
+                : `${calculatorAccess.includedCount} of ${NEC_CATEGORIES.length} included · Locked tools open in view only`}
             </p>
           </div>
         </div>
@@ -250,8 +235,8 @@ export default function NECCalculator() {
                       </span>
                       {sectionLocked && (
                         <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 text-amber-700 px-2 py-0.5 text-[10px] font-black">
-                          <Lock className="w-3 h-3" />
-                          Upgrade tier
+                          <Eye className="w-3 h-3" />
+                          View only
                         </span>
                       )}
                     </div>
@@ -292,8 +277,8 @@ export default function NECCalculator() {
                               <p className="text-sm font-bold text-slate-950 leading-snug">{cat.label}</p>
                               {locked && (
                                 <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 text-amber-700 px-2 py-0.5 text-[10px] font-black">
-                                  <Lock className="w-3 h-3" />
-                                  Upgrade
+                                  <Eye className="w-3 h-3" />
+                                  View only
                                 </span>
                               )}
                             </div>
