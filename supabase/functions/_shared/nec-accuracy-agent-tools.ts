@@ -195,6 +195,140 @@ async function createOrUpdateFile(options: {
   });
 }
 
+const AGENT_RUNNER_BRANCH = "agent-runner";
+const ALLOWED_COMMAND =
+  /^(npm run (verify:[a-z0-9:_-]+|lint|typecheck|verify:nec-accuracy:json|verify:nec-accuracy|verify:release)|node scripts\/run-nec-accuracy-guardian\.mjs( --json)?)$/;
+
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function putFileOnBranch(options: {
+  path: string;
+  content: string;
+  message: string;
+  branch: string;
+}) {
+  const { headers, hasWriteToken } = githubHeaders();
+  if (!hasWriteToken) {
+    throw new Error("GITHUB_TOKEN is required to queue/run commands like Cursor.");
+  }
+  const repo = resolveRepoSlug();
+  const clean = normalizePath(options.path);
+  let sha: string | undefined;
+  try {
+    const existing = await githubFetch(
+      `/repos/${repo}/contents/${clean.split("/").map(encodeURIComponent).join("/")}?ref=${encodeURIComponent(options.branch)}`,
+    ) as { sha?: string };
+    sha = existing.sha;
+  } catch {
+    sha = undefined;
+  }
+  const response = await fetch(
+    `https://api.github.com/repos/${repo}/contents/${clean.split("/").map(encodeURIComponent).join("/")}`,
+    {
+      method: "PUT",
+      headers: { ...headers, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        message: options.message,
+        content: btoa(unescape(encodeURIComponent(options.content))),
+        branch: options.branch,
+        sha,
+      }),
+    },
+  );
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error((payload as { message?: string }).message || `Failed to write ${clean}`);
+  }
+  return payload;
+}
+
+async function readFileOnBranch(path: string, branch: string) {
+  const repo = resolveRepoSlug();
+  const clean = normalizePath(path);
+  const data = await githubFetch(
+    `/repos/${repo}/contents/${clean.split("/").map(encodeURIComponent).join("/")}?ref=${encodeURIComponent(branch)}`,
+  ) as { encoding?: string; content?: string; type?: string };
+  if (data.type !== "file" || data.encoding !== "base64" || !data.content) {
+    throw new Error(`Missing file ${clean} on ${branch}`);
+  }
+  return atob(data.content.replace(/\n/g, ""));
+}
+
+async function runCommand(command: string, waitSeconds = 75) {
+  const cmd = String(command || "").trim();
+  if (!ALLOWED_COMMAND.test(cmd)) {
+    return JSON.stringify({
+      ok: false,
+      status: "rejected",
+      error: `Command not allowlisted. Allowed: npm run verify:*, npm run lint, npm run typecheck, node scripts/run-nec-accuracy-guardian.mjs [--json]. Got: ${cmd}`,
+    });
+  }
+  const { hasWriteToken } = githubHeaders();
+  if (!hasWriteToken) {
+    return JSON.stringify({
+      ok: false,
+      status: "blocked",
+      error: "GITHUB_TOKEN secret missing on Supabase — cannot execute commands yet.",
+    });
+  }
+
+  const jobId = `job-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  const request = {
+    id: jobId,
+    command: cmd,
+    createdAt: new Date().toISOString(),
+  };
+  await putFileOnBranch({
+    path: `agent-jobs/requests/${jobId}.json`,
+    content: JSON.stringify(request, null, 2),
+    message: `agent-job request: ${jobId}`,
+    branch: AGENT_RUNNER_BRANCH,
+  });
+
+  const deadline = Date.now() + Math.max(15, Math.min(waitSeconds, 100)) * 1000;
+  while (Date.now() < deadline) {
+    await sleep(4000);
+    try {
+      const raw = await readFileOnBranch(`agent-jobs/results/${jobId}.json`, AGENT_RUNNER_BRANCH);
+      return raw;
+    } catch {
+      // still running
+    }
+  }
+
+  return JSON.stringify({
+    ok: false,
+    status: "running",
+    id: jobId,
+    command: cmd,
+    message: `Command still running. Call get_command_result with job_id=${jobId}.`,
+  });
+}
+
+async function getCommandResult(jobId: string, waitSeconds = 45) {
+  const id = String(jobId || "").trim();
+  if (!id) {
+    return JSON.stringify({ ok: false, error: "job_id is required" });
+  }
+  const deadline = Date.now() + Math.max(5, Math.min(waitSeconds, 90)) * 1000;
+  while (Date.now() < deadline) {
+    try {
+      const raw = await readFileOnBranch(`agent-jobs/results/${id}.json`, AGENT_RUNNER_BRANCH);
+      return raw;
+    } catch {
+      await sleep(4000);
+    }
+  }
+  return JSON.stringify({
+    ok: false,
+    status: "running",
+    id,
+    message: "Result not ready yet. Call get_command_result again with the same job_id.",
+  });
+}
+
 export const AGENT_TOOL_DEFINITIONS = [
   {
     type: "function",
@@ -255,6 +389,43 @@ export const AGENT_TOOL_DEFINITIONS = [
       },
     },
   },
+  {
+    type: "function",
+    function: {
+      name: "run_command",
+      description:
+        "Execute an allowlisted project command exactly like a Cursor terminal (npm verify/lint/typecheck). Use this whenever the user asks to run verification or tests. Do not tell the user to run it themselves.",
+      parameters: {
+        type: "object",
+        properties: {
+          command: {
+            type: "string",
+            description: "e.g. npm run verify:nec-accuracy:json or npm run verify:release",
+          },
+          wait_seconds: {
+            type: "number",
+            description: "Seconds to wait for completion before returning a running job id (default 75).",
+          },
+        },
+        required: ["command"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_command_result",
+      description: "Poll a previously started run_command job until finished, then return stdout/stderr and exit code.",
+      parameters: {
+        type: "object",
+        properties: {
+          job_id: { type: "string" },
+          wait_seconds: { type: "number" },
+        },
+        required: ["job_id"],
+      },
+    },
+  },
 ] as const;
 
 export async function executeAgentTool(call: AgentToolCall): Promise<AgentToolResult> {
@@ -277,6 +448,18 @@ export async function executeAgentTool(call: AgentToolCall): Promise<AgentToolRe
           content: String(args.content ?? ""),
           message: String(args.message ?? ""),
         });
+        break;
+      case "run_command":
+        content = await runCommand(
+          String(args.command ?? ""),
+          typeof args.wait_seconds === "number" ? args.wait_seconds : Number(args.wait_seconds || 75),
+        );
+        break;
+      case "get_command_result":
+        content = await getCommandResult(
+          String(args.job_id ?? args.jobId ?? ""),
+          typeof args.wait_seconds === "number" ? args.wait_seconds : Number(args.wait_seconds || 45),
+        );
         break;
       default:
         content = JSON.stringify({ error: `Unknown tool: ${call.name}` });
