@@ -1,0 +1,5 @@
+{
+  "id": "job-probe-1790630541",
+  "command": "npm run verify:nec-accuracy:json",
+  "createdAt": "2026-09-28T21:22:21Z"
+}
