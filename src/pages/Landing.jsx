@@ -178,6 +178,12 @@ export default function Landing() {
               <Button size="sm" onClick={handleSignIn} className="ml-1 h-8 bg-blue-600 hover:bg-blue-700">
                 Sign In
               </Button>
+              <Link
+                to="/sports"
+                className="ml-1 hidden h-8 items-center rounded-md border border-emerald-600/40 bg-emerald-500/10 px-2.5 text-xs font-bold text-emerald-700 hover:bg-emerald-500/20 sm:inline-flex"
+              >
+                VECTR Sports
+              </Link>
             </div>
           </div>
         </div>

@@ -1,0 +1,73 @@
+.vectr-root {
+  --vectr-ink: #07110c;
+  --vectr-panel: rgba(8, 22, 16, 0.82);
+  --vectr-line: rgba(163, 230, 53, 0.22);
+  --vectr-signal: #a3e635;
+  --vectr-signal-hot: #d9f99d;
+  --vectr-home: #38bdf8;
+  --vectr-away: #fb7185;
+  --vectr-turf: #14532d;
+  --vectr-turf-deep: #052e16;
+  --vectr-mist: rgba(226, 232, 240, 0.72);
+  --vectr-display: "Bebas Neue", "Arial Narrow", Impact, sans-serif;
+  --vectr-body: "Manrope", "Segoe UI", sans-serif;
+  --vectr-mono: "IBM Plex Mono", ui-monospace, monospace;
+  color: #e2e8f0;
+  font-family: var(--vectr-body);
+  background:
+    radial-gradient(1200px 600px at 10% -10%, rgba(163, 230, 53, 0.16), transparent 55%),
+    radial-gradient(900px 500px at 90% 0%, rgba(56, 189, 248, 0.12), transparent 50%),
+    linear-gradient(165deg, #020805 0%, #07140e 42%, #0a1a12 100%);
+  min-height: 100%;
+}
+
+.vectr-root * {
+  box-sizing: border-box;
+}
+
+.vectr-display {
+  font-family: var(--vectr-display);
+  letter-spacing: 0.04em;
+}
+
+.vectr-mono {
+  font-family: var(--vectr-mono);
+}
+
+@keyframes vectr-pulse {
+  0%, 100% { opacity: 0.45; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.08); }
+}
+
+@keyframes vectr-scan {
+  0% { transform: translateY(-100%); opacity: 0; }
+  20% { opacity: 0.5; }
+  100% { transform: translateY(220%); opacity: 0; }
+}
+
+@keyframes vectr-rise {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.vectr-animate-rise {
+  animation: vectr-rise 0.7s ease-out both;
+}
+
+.vectr-live-dot {
+  animation: vectr-pulse 1.6s ease-in-out infinite;
+}
+
+.vectr-scanline::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(163, 230, 53, 0.08) 48%,
+    transparent 52%
+  );
+  animation: vectr-scan 4.8s linear infinite;
+  pointer-events: none;
+}

@@ -46,6 +46,10 @@ const Purchase = lazy(lazyRetry(() => import('@/pages/Purchase'), 'Purchase'));
 const PrivacyPolicy = lazy(lazyRetry(() => import('@/pages/PrivacyPolicy'), 'PrivacyPolicy'));
 const TermsOfService = lazy(lazyRetry(() => import('@/pages/TermsOfService'), 'TermsOfService'));
 const EULA = lazy(lazyRetry(() => import('@/pages/EULA'), 'EULA'));
+const SportsLanding = lazy(lazyRetry(() => import('@/sports/pages/SportsLanding'), 'SportsLanding'));
+const TrackingStudio = lazy(lazyRetry(() => import('@/sports/pages/TrackingStudio'), 'TrackingStudio'));
+const FilmRoomPage = lazy(lazyRetry(() => import('@/sports/pages/FilmRoomPage'), 'FilmRoomPage'));
+const RosterPage = lazy(lazyRetry(() => import('@/sports/pages/RosterPage'), 'RosterPage'));
 
 function PageLoader() {
   return (
@@ -186,7 +190,8 @@ const AuthenticatedApp = () => {
   }
 
   // Block access if trial expired or disabled (admins are always allowed)
-  if (!trialStatus.canAccess && trialStatus.status !== 'unknown' && location.pathname !== "/purchase") {
+  const isSportsRoute = location.pathname.startsWith("/sports");
+  if (!trialStatus.canAccess && trialStatus.status !== 'unknown' && location.pathname !== "/purchase" && !isSportsRoute) {
     return <TrialExpiredScreen user={user} status={trialStatus.status} blockReason={trialStatus.blockReason} />;
   }
 
@@ -194,6 +199,10 @@ const AuthenticatedApp = () => {
     <Suspense fallback={<PageLoader />}>
       <Routes>
         <Route path="/landing" element={<Landing />} />
+        <Route path="/sports" element={<SportsLanding />} />
+        <Route path="/sports/studio" element={<TrackingStudio />} />
+        <Route path="/sports/film" element={<FilmRoomPage />} />
+        <Route path="/sports/roster" element={<RosterPage />} />
         <Route path="/privacy" element={<PrivacyPolicy />} />
         <Route path="/terms" element={<TermsOfService />} />
         <Route path="/eula" element={<EULA />} />
@@ -201,7 +210,7 @@ const AuthenticatedApp = () => {
         <Route path="/register" element={<Register />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
-        <Route element={<ProtectedRoute unauthenticatedElement={<Navigate to="/landing" replace />} />}>
+        <Route element={<ProtectedRoute unauthenticatedElement={<Navigate to="/sports" replace />} />}>
           <Route element={<AppLayout trialStatus={trialStatus} />}>
             <Route path="/" element={<NECCalculator />} />
             <Route path="/calculator/:calcId" element={<NECCalculator />} />

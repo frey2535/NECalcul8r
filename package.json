@@ -32,6 +32,7 @@
     "verify:neutral-load": "node scripts/run_neutral_load_tests.mjs",
     "verify:pull-box": "node scripts/run_pull_box_tests.mjs",
     "verify:pricing-tiers": "node scripts/verify-pricing-tiers.mjs",
+    "verify:vectr-tracking": "node scripts/verify-vectr-tracking.mjs",
     "audit:calculator-verification": "node scripts/audit-calculator-verification.mjs",
     "audit:calculator-verification:strict": "node scripts/audit-calculator-verification.mjs --strict",
     "verify:2020": "npm run verify:commercial-load-2020 && npm run verify:lighting-load-2020 && npm run verify:remaining-2020 && npm run verify:marina-2020 && npm run verify:conductor-ampacity-2020 && npm run verify:rv-park-2020 && npm run verify:remaining-calcs-2020",

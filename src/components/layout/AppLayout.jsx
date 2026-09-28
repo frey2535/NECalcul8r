@@ -221,6 +221,12 @@ export default function AppLayout({ trialStatus }) {
                     </Link>
                   );
                 })}
+                <Link
+                  to="/sports"
+                  className="ml-1 flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold text-emerald-700 hover:bg-emerald-500/10"
+                >
+                  VECTR
+                </Link>
               </nav>
 
               {/* Accuracy assistant — opens as a side panel so current screen stays visible */}
