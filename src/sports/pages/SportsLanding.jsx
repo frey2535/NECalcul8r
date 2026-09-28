@@ -43,7 +43,7 @@ export default function SportsLanding() {
             transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
             className="max-w-3xl"
           >
-            <h1 className="vectr-display text-[clamp(4.5rem,16vw,9.5rem)] leading-[0.82] text-white">
+            <h1 className="vectr-display text-[clamp(4.5rem,16vw,9.5rem)] leading-[0.82] text-white drop-shadow-[0_2px_24px_rgba(0,0,0,0.65)]">
               VECTR
             </h1>
             <p className="mt-4 max-w-xl text-lg font-medium text-[var(--vectr-signal-hot)] md:text-xl">
