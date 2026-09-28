@@ -82,9 +82,16 @@ function updateMetrics(track, prev, next, dt) {
   const dx = next.x - prev.x;
   const dy = next.y - prev.y;
   const step = Math.hypot(dx, dy);
+  // Ignore teleport jumps from re-ID / gate association
+  if (step > 4.5) {
+    track.speed = track.prevSpeed || 0;
+    track.speedMph = (track.speed || 0) * 2.04545;
+    track.acceleration = 0;
+    return;
+  }
   track.metrics.distance += step;
   const speed = dt > 0 ? step / dt : 0; // yards/sec
-  const speedMph = speed * 2.04545;
+  const speedMph = Math.min(22.5, speed * 2.04545); // hard cap ~world-class sprint
   track.speed = speed;
   track.speedMph = speedMph;
   track.acceleration = dt > 0 ? (speed - (track.prevSpeed || 0)) / dt : 0;

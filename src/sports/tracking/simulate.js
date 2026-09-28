@@ -133,15 +133,15 @@ export function simulateStep(sim, dt = 1 / 30) {
     const { tx, ty, urgency } = rolePressure(player, ball, sim.possession);
     const ax = (tx - player.x) * 2.8 * urgency;
     const ay = (ty - player.y) * 2.8 * urgency;
-    player.vx = clamp(player.vx * 0.86 + ax * dt + noise(0.4), -12, 12);
-    player.vy = clamp(player.vy * 0.86 + ay * dt + noise(0.4), -12, 12);
+    player.vx = clamp(player.vx * 0.86 + ax * dt + noise(0.4), -9, 9);
+    player.vy = clamp(player.vy * 0.86 + ay * dt + noise(0.4), -9, 9);
 
     // Sprint bursts near ball
     const distBall = Math.hypot(ball.x - player.x, ball.y - player.y);
     if (distBall < 8 && Math.random() < 0.04) {
       const ang = Math.atan2(ball.y - player.y, ball.x - player.x);
-      player.vx += Math.cos(ang) * 4;
-      player.vy += Math.sin(ang) * 4;
+      player.vx += Math.cos(ang) * 2.5;
+      player.vy += Math.sin(ang) * 2.5;
     }
 
     player.x = clamp(player.x + player.vx * dt, 2, 98);
