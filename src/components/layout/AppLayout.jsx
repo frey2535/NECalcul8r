@@ -15,11 +15,21 @@ import {
   DrawerHeader,
   DrawerTitle,
 } from "@/components/ui/drawer";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+} from "@/components/ui/sheet";
 import Profile from "@/pages/Profile";
+import NecAccuracyChat from "@/components/NecAccuracyChat";
 import { useNECYear } from "@/context/NECYearContext";
 import { useTheme } from "@/context/ThemeContext";
 import { getResolvedEntitlement, canUseNecAccuracyAssistant } from "@/lib/pricing";
 import { isGooglePlayBillingPluginMissing, openPlayStoreListing } from "@/lib/googlePlayBilling";
+import { OPEN_ASSISTANT_EVENT } from "@/lib/assistantPanel";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 // Each tab remembers its last visited path independently
 const TABS = [
@@ -38,12 +48,26 @@ export default function AppLayout({ trialStatus }) {
   const { theme, toggleTheme } = useTheme();
   const location = useLocation();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const [profileOpen, setProfileOpen] = useState(false);
+  const [assistantOpen, setAssistantOpen] = useState(false);
   const [openReportCount, setOpenReportCount] = useState(0);
   const [unreadScanCount, setUnreadScanCount] = useState(0);
   const [refreshingApp, setRefreshingApp] = useState(false);
   // Store saved scroll positions per tab key
   const scrollPositions = useRef({ calculators: 0, tables: 0, projects: 0 });
+
+  const openAssistant = useCallback(() => {
+    setProfileOpen(false);
+    setAssistantOpen(true);
+  }, []);
+
+  const toggleAssistant = useCallback(() => {
+    setAssistantOpen((open) => {
+      if (!open) setProfileOpen(false);
+      return !open;
+    });
+  }, []);
 
   const getActiveTabKey = useCallback(() => {
     if (location.pathname === "/" || location.pathname.startsWith("/calculator")) return "calculators";
@@ -121,6 +145,12 @@ export default function AppLayout({ trialStatus }) {
     };
   }, [isPlatformAdmin, refreshOpenReportCount, refreshUnreadScanCount]);
 
+  useEffect(() => {
+    const onOpenAssistant = () => openAssistant();
+    window.addEventListener(OPEN_ASSISTANT_EVENT, onOpenAssistant);
+    return () => window.removeEventListener(OPEN_ASSISTANT_EVENT, onOpenAssistant);
+  }, [openAssistant]);
+
   const reportBadge = openReportCount > 0
     ? (
       <span className="min-w-4 h-4 rounded-full bg-rose-500 px-1 text-[9px] leading-4 text-white font-extrabold text-center shadow-sm">
@@ -193,12 +223,17 @@ export default function AppLayout({ trialStatus }) {
                 })}
               </nav>
 
-              {/* Accuracy assistant — paid upgrades + platform admin */}
+              {/* Accuracy assistant — opens as a side panel so current screen stays visible */}
               {(canUseAssistant || isPlatformAdmin) && (
-                <Link to="/accuracy-assistant">
+                <button
+                  type="button"
+                  onClick={toggleAssistant}
+                  aria-pressed={assistantOpen}
+                  aria-label={assistantOpen ? "Close assistant panel" : "Open assistant panel"}
+                >
                   <div className={cn(
                     "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all",
-                    location.pathname === "/accuracy-assistant" || location.pathname === "/admin/cursor-agent"
+                    assistantOpen
                       ? "bg-blue-600 text-white shadow-md shadow-blue-200"
                       : "text-muted-foreground hover:text-foreground hover:bg-muted"
                   )}>
@@ -206,7 +241,7 @@ export default function AppLayout({ trialStatus }) {
                     Assistant
                     {isPlatformAdmin ? scanBadge : null}
                   </div>
-                </Link>
+                </button>
               )}
 
               {/* Admin links — desktop only */}
@@ -336,10 +371,46 @@ export default function AppLayout({ trialStatus }) {
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="flex-1 max-w-7xl mx-auto w-full px-3 sm:px-6 lg:px-8 py-4 pb-24 sm:pb-8">
-        <Outlet />
-      </main>
+      {/* Main Content + optional docked assistant panel (desktop/tablet) */}
+      <div className="flex flex-1 min-h-0 w-full">
+        <main className="flex-1 max-w-7xl mx-auto w-full px-3 sm:px-6 lg:px-8 py-4 pb-24 sm:pb-8 min-w-0">
+          <Outlet />
+        </main>
+
+        {assistantOpen && !isMobile && (
+          <aside
+            className="hidden md:flex w-[min(28rem,42vw)] shrink-0 flex-col border-l border-border/60 bg-background"
+            style={{
+              height: "calc(100dvh - 3.5rem - env(safe-area-inset-top, 0px))",
+              position: "sticky",
+              top: "calc(3.5rem + env(safe-area-inset-top, 0px))",
+            }}
+            aria-label="Assistant side panel"
+          >
+            <div className="flex items-center justify-between gap-2 border-b border-border/60 px-4 py-3 shrink-0">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-wide text-blue-600">In-app chat</p>
+                <h2 className="text-sm font-bold text-foreground">Assistant</h2>
+              </div>
+              <button
+                type="button"
+                onClick={() => setAssistantOpen(false)}
+                className="flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                aria-label="Close assistant panel"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="flex-1 min-h-0 overflow-hidden px-3 py-3">
+              <NecAccuracyChat
+                compact
+                allowed={canUseAssistant || isPlatformAdmin}
+                disabledReason="Discuss product and NEC accuracy in chat inside the app — included with paid upgrades."
+              />
+            </div>
+          </aside>
+        )}
+      </div>
 
       {/* Mobile Bottom Nav */}
       <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-50 bg-background/90 backdrop-blur-xl border-t border-border/60 shadow-[0_-4px_24px_rgba(0,0,0,0.08)]" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
@@ -431,6 +502,30 @@ export default function AppLayout({ trialStatus }) {
           </div>
         </DrawerContent>
       </Drawer>
+
+      {/* Mobile assistant sheet — keeps the current route mounted underneath */}
+      {isMobile && (
+        <Sheet open={assistantOpen} onOpenChange={setAssistantOpen}>
+          <SheetContent
+            side="right"
+            className="flex w-full max-w-full flex-col gap-0 p-0 sm:max-w-md"
+          >
+            <SheetHeader className="shrink-0 border-b border-border/60 px-4 py-3 pr-14 text-left">
+              <SheetTitle className="text-base font-bold">Assistant</SheetTitle>
+              <SheetDescription className="text-xs">
+                Chat without leaving this screen.
+              </SheetDescription>
+            </SheetHeader>
+            <div className="min-h-0 flex-1 overflow-hidden px-3 py-3">
+              <NecAccuracyChat
+                compact
+                allowed={canUseAssistant || isPlatformAdmin}
+                disabledReason="Discuss product and NEC accuracy in chat inside the app — included with paid upgrades."
+              />
+            </div>
+          </SheetContent>
+        </Sheet>
+      )}
     </div>
   );
 }

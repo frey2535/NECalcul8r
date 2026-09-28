@@ -16,6 +16,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { canUseNecAccuracyAssistant } from "@/lib/pricing";
+import { openAssistantPanel } from "@/lib/assistantPanel";
 
 const ORG_ROLE_LABELS = {
   owner: "Company Owner",
@@ -165,13 +166,14 @@ export default function Profile() {
           <ShoppingCart className="w-4 h-4 text-muted-foreground" />
           Purchase Now
         </Link>
-        <Link
-          to="/accuracy-assistant"
+        <button
+          type="button"
+          onClick={() => openAssistantPanel()}
           className="w-full flex items-center gap-3 px-5 py-4 text-sm font-semibold text-foreground hover:bg-muted active:bg-muted/80 transition-colors border-t border-border/40"
         >
           <Bot className="w-4 h-4 text-muted-foreground" />
           {canUseAssistant ? "NEC Accuracy Assistant" : "NEC Accuracy Assistant (upgrade)"}
-        </Link>
+        </button>
         {canManageBilling && (
           <button
             type="button"

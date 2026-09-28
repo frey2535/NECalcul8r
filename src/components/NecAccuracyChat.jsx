@@ -74,6 +74,7 @@ export default function NecAccuracyChat({
   focusHint = "",
   agentContext = "",
   disabledReason = "",
+  compact = false,
 }) {
   const [messages, setMessages] = useState(() => loadMessages());
   const [draft, setDraft] = useState("");
@@ -140,7 +141,7 @@ export default function NecAccuracyChat({
 
   if (!allowed) {
     return (
-      <div className="rounded-2xl border border-border bg-card p-6 shadow-sm text-center space-y-3">
+      <div className={`rounded-2xl border border-border bg-card shadow-sm text-center space-y-3 ${compact ? "p-4" : "p-6"}`}>
         <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-100">
           <Lock className="h-6 w-6 text-amber-700" />
         </div>
@@ -159,18 +160,33 @@ export default function NecAccuracyChat({
   }
 
   return (
-    <div className="rounded-2xl border border-border bg-card p-5 shadow-sm space-y-4">
-      <div className="flex flex-wrap items-start justify-between gap-3">
+    <div
+      className={`bg-card space-y-3 ${
+        compact
+          ? "flex h-full min-h-0 flex-col border-0 p-0 shadow-none rounded-none"
+          : "rounded-2xl border border-border p-5 shadow-sm space-y-4"
+      }`}
+    >
+      <div className={`flex flex-wrap items-start justify-between gap-3 ${compact ? "shrink-0" : ""}`}>
         <div>
-          <p className="text-xs font-bold uppercase tracking-wide text-blue-600">Discuss in-app</p>
-          <h2 className="text-lg font-black text-foreground flex items-center gap-2">
+          {!compact && (
+            <p className="text-xs font-bold uppercase tracking-wide text-blue-600">Discuss in-app</p>
+          )}
+          <h2 className={`font-black text-foreground flex items-center gap-2 ${compact ? "text-base" : "text-lg"}`}>
             <MessageSquare className="h-5 w-5 text-blue-600" />
             Conversation
           </h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Chat back and forth here the same way you would with a coding agent — ask, clarify, iterate.
-            Replies are immediate. Cloud Agent runs (if any) stay optional and do not block this discussion.
-          </p>
+          {!compact && (
+            <p className="mt-1 text-sm text-muted-foreground">
+              Chat back and forth here the same way you would with a coding agent — ask, clarify, iterate.
+              Replies are immediate. Cloud Agent runs (if any) stay optional and do not block this discussion.
+            </p>
+          )}
+          {compact && (
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              Stay on this screen — chat while you work.
+            </p>
+          )}
         </div>
         {messages.length > 0 && (
           <Button
@@ -191,7 +207,7 @@ export default function NecAccuracyChat({
       </div>
 
       {messages.length === 0 && (
-        <div className="grid gap-2 sm:grid-cols-2">
+        <div className={`grid gap-2 shrink-0 ${compact ? "grid-cols-1" : "sm:grid-cols-2"}`}>
           {STARTERS.map((starter) => (
             <button
               key={starter}
@@ -207,7 +223,13 @@ export default function NecAccuracyChat({
         </div>
       )}
 
-      <div className="min-h-[18rem] max-h-[min(70vh,36rem)] overflow-y-auto rounded-xl border border-border bg-background p-3 space-y-3">
+      <div
+        className={`overflow-y-auto rounded-xl border border-border bg-background p-3 space-y-3 ${
+          compact
+            ? "min-h-0 flex-1"
+            : "min-h-[18rem] max-h-[min(70vh,36rem)]"
+        }`}
+      >
         {messages.length === 0 && (
           <p className="text-sm text-muted-foreground">
             Start a discussion — bugs, NEC results, upgrades, mobile quirks, verification. Keep going turn by turn.
@@ -235,17 +257,17 @@ export default function NecAccuracyChat({
       </div>
 
       {error && (
-        <p className="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 whitespace-pre-wrap">
+        <p className="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 whitespace-pre-wrap shrink-0">
           {error}
         </p>
       )}
 
-      <div className="space-y-2">
+      <div className={`space-y-2 ${compact ? "shrink-0 pb-1" : ""}`}>
         <Textarea
           ref={composerRef}
           value={draft}
           onChange={(event) => setDraft(event.target.value)}
-          rows={4}
+          rows={compact ? 3 : 4}
           placeholder="Message the assistant… (Enter to send, Shift+Enter for a new line)"
           className="text-sm"
           disabled={busy}
@@ -261,9 +283,11 @@ export default function NecAccuracyChat({
             <Send className="h-4 w-4" />
             {busy ? "Sending…" : "Send"}
           </Button>
-          <p className="text-xs text-muted-foreground">
-            Continuous discussion thread — not a one-shot Cloud Agent task.
-          </p>
+          {!compact && (
+            <p className="text-xs text-muted-foreground">
+              Continuous discussion thread — not a one-shot Cloud Agent task.
+            </p>
+          )}
         </div>
       </div>
     </div>
