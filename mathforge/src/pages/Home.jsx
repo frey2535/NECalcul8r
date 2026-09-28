@@ -1,87 +1,130 @@
 import { Link } from 'react-router-dom'
 import { useAppState } from '../hooks/useAppState'
 import { LEVELS } from '../lib/curriculum/catalog'
+import { nextRank, pickRival, rankForRating } from '../lib/arena/ranks'
 
 export default function Home() {
-  const { activeChild, activeProgress } = useAppState()
+  const { activeChild, activeProgress, state } = useAppState()
+  const rating = state.arena?.rating || 0
+  const rank = rankForRating(rating)
+  const nxt = nextRank(rating)
+  const rival = pickRival((activeChild?.name || 'x').length * 31 + new Date().getDate())
+  const wins = state.arena?.wins || 0
+  const losses = state.arena?.losses || 0
+  const wr = wins + losses > 0 ? Math.round((wins / (wins + losses)) * 100) : 0
 
   return (
-    <>
-      <section className="hero">
-        <div className="hero-kicker">
-          <span className="live-dot" /> No calculator · Real scratch paper · Parent watch
+    <div className="lobby">
+      <section className="lobby-hero">
+        <div className="lobby-kicker">
+          <span className="live-dot" /> SEASON 1 · LIVE · NO CALCULATORS
         </div>
-        <h1>
-          Axiom
-          <br />
-          <em>Arena</em>
-        </h1>
-        <p className="lead">
-          Math training that feels like a game — elementary through calculus. International
-          shortcuts explained. Every answer Accuracy-Agent verified.
-        </p>
-        <div className="cta-row">
+        <div className="lobby-title-row">
+          <div>
+            <h1>
+              Axiom
+              <br />
+              <em>Arena</em>
+            </h1>
+            <p className="lead">
+              Ranked math combat. Outpace rivals. Build combos. Climb from Rookie to Axiom Elite.
+            </p>
+          </div>
+          <div className="player-card">
+            <div className="player-card-avatar">{activeChild?.avatar || '🦊'}</div>
+            <div>
+              <div className="player-card-name">{activeChild?.name || 'Player'}</div>
+              <div className="rank-pill lg" style={{ '--rank': rank.color }}>
+                {rank.name}
+              </div>
+              <div className="player-card-rr">{rating} RR</div>
+              {nxt && (
+                <div className="rank-track">
+                  <div className="rank-track-fill" style={{ width: `${Math.min(100, ((rating - rank.min) / Math.max(1, nxt.min - rank.min)) * 100)}%` }} />
+                </div>
+              )}
+              <div className="muted" style={{ fontSize: '0.8rem', marginTop: 6 }}>
+                {nxt ? `${nxt.min - rating} RR to ${nxt.name}` : 'Top of the ladder'}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="lobby-actions">
+          <Link className="btn btn-fight" to="/arena">
+            <span className="btn-fight-pulse" />
+            FIND MATCH
+          </Link>
           <Link className="btn btn-primary" to="/train">
-            Start training →
+            Daily Quests
           </Link>
-          <Link className="btn btn-accent" to="/arena">
-            Enter the Arena
-          </Link>
-          <Link className="btn btn-secondary" to="/parent">
-            Parent HQ
+          <Link className="btn btn-secondary" to="/progress">
+            Career
           </Link>
         </div>
-        <div className="stat-row" style={{ marginTop: 28, maxWidth: 520 }}>
+
+        <div className="stat-row lobby-stats">
           <div className="stat">
-            <div className="label">{activeChild?.name || 'You'}</div>
-            <div className="value">Lv {activeProgress?.level ?? 1}</div>
+            <div className="label">Win rate</div>
+            <div className="value">{wr}%</div>
           </div>
           <div className="stat">
-            <div className="label">XP</div>
-            <div className="value">{activeProgress?.xp ?? 0}</div>
+            <div className="label">Record</div>
+            <div className="value">
+              {wins}-{losses}
+            </div>
           </div>
           <div className="stat">
-            <div className="label">Streak</div>
+            <div className="label">Best combo</div>
+            <div className="value">{state.arena?.bestStreak || 0}x</div>
+          </div>
+          <div className="stat">
+            <div className="label">Login streak</div>
             <div className="value">{activeProgress?.streak ?? 0}d</div>
           </div>
         </div>
       </section>
 
+      <section className="lobby-grid">
+        <Link to="/arena" className="mode-tile mode-ranked">
+          <div className="mode-tag">MAIN MODE</div>
+          <h2>Ranked Duel</h2>
+          <p>75s · HP race · named rivals · RR on the line</p>
+          <span className="mode-cta">Queue up →</span>
+        </Link>
+        <Link to="/train" className="mode-tile mode-quests">
+          <div className="mode-tag">WARMUP</div>
+          <h2>Quest Board</h2>
+          <p>Unlock weapons (topics). Learn tech. Then take it into Ranked.</p>
+          <span className="mode-cta">Open quests →</span>
+        </Link>
+        <div className="mode-tile mode-rival">
+          <div className="mode-tag">TODAY&apos;S RIVAL</div>
+          <div className="rival-preview">
+            <span className="rival-avatar">{rival.avatar}</span>
+            <div>
+              <h2>{rival.name}</h2>
+              <p>“{rival.taunt}”</p>
+            </div>
+          </div>
+          <Link className="mode-cta" to="/arena">
+            Challenge →
+          </Link>
+        </div>
+      </section>
+
       <section className="section">
-        <h2>Pick your battlefield</h2>
-        <p className="sub">From number bonds to integrals. Lessons open with worked examples — then you grind.</p>
+        <h2>Weapon racks</h2>
+        <p className="sub">Every quest line is a weapon class. Master it, then bring it into Ranked.</p>
         <div className="level-rail">
           {LEVELS.map((l) => (
-            <Link key={l.id} to={`/train?level=${l.id}`} className="level-chip" style={{ borderColor: l.color }}>
+            <Link key={l.id} to={`/train?level=${l.id}`} className="level-chip weapon-chip" style={{ borderColor: l.color }}>
               <span className="name">{l.name}</span>
               <span className="blurb">{l.blurb}</span>
             </Link>
           ))}
         </div>
       </section>
-
-      <section className="section">
-        <h2>Built different</h2>
-        <p className="sub">Not another worksheet app. Competitive, visual, and honest about how math works worldwide.</p>
-        <div className="topic-grid">
-          <div className="panel">
-            <h3 style={{ fontFamily: 'var(--font-display)', marginTop: 0 }}>Scratch paper</h3>
-            <p className="muted">Long multiplication & division on a real writing surface. Calculators are banned.</p>
-          </div>
-          <div className="panel">
-            <h3 style={{ fontFamily: 'var(--font-display)', marginTop: 0 }}>Global methods</h3>
-            <p className="muted">Lattice, Vedic, Japanese lines, Singapore bars, Egyptian doubling — with why they work.</p>
-          </div>
-          <div className="panel">
-            <h3 style={{ fontFamily: 'var(--font-display)', marginTop: 0 }}>Parent watch</h3>
-            <p className="muted">Live session feed + proficiency map so you know where to coach.</p>
-          </div>
-          <div className="panel">
-            <h3 style={{ fontFamily: 'var(--font-display)', marginTop: 0 }}>Accuracy Agent</h3>
-            <p className="muted">Every generated problem is step-checked before it reaches your kid.</p>
-          </div>
-        </div>
-      </section>
-    </>
+    </div>
   )
 }

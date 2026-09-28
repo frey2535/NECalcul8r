@@ -58,11 +58,12 @@ export default function Parent() {
 
   return (
     <div>
-      <h1 style={{ fontFamily: 'var(--font-display)', letterSpacing: '-0.03em', marginTop: 0 }}>Parent HQ</h1>
+      <h1 style={{ fontFamily: 'var(--font-display)', letterSpacing: '-0.03em', marginTop: 0 }}>
+        Coach <em style={{ color: 'var(--lime-dim)', fontStyle: 'normal' }}>View</em>
+      </h1>
       <p className="muted">
-        Watch practice live, see proficiency gaps, manage kid profiles. Open this page on your phone with the family
-        code while they train on another tab or device that shares this browser profile — live feed updates every
-        few seconds via BroadcastChannel + local sync.
+        Live spectate your players, scout weak weapons, manage the roster. Open with the family code while they
+        grind or queue Ranked — feed updates across tabs via BroadcastChannel + local sync.
       </p>
 
       <div className="panel" style={{ margin: '16px 0' }}>
@@ -90,7 +91,7 @@ export default function Parent() {
       </div>
 
       <div className="panel" style={{ marginBottom: 20 }}>
-        <h3 style={{ fontFamily: 'var(--font-display)', marginTop: 0 }}>Add a kid</h3>
+        <h3 style={{ fontFamily: 'var(--font-display)', marginTop: 0 }}>Add a player</h3>
         <form onSubmit={onAdd} className="answer-row">
           <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Name" />
           <select value={avatar} onChange={(e) => setAvatar(e.target.value)} style={{ padding: 12, borderRadius: 12, border: '2px solid var(--ink)' }}>
@@ -140,7 +141,7 @@ export default function Parent() {
                   )}
                 </div>
               )}
-              <p style={{ fontWeight: 700, marginBottom: 4 }}>Needs study</p>
+              <p style={{ fontWeight: 700, marginBottom: 4 }}>Weak points</p>
               {needs.length === 0 ? (
                 <p className="muted">None flagged</p>
               ) : (
@@ -152,9 +153,9 @@ export default function Parent() {
                   ))}
                 </ul>
               )}
-              <p style={{ fontWeight: 700, marginBottom: 4 }}>Proficient</p>
+              <p style={{ fontWeight: 700, marginBottom: 4 }}>Mastered</p>
               {pro.length === 0 ? (
-                <p className="muted">Still building</p>
+                <p className="muted">Still climbing</p>
               ) : (
                 <ul style={{ marginTop: 0 }}>
                   {pro.map(([id, t]) => (
@@ -164,7 +165,7 @@ export default function Parent() {
                   ))}
                 </ul>
               )}
-              <p style={{ fontWeight: 700 }}>Recent</p>
+              <p style={{ fontWeight: 700 }}>Recent hits</p>
               <div className="steps">
                 {(kid.recentHistory || []).slice(0, 5).map((h, i) => (
                   <div key={i} className="step">

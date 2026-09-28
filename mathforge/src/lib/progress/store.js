@@ -16,7 +16,10 @@ const defaultState = () => ({
   arena: {
     highScore: 0,
     wins: 0,
+    losses: 0,
     bestStreak: 0,
+    rating: 0,
+    matchHistory: [],
   },
 })
 
@@ -27,6 +30,7 @@ function emptyChildProgress() {
     streak: 0,
     bestStreak: 0,
     lastPracticeDate: null,
+    comboBest: 0,
     // topicId -> { attempted, correct, incorrect, avgTimeMs, recent: bool[] }
     topics: {},
     history: [], // recent attempts
@@ -38,7 +42,16 @@ export function loadState() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (!raw) return defaultState()
-    return { ...defaultState(), ...JSON.parse(raw) }
+    const parsed = JSON.parse(raw)
+    const base = defaultState()
+    return {
+      ...base,
+      ...parsed,
+      arena: { ...base.arena, ...(parsed.arena || {}) },
+      progress: { ...parsed.progress },
+      live: { ...(parsed.live || {}) },
+      children: parsed.children || [],
+    }
   } catch {
     return defaultState()
   }
@@ -57,6 +70,7 @@ export function saveState(state) {
         avatar: c.avatar,
         xp: state.progress[c.id]?.xp ?? 0,
         streak: state.progress[c.id]?.streak ?? 0,
+        rating: state.arena?.rating ?? 0,
         topics: summarizeTopics(state.progress[c.id]),
         live: state.live[c.id] || null,
         recentHistory: (state.progress[c.id]?.history || []).slice(0, 12),
@@ -176,6 +190,30 @@ export function getProficiencyReport(state, childId) {
     else if (t.status === 'learning') learning.push({ id, ...t })
   }
   return { proficient, needsWork, learning, topics }
+}
+
+export function applyMatchResult(state, match) {
+  if (!state.arena) {
+    state.arena = { highScore: 0, wins: 0, losses: 0, bestStreak: 0, rating: 0, matchHistory: [] }
+  }
+  const a = state.arena
+  a.highScore = Math.max(a.highScore || 0, match.score || 0)
+  a.bestStreak = Math.max(a.bestStreak || 0, match.maxStreak || match.streak || 0)
+  a.rating = Math.max(0, (a.rating || 0) + (match.ratingChange || 0))
+  if (match.result === 'win') a.wins = (a.wins || 0) + 1
+  if (match.result === 'loss') a.losses = (a.losses || 0) + 1
+  a.matchHistory = [
+    {
+      at: Date.now(),
+      result: match.result,
+      score: match.score,
+      rival: match.rival?.name,
+      topicId: match.topicId,
+      ratingChange: match.ratingChange,
+    },
+    ...(a.matchHistory || []),
+  ].slice(0, 20)
+  return a
 }
 
 export { summarizeTopics, emptyChildProgress }

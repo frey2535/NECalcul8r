@@ -78,7 +78,7 @@ export default function Practice() {
       prompt: problem.prompt,
     })
     setFeedback(result)
-    setXpToast(`+${xpGain} XP`)
+    setXpToast(result.ok ? `HIT · +${xpGain} XP` : `MISS · +${xpGain} XP`)
     setTimeout(() => setXpToast(null), 1400)
     setLive({
       topicId: topic.id,
@@ -95,11 +95,11 @@ export default function Practice() {
 
   return (
     <div>
-      <div className="no-calc-banner">🚫 No calculator · Accuracy Agent sealed</div>
+      <div className="no-calc-banner">NO CALC · Mission grind · Sealed by Accuracy Agent</div>
       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
         <div>
           <p className="muted" style={{ margin: 0 }}>
-            <Link to={`/lesson/${topic.id}`}>Lesson</Link> / Practice
+            <Link to={`/lesson/${topic.id}`}>Briefing</Link> / Mission
           </p>
           <h1 style={{ fontFamily: 'var(--font-display)', margin: '4px 0 0', letterSpacing: '-0.03em' }}>
             {topic.icon} {topic.name}
@@ -107,7 +107,7 @@ export default function Practice() {
         </div>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <label className="muted" htmlFor="diff">
-            Difficulty
+            Intensity
           </label>
           <select
             id="diff"
@@ -115,9 +115,9 @@ export default function Practice() {
             onChange={(e) => setDifficulty(Number(e.target.value))}
             style={{ padding: '8px 12px', borderRadius: 10, border: '2px solid var(--ink)', background: 'var(--paper)' }}
           >
-            <option value={1}>1 · Warmup</option>
-            <option value={2}>2 · Solid</option>
-            <option value={3}>3 · Spicy</option>
+            <option value={1}>1 · Rookie</option>
+            <option value={2}>2 · Competitive</option>
+            <option value={3}>3 · Tryhard</option>
           </select>
         </div>
       </div>
@@ -128,7 +128,7 @@ export default function Practice() {
         <div className="panel">
           {problem && (
             <>
-              <div className="accuracy-seal">Accuracy Agent · verified</div>
+              <div className="accuracy-seal">Sealed target</div>
               <div className="prompt-box">{problem.prompt}</div>
               <div className="methods-row">
                 {(problem.methods || []).map((m) => (
@@ -142,13 +142,13 @@ export default function Practice() {
                   <input
                     value={answer}
                     onChange={(e) => setAnswer(e.target.value)}
-                    placeholder="Your answer"
+                    placeholder="Strike"
                     autoFocus
                     autoComplete="off"
                     inputMode="decimal"
                   />
-                  <button type="submit" className="btn btn-primary" disabled={!!feedback}>
-                    Check
+                  <button type="submit" className="btn btn-accent" disabled={!!feedback}>
+                    HIT
                   </button>
                 </div>
               </form>
@@ -159,16 +159,18 @@ export default function Practice() {
                     initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
                   >
-                    {feedback.ok ? 'Correct — nice.' : `Not yet. Expected ${feedback.expected}. Study the steps, then go again.`}
+                    {feedback.ok
+                      ? 'HIT — clean.'
+                      : `MISS. Answer was ${feedback.expected}. Replay the tech, then requeue.`}
                   </motion.div>
                 )}
               </AnimatePresence>
               <div className="cta-row" style={{ marginTop: 12 }}>
                 <button type="button" className="btn btn-ghost" onClick={() => setShowSteps((s) => !s)}>
-                  {showSteps ? 'Hide steps' : 'Show step-by-step'}
+                  {showSteps ? 'Hide tech' : 'Show tech / steps'}
                 </button>
-                <button type="button" className="btn btn-accent" onClick={nextProblem}>
-                  Next problem
+                <button type="button" className="btn btn-primary" onClick={nextProblem}>
+                  Next target
                 </button>
               </div>
               {showSteps && problem.steps && (

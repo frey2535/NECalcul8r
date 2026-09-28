@@ -67,7 +67,7 @@ export default function Lesson() {
             </button>
           ) : (
             <button type="button" className="btn btn-accent" onClick={() => navigate(`/practice/${topic.id}`)}>
-              Practice this →
+              Start mission →
             </button>
           )}
         </div>
@@ -82,10 +82,13 @@ export default function Lesson() {
 
       <div className="cta-row" style={{ marginTop: 18 }}>
         <button type="button" className="btn btn-primary" onClick={() => navigate(`/practice/${topic.id}`)}>
-          Skip to practice
+          Skip to mission
+        </button>
+        <button type="button" className="btn btn-fight" onClick={() => navigate('/arena')}>
+          Jump to Ranked
         </button>
         <button type="button" className="btn btn-secondary" onClick={() => setStepIdx(0)}>
-          Replay example
+          Replay briefing
         </button>
       </div>
     </div>

@@ -7,6 +7,7 @@ import {
   saveState,
   setLiveSession,
   getProficiencyReport,
+  applyMatchResult,
 } from '../lib/progress/store'
 
 const AppStateContext = createContext(null)
@@ -74,7 +75,13 @@ export function AppStateProvider({ children }) {
         return getProficiencyReport(state, childId || state.activeChildId)
       },
       updateArena(fn) {
-        update((s) => fn(s.arena))
+        update((s) => {
+          if (!s.arena) s.arena = { highScore: 0, wins: 0, losses: 0, bestStreak: 0, rating: 0, matchHistory: [] }
+          fn(s.arena)
+        })
+      },
+      applyMatch(match) {
+        update((s) => applyMatchResult(s, match))
       },
     }),
     [state, activeChild, activeProgress, update],

@@ -1,44 +1,85 @@
-import { useEffect, useState } from 'react'
-import { motion } from 'framer-motion'
+import { useEffect, useRef, useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { TOPICS } from '../lib/curriculum/catalog'
-import { createArenaMatch, startMatch, submitArenaAnswer, tickMatch, rivalScore } from '../lib/arena/match'
+import {
+  createArenaMatch,
+  enterVs,
+  startCountdown,
+  tickCountdown,
+  submitArenaAnswer,
+  tickMatch,
+  rivalScore,
+} from '../lib/arena/match'
+import { comboLabel, rankForRating } from '../lib/arena/ranks'
 import { useAppState } from '../hooks/useAppState'
 import ScratchPaper from '../components/ScratchPaper'
 
+const ARENA_TOPICS = [
+  'addition',
+  'subtraction',
+  'multiplication',
+  'division',
+  'fractions',
+  'integers',
+  'linear-equations',
+  'exponents',
+  'percentages',
+]
+
 export default function Arena() {
-  const { updateArena } = useAppState()
+  const { activeChild, state, applyMatch } = useAppState()
   const [topicId, setTopicId] = useState('multiplication')
-  const [difficulty, setDifficulty] = useState(1)
+  const [difficulty, setDifficulty] = useState(2)
   const [match, setMatch] = useState(null)
   const [answer, setAnswer] = useState('')
   const [flash, setFlash] = useState(null)
+  const [comboText, setComboText] = useState(null)
   const [, setTick] = useState(0)
+  const appliedRef = useRef(null)
+  const rating = state.arena?.rating || 0
+  const rank = rankForRating(rating)
 
   useEffect(() => {
-    if (!match || match.status !== 'running') return undefined
-    const id = setInterval(() => {
-      setMatch((m) => (m ? { ...tickMatch(m) } : m))
-      setTick((t) => t + 1)
-    }, 200)
-    return () => clearInterval(id)
+    if (!match) return undefined
+    if (match.status === 'countdown') {
+      const id = setInterval(() => {
+        setMatch((m) => (m ? { ...tickCountdown({ ...m }) } : m))
+      }, 700)
+      return () => clearInterval(id)
+    }
+    if (match.status === 'running') {
+      const id = setInterval(() => {
+        setMatch((m) => (m ? { ...tickMatch({ ...m }) } : m))
+        setTick((t) => t + 1)
+      }, 200)
+      return () => clearInterval(id)
+    }
+    return undefined
   }, [match?.status, match?.id])
 
   useEffect(() => {
-    if (match?.status === 'finished') {
-      updateArena((arena) => {
-        arena.highScore = Math.max(arena.highScore, match.score)
-        arena.bestStreak = Math.max(arena.bestStreak, match.streak)
-        if (match.score >= rivalScore(match) || match.correct >= match.rivalTarget) arena.wins++
-      })
+    if (match?.status === 'finished' && appliedRef.current !== match.id) {
+      appliedRef.current = match.id
+      applyMatch(match)
     }
-  }, [match?.status])
+  }, [match?.status, match?.id])
 
-  function begin() {
-    let m = createArenaMatch({ topicId, difficulty, durationSec: 60 })
-    m = startMatch(m)
-    setMatch({ ...m })
+  function queueUp() {
+    const m = createArenaMatch({
+      topicId,
+      difficulty,
+      durationSec: 75,
+      playerName: activeChild?.name || 'You',
+      playerAvatar: activeChild?.avatar || '🦊',
+    })
+    setMatch({ ...enterVs(m) })
     setAnswer('')
     setFlash(null)
+    setComboText(null)
+  }
+
+  function goFight() {
+    setMatch((m) => (m ? { ...startCountdown({ ...m }) } : m))
   }
 
   function onSubmit(e) {
@@ -48,101 +89,177 @@ export default function Arena() {
     setMatch({ ...next })
     setAnswer('')
     setFlash(result?.ok ? 'hit' : 'miss')
-    setTimeout(() => setFlash(null), 400)
+    if (result?.ok) {
+      const label = comboLabel(next.streak)
+      if (label) {
+        setComboText(label)
+        setTimeout(() => setComboText(null), 900)
+      }
+    }
+    setTimeout(() => setFlash(null), 350)
   }
 
-  const remaining = match?.status === 'running'
-    ? Math.max(0, Math.ceil((match.endsAt - Date.now()) / 1000))
-    : match?.durationSec || 60
+  const remaining =
+    match?.status === 'running' ? Math.max(0, Math.ceil((match.endsAt - Date.now()) / 1000)) : match?.durationSec || 75
 
-  const youPct = match ? Math.min(100, (match.score / Math.max(match.rivalTarget * 100, 1)) * 100) : 0
-  const rivalPct = match ? Math.min(100, (rivalScore(match) / Math.max(match.rivalTarget * 100, 1)) * 100) : 0
+  const topic = TOPICS.find((t) => t.id === topicId)
 
   return (
-    <div>
-      <h1 style={{ fontFamily: 'var(--font-display)', letterSpacing: '-0.03em', marginTop: 0 }}>Arena</h1>
-      <p className="muted">60-second rush vs a ghost rival. Fresh problems every time. No calculator.</p>
+    <div className={`arena-screen ${match?.status === 'running' ? 'in-fight' : ''}`}>
+      {(!match || match.status === 'lobby') && (
+        <div className="ranked-lobby">
+          <div className="ranked-head">
+            <div>
+              <div className="lobby-kicker">
+                <span className="live-dot" /> RANKED QUEUE
+              </div>
+              <h1>
+                Find a <em>rival</em>
+              </h1>
+              <p className="lead">HP race. Combos multiply damage. Misses hurt. RR moves every match.</p>
+            </div>
+            <div className="player-card compact">
+              <div className="player-card-avatar">{activeChild?.avatar}</div>
+              <div>
+                <div className="player-card-name">{activeChild?.name}</div>
+                <div className="rank-pill" style={{ '--rank': rank.color }}>
+                  {rank.name} · {rating} RR
+                </div>
+                <div className="muted" style={{ fontSize: '0.85rem', marginTop: 4 }}>
+                  {state.arena?.wins || 0}W · {state.arena?.losses || 0}L
+                </div>
+              </div>
+            </div>
+          </div>
 
-      {(!match || match.status === 'ready') && (
-        <div className="panel" style={{ marginTop: 16, maxWidth: 520 }}>
-          <label>
-            Topic
-            <select
-              value={topicId}
-              onChange={(e) => setTopicId(e.target.value)}
-              style={{ display: 'block', width: '100%', margin: '6px 0 14px', padding: 12, borderRadius: 12, border: '2px solid var(--ink)' }}
-            >
-              {TOPICS.filter((t) => ['addition', 'subtraction', 'multiplication', 'division', 'fractions', 'integers', 'linear-equations', 'exponents', 'percentages'].includes(t.id)).map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.icon} {t.name}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            Difficulty
-            <select
-              value={difficulty}
-              onChange={(e) => setDifficulty(Number(e.target.value))}
-              style={{ display: 'block', width: '100%', margin: '6px 0 14px', padding: 12, borderRadius: 12, border: '2px solid var(--ink)' }}
-            >
-              <option value={1}>Warmup</option>
-              <option value={2}>Solid</option>
-              <option value={3}>Spicy</option>
-            </select>
-          </label>
-          <button type="button" className="btn btn-accent" onClick={begin}>
-            Fight →
-          </button>
+          <div className="loadout-panel">
+            <h3>Loadout</h3>
+            <label>
+              Weapon class
+              <select value={topicId} onChange={(e) => setTopicId(e.target.value)}>
+                {TOPICS.filter((t) => ARENA_TOPICS.includes(t.id)).map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.icon} {t.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Intensity
+              <select value={difficulty} onChange={(e) => setDifficulty(Number(e.target.value))}>
+                <option value={1}>Rookie lane</option>
+                <option value={2}>Competitive</option>
+                <option value={3}>Tryhard</option>
+              </select>
+            </label>
+            <button type="button" className="btn btn-fight" onClick={queueUp}>
+              <span className="btn-fight-pulse" />
+              FIND MATCH
+            </button>
+            <p className="muted" style={{ marginBottom: 0 }}>
+              Rules: no calculator · scratch paper allowed · Accuracy Agent sealed problems
+            </p>
+          </div>
         </div>
       )}
 
-      {match && match.status !== 'ready' && (
+      <AnimatePresence mode="wait">
+        {match?.status === 'vs' && (
+          <motion.div
+            key="vs"
+            className="vs-screen"
+            initial={{ opacity: 0, scale: 0.96 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <div className="vs-fighter">
+              <div className="vs-avatar">{match.playerAvatar}</div>
+              <div className="vs-name">{match.playerName}</div>
+              <div className="rank-pill" style={{ '--rank': rank.color }}>
+                {rank.name}
+              </div>
+            </div>
+            <div className="vs-center">
+              <div className="vs-badge">VS</div>
+              <div className="vs-meta">
+                {topic?.icon} {topic?.name} · {difficulty === 3 ? 'Tryhard' : difficulty === 2 ? 'Competitive' : 'Rookie'}
+              </div>
+              <p className="vs-taunt">“{match.rival.taunt}”</p>
+              <button type="button" className="btn btn-fight" onClick={goFight}>
+                FIGHT
+              </button>
+            </div>
+            <div className="vs-fighter rival">
+              <div className="vs-avatar">{match.rival.avatar}</div>
+              <div className="vs-name">{match.rival.name}</div>
+              <div className="rank-pill" style={{ '--rank': '#e76f51' }}>
+                Rival
+              </div>
+            </div>
+          </motion.div>
+        )}
+
+        {match?.status === 'countdown' && (
+          <motion.div
+            key="cd"
+            className="countdown-screen"
+            initial={{ scale: 0.5, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+          >
+            <div className="countdown-num">{match.countdown > 0 ? match.countdown : 'GO'}</div>
+            <p>Lock in.</p>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {match?.status === 'running' && (
         <>
-          <div className="arena-hud">
-            <div className="stat">
-              <div className="label">Time</div>
-              <div className="value">{remaining}s</div>
+          <div className="fight-hud">
+            <div className="hp-block">
+              <div className="hp-head">
+                <span>
+                  {match.playerAvatar} {match.playerName}
+                </span>
+                <strong>{match.playerHp}</strong>
+              </div>
+              <div className="hp-bar you">
+                <span style={{ width: `${match.playerHp}%` }} />
+              </div>
             </div>
-            <div className="stat">
-              <div className="label">Score</div>
-              <div className="value">{match.score}</div>
+            <div className="fight-clock">
+              <div className="label">TIME</div>
+              <div className={`value ${remaining <= 10 ? 'urgent' : ''}`}>{remaining}</div>
+              <div className="combo-mini">{match.streak > 0 ? `${match.streak}x COMBO` : '—'}</div>
             </div>
-            <div className="stat">
-              <div className="label">Streak</div>
-              <div className="value">{match.streak}</div>
-            </div>
-            <div className="stat">
-              <div className="label">Correct</div>
-              <div className="value">{match.correct}</div>
-            </div>
-          </div>
-
-          <div className="panel" style={{ marginBottom: 14 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700 }}>
-              <span>You</span>
-              <span>{match.score}</span>
-            </div>
-            <div className="rival-bar you-bar">
-              <span style={{ width: `${youPct}%` }} />
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, marginTop: 10 }}>
-              <span>Ghost rival</span>
-              <span>{rivalScore(match)}</span>
-            </div>
-            <div className="rival-bar">
-              <span style={{ width: `${rivalPct}%` }} />
+            <div className="hp-block">
+              <div className="hp-head">
+                <span>
+                  {match.rival.avatar} {match.rival.name}
+                </span>
+                <strong>{match.rivalHp}</strong>
+              </div>
+              <div className="hp-bar rival">
+                <span style={{ width: `${match.rivalHp}%` }} />
+              </div>
             </div>
           </div>
 
-          {match.status === 'running' && match.current && (
-            <div className="practice-layout">
+          <div className="score-strip">
+            <span>YOU {match.score}</span>
+            <span className="muted">ghost pace {rivalScore(match)}</span>
+            <span>
+              HITS {match.correct} · MISS {match.wrong}
+            </span>
+          </div>
+
+          {match.current && (
+            <div className="practice-layout fight-layout">
               <motion.div
-                className="panel"
-                animate={flash === 'hit' ? { scale: [1, 1.02, 1] } : flash === 'miss' ? { x: [0, -6, 6, 0] } : {}}
-                transition={{ duration: 0.35 }}
+                className={`panel fight-panel ${flash || ''}`}
+                animate={flash === 'hit' ? { scale: [1, 1.03, 1] } : flash === 'miss' ? { x: [0, -8, 8, -4, 0] } : {}}
+                transition={{ duration: 0.3 }}
               >
-                <div className="accuracy-seal">Live verified</div>
+                <div className="accuracy-seal">Sealed problem</div>
                 <div className="prompt-box">{match.current.prompt}</div>
                 <form onSubmit={onSubmit}>
                   <div className="answer-row">
@@ -150,38 +267,73 @@ export default function Arena() {
                       value={answer}
                       onChange={(e) => setAnswer(e.target.value)}
                       autoFocus
-                      placeholder="Answer"
+                      placeholder="Strike"
                       autoComplete="off"
                     />
-                    <button type="submit" className="btn btn-primary">
-                      Fire
+                    <button type="submit" className="btn btn-accent">
+                      HIT
                     </button>
                   </div>
                 </form>
               </motion.div>
               <div className="panel">
-                <ScratchPaper height={260} />
+                <ScratchPaper height={240} />
               </div>
             </div>
           )}
 
-          {match.status === 'finished' && (
-            <div className="panel">
-              <h2 style={{ fontFamily: 'var(--font-display)', marginTop: 0 }}>
-                {match.score >= rivalScore(match) ? 'You beat the ghost.' : 'Ghost edged you — rematch?'}
-              </h2>
-              <p>
-                Score {match.score} · {match.correct} correct · {match.wrong} misses
-              </p>
-              <button type="button" className="btn btn-accent" onClick={begin}>
-                Rematch
-              </button>
-              <button type="button" className="btn btn-ghost" style={{ marginLeft: 8 }} onClick={() => setMatch(null)}>
-                Change topic
-              </button>
-            </div>
-          )}
+          <AnimatePresence>
+            {comboText && (
+              <motion.div
+                className="combo-banner"
+                initial={{ opacity: 0, y: 20, scale: 0.8 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -30 }}
+              >
+                {comboText}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </>
+      )}
+
+      {match?.status === 'finished' && (
+        <motion.div className={`result-screen ${match.result}`} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
+          <div className="result-kicker">{match.result === 'win' ? 'VICTORY' : match.result === 'loss' ? 'DEFEAT' : 'DRAW'}</div>
+          <h2>
+            {match.result === 'win' ? 'You dropped them.' : match.result === 'loss' ? 'They edged you.' : 'Even fight.'}
+          </h2>
+          <div className="result-rr">
+            {match.ratingChange >= 0 ? '+' : ''}
+            {match.ratingChange} RR
+          </div>
+          <div className="stat-row" style={{ margin: '18px 0' }}>
+            <div className="stat">
+              <div className="label">Score</div>
+              <div className="value">{match.score}</div>
+            </div>
+            <div className="stat">
+              <div className="label">Max combo</div>
+              <div className="value">{match.maxStreak}x</div>
+            </div>
+            <div className="stat">
+              <div className="label">HP left</div>
+              <div className="value">{match.playerHp}</div>
+            </div>
+            <div className="stat">
+              <div className="label">Rival HP</div>
+              <div className="value">{match.rivalHp}</div>
+            </div>
+          </div>
+          <div className="cta-row">
+            <button type="button" className="btn btn-fight" onClick={queueUp}>
+              Rematch
+            </button>
+            <button type="button" className="btn btn-secondary" onClick={() => setMatch(null)}>
+              Change loadout
+            </button>
+          </div>
+        </motion.div>
       )}
     </div>
   )
