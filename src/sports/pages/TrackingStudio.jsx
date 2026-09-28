@@ -41,6 +41,8 @@ export default function TrackingStudio() {
 
   const simRef = useRef(null);
   const trackerRef = useRef(null);
+  const tracksRef = useRef([]);
+  const ballRef = useRef(null);
 
   useEffect(() => {
     simRef.current = createMatchSimulation();
@@ -52,21 +54,38 @@ export default function TrackingStudio() {
     let raf = 0;
     let last = performance.now();
     let acc = 0;
+    let uiAcc = 0;
     const dt = 1 / FPS;
 
     const tick = (now) => {
-      acc += (now - last) / 1000;
+      const elapsed = (now - last) / 1000;
       last = now;
+      acc += elapsed;
+      uiAcc += elapsed;
       while (acc >= dt) {
         const frame = simulateStep(simRef.current, dt);
         const nextTracks = trackerStep(trackerRef.current, frame.detections, dt);
-        setTracks(nextTracks);
-        setBall(frame.ball);
-        setClock(frame.t);
-        setPossession(frame.possession);
-        setPhase(frame.phase);
-        setEvents(frame.events);
+        tracksRef.current = nextTracks;
+        ballRef.current = frame.ball;
+        simRef.current.__lastUi = {
+          tracks: nextTracks,
+          ball: frame.ball,
+          clock: frame.t,
+          possession: frame.possession,
+          phase: frame.phase,
+          events: frame.events,
+        };
         acc -= dt;
+      }
+      if (uiAcc >= 1 / 12 && simRef.current.__lastUi) {
+        const ui = simRef.current.__lastUi;
+        setTracks(ui.tracks);
+        setBall(ui.ball);
+        setClock(ui.clock);
+        setPossession(ui.possession);
+        setPhase(ui.phase);
+        setEvents(ui.events);
+        uiAcc = 0;
       }
       raf = requestAnimationFrame(tick);
     };
@@ -137,6 +156,7 @@ export default function TrackingStudio() {
         <div className="vectr-scanline relative min-h-[52vh] border-b border-[var(--vectr-line)] lg:min-h-0 lg:border-b-0 lg:border-r">
           <TrackingCanvas
             tracks={tracks}
+            tracksRef={tracksRef}
             ball={ball}
             heatmap={heatmap}
             selectedId={selectedId}

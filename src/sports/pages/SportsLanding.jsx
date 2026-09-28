@@ -15,11 +15,6 @@ export default function SportsLanding() {
 
   return (
     <div className="vectr-root">
-      <link
-        rel="stylesheet"
-        href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;600&family=Manrope:wght@400;500;600;700;800&display=swap"
-      />
-
       <nav className="absolute inset-x-0 top-0 z-20 flex items-center justify-between px-5 py-5 md:px-10">
         <div className="vectr-display text-2xl tracking-[0.12em] text-[var(--vectr-signal)]">VECTR</div>
         <div className="flex items-center gap-4 text-sm">
