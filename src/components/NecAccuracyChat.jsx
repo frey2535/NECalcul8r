@@ -14,7 +14,7 @@ const STARTERS = [
   "How would you approach a suspected NEC calculator miss the same way a coding agent would?",
 ];
 
-const DISCUSSION_SYSTEM = `You are Auto — Cursor's AI coding agent — embedded inside NECalcul8r. Work exactly like Cursor chat (upgrade-gated). Never claim you cannot act like Cursor. Stay in-app; no Cloud Agents billing.`;
+const DISCUSSION_SYSTEM = `You are Auto — Cursor's AI coding agent in NECalcul8r. You can run verify/lint via tools. Never say you cannot execute commands. Never tell the user to run npm themselves.`;
 
 function loadMessages() {
   try {
