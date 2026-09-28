@@ -1,5 +1,4 @@
 import { Link } from 'react-router-dom'
-import { motion } from 'framer-motion'
 import { useAppState } from '../hooks/useAppState'
 import { LEVELS } from '../lib/curriculum/catalog'
 
@@ -9,36 +8,19 @@ export default function Home() {
   return (
     <>
       <section className="hero">
-        <motion.div
-          className="hero-kicker"
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.45 }}
-        >
+        <div className="hero-kicker">
           <span className="live-dot" /> No calculator · Real scratch paper · Parent watch
-        </motion.div>
-        <motion.h1
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.55, delay: 0.05 }}
-        >
-          <span>Axiom</span> Arena
-        </motion.h1>
-        <motion.p
-          className="lead"
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.15 }}
-        >
+        </div>
+        <h1>
+          Axiom
+          <br />
+          <em>Arena</em>
+        </h1>
+        <p className="lead">
           Math training that feels like a game — elementary through calculus. International
           shortcuts explained. Every answer Accuracy-Agent verified.
-        </motion.p>
-        <motion.div
-          className="cta-row"
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.45, delay: 0.28 }}
-        >
+        </p>
+        <div className="cta-row">
           <Link className="btn btn-primary" to="/train">
             Start training →
           </Link>
@@ -48,7 +30,7 @@ export default function Home() {
           <Link className="btn btn-secondary" to="/parent">
             Parent HQ
           </Link>
-        </motion.div>
+        </div>
         <div className="stat-row" style={{ marginTop: 28, maxWidth: 520 }}>
           <div className="stat">
             <div className="label">{activeChild?.name || 'You'}</div>

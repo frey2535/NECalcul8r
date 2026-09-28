@@ -128,9 +128,10 @@ a {
 .hero {
   display: grid;
   gap: 18px;
-  padding: 28px 0 12px;
-  min-height: calc(100vh - var(--nav-h) - 40px);
-  align-content: center;
+  padding: 36px 0 28px;
+  min-height: calc(100vh - var(--nav-h) - 48px);
+  align-content: start;
+  padding-top: clamp(36px, 8vh, 72px);
 }
 
 .hero-kicker {
@@ -146,18 +147,31 @@ a {
 
 .hero h1 {
   font-family: var(--font-display);
-  font-size: clamp(2.8rem, 8vw, 5.5rem);
-  line-height: 0.92;
-  letter-spacing: -0.045em;
+  font-size: clamp(3.2rem, 10vw, 6.2rem);
+  line-height: 0.88;
+  letter-spacing: -0.05em;
   margin: 0;
-  max-width: 10ch;
+  max-width: 8ch;
+  color: var(--ink);
+  animation: heroRise 0.55s ease both;
 }
 
-.hero h1 span {
-  color: transparent;
-  background: linear-gradient(120deg, var(--ink) 20%, var(--lime-dim) 50%, var(--coral) 90%);
-  -webkit-background-clip: text;
-  background-clip: text;
+.hero h1 em {
+  font-style: normal;
+  color: var(--lime-dim);
+}
+
+.hero .lead {
+  animation: heroRise 0.55s ease 0.08s both;
+}
+
+.hero .cta-row {
+  animation: heroRise 0.55s ease 0.16s both;
+}
+
+@keyframes heroRise {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .hero p.lead {
