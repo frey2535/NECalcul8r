@@ -53,14 +53,20 @@ to `https://api.cursor.com/v1/agents` with Basic auth (`API_KEY:`).
 **Primary in-app assistant (recommended — no Cursor Cloud Agents billing):**
 
 ```bash
+# Option A: OpenAI
 supabase secrets set OPENAI_API_KEY=... --project-ref gqdxvctvufalunaaopyj
 supabase secrets set OPENAI_MODEL=gpt-4o-mini --project-ref gqdxvctvufalunaaopyj
+
+# Option B: OpenRouter (OpenAI-compatible; free models available)
+supabase secrets set OPENROUTER_API_KEY=... --project-ref gqdxvctvufalunaaopyj
+supabase secrets set OPENAI_MODEL=openai/gpt-4o-mini --project-ref gqdxvctvufalunaaopyj
+
 supabase functions deploy nec-accuracy-chat --project-ref gqdxvctvufalunaaopyj
 ```
 
 `nec-accuracy-chat` powers `/accuracy-assistant`. It is included with paid upgrades
 (same boundary as NEC Tables) and for platform admins. It never opens cursor.com and
-does not use Cursor hard limits.
+does not use Cursor hard limits. Do **not** rely on `VITE_OPENAI_API_KEY` for production chat.
 
 `create-cursor-agent` accepts optional `missionId` (`nec_accuracy_guardian`,
 `daily_full_scan`, `proactive_audit`, `fix_known`, `suggest_only`,

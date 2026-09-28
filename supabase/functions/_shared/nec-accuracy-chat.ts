@@ -1,4 +1,4 @@
-/** System prompt + OpenAI helpers for the in-app NECalcul8r chat (conversational, like Cursor Agent chat). */
+/** System prompt + LLM helpers for the in-app NECalcul8r chat (OpenAI or OpenRouter). */
 
 export const NEC_ASSISTANT_SYSTEM = `You are the in-app NECalcul8r assistant — a conversational partner for the product owner and paid users, similar to chatting with a coding agent inside the app.
 
@@ -28,22 +28,43 @@ function optionalEnv(name: string) {
   return value && value.trim() ? value.trim() : null;
 }
 
+function resolveLlmConfig() {
+  const openRouterKey = optionalEnv("OPENROUTER_API_KEY");
+  const openAiKey = optionalEnv("OPENAI_API_KEY");
+  const explicitBase = optionalEnv("OPENAI_BASE_URL");
+
+  if (openRouterKey) {
+    return {
+      apiKey: openRouterKey,
+      baseUrl: (explicitBase || "https://openrouter.ai/api/v1").replace(/\/$/, ""),
+      model: optionalEnv("OPENAI_MODEL") || optionalEnv("OPENROUTER_MODEL") || "openai/gpt-4o-mini",
+      provider: "openrouter" as const,
+    };
+  }
+
+  if (openAiKey) {
+    return {
+      apiKey: openAiKey,
+      baseUrl: (explicitBase || "https://api.openai.com/v1").replace(/\/$/, ""),
+      model: optionalEnv("OPENAI_MODEL") || "gpt-4o-mini",
+      provider: "openai" as const,
+    };
+  }
+
+  throw Object.assign(
+    new Error(
+      "In-app chat is not configured. Set Supabase secret OPENAI_API_KEY (or OPENROUTER_API_KEY) on project gqdxvctvufalunaaopyj, then redeploy nec-accuracy-chat. Do not use VITE_OPENAI_API_KEY for production chat.",
+    ),
+    { status: 503 },
+  );
+}
+
 export async function completeNecAccuracyChat(options: {
   messages: ChatMessage[];
   missionHint?: string | null;
   agentContext?: string | null;
 }) {
-  const apiKey = optionalEnv("OPENAI_API_KEY");
-  if (!apiKey) {
-    throw Object.assign(
-      new Error(
-        "OPENAI_API_KEY is not set on Supabase. Set it once (same key used for blueprint AI) — this chat does not use Cursor Cloud Agents or Cursor billing.",
-      ),
-      { status: 503 },
-    );
-  }
-
-  const model = optionalEnv("OPENAI_MODEL") || "gpt-4o-mini";
+  const config = resolveLlmConfig();
   const extras = [
     options.missionHint ? `Session focus: ${options.missionHint}` : null,
     options.agentContext ? `Active Cloud Agent context (for discussion only):\n${options.agentContext}` : null,
@@ -64,14 +85,20 @@ export async function completeNecAccuracyChat(options: {
     throw Object.assign(new Error("Send at least one user message."), { status: 400 });
   }
 
-  const response = await fetch("https://api.openai.com/v1/chat/completions", {
+  const headers: Record<string, string> = {
+    Authorization: `Bearer ${config.apiKey}`,
+    "Content-Type": "application/json",
+  };
+  if (config.provider === "openrouter") {
+    headers["HTTP-Referer"] = optionalEnv("APP_ORIGIN") || "https://necalcul8r.currentflowconsulting.org";
+    headers["X-Title"] = "NECalcul8r Accuracy Assistant";
+  }
+
+  const response = await fetch(`${config.baseUrl}/chat/completions`, {
     method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
+    headers,
     body: JSON.stringify({
-      model,
+      model: config.model,
       temperature: 0.35,
       messages,
     }),
@@ -80,8 +107,11 @@ export async function completeNecAccuracyChat(options: {
   const payload = await response.json().catch(() => ({} as Record<string, unknown>));
   if (!response.ok) {
     const err = (payload as { error?: { message?: string }; message?: string });
-    const detail = err.error?.message || err.message || `OpenAI request failed (${response.status}).`;
-    throw Object.assign(new Error(detail), { status: response.status >= 400 && response.status < 600 ? response.status : 502, details: payload });
+    const detail = err.error?.message || err.message || `LLM request failed (${response.status}).`;
+    throw Object.assign(new Error(detail), {
+      status: response.status >= 400 && response.status < 600 ? response.status : 502,
+      details: payload,
+    });
   }
 
   const choice = (payload as { choices?: Array<{ message?: { content?: string } }> }).choices?.[0];
@@ -90,5 +120,5 @@ export async function completeNecAccuracyChat(options: {
     throw Object.assign(new Error("The assistant returned an empty reply."), { status: 502 });
   }
 
-  return { text, model };
+  return { text, model: config.model, provider: config.provider };
 }

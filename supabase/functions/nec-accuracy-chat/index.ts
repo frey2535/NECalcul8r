@@ -79,7 +79,7 @@ Deno.serve(async (req) => {
         ok: true,
         reply: result.text,
         model: result.model,
-        provider: "openai",
+        provider: result.provider || "openai",
       });
     } catch (error) {
       const err = error as Error & { status?: number; details?: unknown };
