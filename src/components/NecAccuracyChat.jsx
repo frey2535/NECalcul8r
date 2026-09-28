@@ -41,8 +41,20 @@ async function askAssistant({ messages, focusHint, agentContext }) {
     throw new Error("Empty assistant reply.");
   } catch (edgeError) {
     const message = String(edgeError?.message || "");
-    const canFallback = /OPENAI_API_KEY|not configured|503|AI is not configured|Unknown function|failed to send|gateway 404|not found/i.test(message);
+    // Missing server AI secrets must not fall through to the browser Vite key path.
+    if (/OPENAI_API_KEY|OPENROUTER_API_KEY|In-app chat is not configured|is not set on Supabase/i.test(message)) {
+      throw new Error(
+        /Supabase secret|OPENROUTER_API_KEY|OPENAI_API_KEY/i.test(message)
+          ? message
+          : "In-app chat is not configured. Set Supabase secret OPENAI_API_KEY or OPENROUTER_API_KEY on project gqdxvctvufalunaaopyj, then redeploy nec-accuracy-chat.",
+      );
+    }
+
+    const hasViteKey = Boolean(import.meta.env.VITE_OPENAI_API_KEY);
+    const canFallback = hasViteKey && /Unknown function|failed to send|gateway 404|not found|not deployed/i.test(message);
     if (!canFallback) throw edgeError;
+
+    // Local/dev only: fall back to the blueprint OpenAI path when Vite key exists.
     const transcript = messages
       .map((item) => `${item.role === "assistant" ? "Assistant" : "User"}: ${item.content}`)
       .join("\n\n");
