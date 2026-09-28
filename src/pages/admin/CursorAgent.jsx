@@ -207,8 +207,7 @@ export default function CursorAgent() {
             <h1 className="text-2xl font-black text-foreground">In-app Agent Chat</h1>
             <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
               Discuss here turn-by-turn <span className="font-semibold text-foreground">exactly like a Cursor agent chat</span> —
-              ask, clarify, iterate. Replies are immediate and stay in the app. Optional Cloud Agent runs can implement repo work;
-              they do not replace this conversation.
+              ask, clarify, iterate. Replies are immediate, stay in the app, and do not use Cursor credits.
             </p>
           </div>
         </div>
@@ -341,7 +340,7 @@ export default function CursorAgent() {
                 <ChevronDown className="h-4 w-4 text-muted-foreground" />
               </h2>
               <p className="mt-1 text-xs text-muted-foreground">
-                Billed on your Cursor account (hard limits apply). Not required for the in-app assistant above.
+                Uses Cursor account credits. Not used by the in-app chat above — leave this closed unless you intentionally want a repo agent.
               </p>
             </div>
           </summary>

@@ -190,7 +190,7 @@ Deno.serve(async (req) => {
     const payload = await req.json().catch(() => ({}));
     const source = optionalString(payload.source)
       || (auth.mode === "manual" ? "manual" : "daily_cron");
-    const startAgent = payload.startAgent !== false;
+    const startAgent = payload.startAgent === true;
     const client = serviceClient();
 
     const findings: Finding[] = [];
@@ -259,7 +259,7 @@ Deno.serve(async (req) => {
     const severity = criticalCount > 0 ? "critical" : findings.length > 0 ? "warning" : "info";
     const appOrigin = optionalString(Deno.env.get("APP_ORIGIN")) || "https://frey2535.github.io/NECalcul8r";
     const link = agent?.url
-      || `${appOrigin.replace(/\/$/, "")}/admin/cursor-agent`;
+      || `${appOrigin.replace(/\/$/, "")}/accuracy-assistant`;
     const title = criticalCount > 0
       ? `Daily scan: ${criticalCount} critical issue(s) found`
       : findings.length > 0
@@ -268,9 +268,9 @@ Deno.serve(async (req) => {
     const body = [
       `Source: ${source}.`,
       `Automated findings: ${findings.length}.`,
-      agent?.url ? `Deep Cursor scan started: ${agent.url}` : null,
-      agentError ? `Cursor deep scan could not start: ${agentError}` : null,
-      "Open the Cursor admin page for the full list and follow-ups.",
+      agent?.url ? `Optional Cloud Agent started: ${agent.url}` : null,
+      agentError ? `Optional Cloud Agent could not start: ${agentError}` : null,
+      "Open the in-app Assistant to discuss findings (no Cursor credits required).",
     ].filter(Boolean).join(" ");
 
     await client

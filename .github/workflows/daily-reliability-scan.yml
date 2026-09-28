@@ -104,7 +104,7 @@ jobs:
           const findings = JSON.parse(fs.readFileSync("daily-scan-findings.json", "utf8"));
           const body = JSON.stringify({
             source: "github_actions",
-            startAgent: true,
+            startAgent: false,
             findings,
           });
           const url = `${process.env.SUPABASE_URL.replace(/\/$/, "")}/functions/v1/daily-reliability-scan`;

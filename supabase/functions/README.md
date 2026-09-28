@@ -57,9 +57,11 @@ to `https://api.cursor.com/v1/agents` with Basic auth (`API_KEY:`).
 supabase secrets set OPENAI_API_KEY=... --project-ref gqdxvctvufalunaaopyj
 supabase secrets set OPENAI_MODEL=gpt-4o-mini --project-ref gqdxvctvufalunaaopyj
 
-# Option B: OpenRouter (OpenAI-compatible; free models available)
+# Option B: OpenRouter (preferred for credit-free in-app chat)
+# Use openrouter/free so chat works with $0 OpenRouter balance.
 supabase secrets set OPENROUTER_API_KEY=... --project-ref gqdxvctvufalunaaopyj
-supabase secrets set OPENAI_MODEL=openai/gpt-4o-mini --project-ref gqdxvctvufalunaaopyj
+supabase secrets set OPENAI_MODEL=openrouter/free --project-ref gqdxvctvufalunaaopyj
+# Paid OpenRouter slugs need credits; the function falls back to openrouter/free on 402.
 
 supabase functions deploy nec-accuracy-chat --project-ref gqdxvctvufalunaaopyj
 ```

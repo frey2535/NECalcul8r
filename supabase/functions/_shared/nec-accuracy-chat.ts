@@ -15,13 +15,16 @@ Domain focus:
 
 Boundaries:
 - Stay inside NECalcul8r. Do not tell the user they must leave the app to continue this conversation.
-- You cannot push to GitHub, open PRs, or control Cursor Cloud Agents from this chat. If the user wants a repo change implemented by a Cloud Agent, explain what to send as a follow-up task — but keep discussing here.
+- Do not send users to cursor.com or ask them to buy Cursor credits. This chat runs inside NECalcul8r.
 - Never weaken auth, billing, or admin checks. Never ask for or expose API keys or secrets.`;
 
 export type ChatMessage = {
   role: "user" | "assistant" | "system";
   content: string;
 };
+
+/** OpenRouter free router — works with $0 OpenRouter balance. */
+const OPENROUTER_FREE_MODEL = "openrouter/free";
 
 function optionalEnv(name: string) {
   const value = Deno.env.get(name);
@@ -34,10 +37,19 @@ function resolveLlmConfig() {
   const explicitBase = optionalEnv("OPENAI_BASE_URL");
 
   if (openRouterKey) {
+    const configured =
+      optionalEnv("OPENROUTER_MODEL") ||
+      optionalEnv("OPENAI_MODEL") ||
+      OPENROUTER_FREE_MODEL;
+    // Paid OpenRouter slugs need account credits. Prefer free router when unset/legacy paid default.
+    const model =
+      configured === "openai/gpt-4o-mini" || configured === "gpt-4o-mini"
+        ? OPENROUTER_FREE_MODEL
+        : configured;
     return {
       apiKey: openRouterKey,
       baseUrl: (explicitBase || "https://openrouter.ai/api/v1").replace(/\/$/, ""),
-      model: optionalEnv("OPENAI_MODEL") || optionalEnv("OPENROUTER_MODEL") || "openai/gpt-4o-mini",
+      model,
       provider: "openrouter" as const,
     };
   }
@@ -53,10 +65,45 @@ function resolveLlmConfig() {
 
   throw Object.assign(
     new Error(
-      "In-app chat is not configured. Set Supabase secret OPENAI_API_KEY (or OPENROUTER_API_KEY) on project gqdxvctvufalunaaopyj, then redeploy nec-accuracy-chat. Do not use VITE_OPENAI_API_KEY for production chat.",
+      "In-app chat is not configured. Set Supabase secret OPENROUTER_API_KEY (or OPENAI_API_KEY) on project gqdxvctvufalunaaopyj, then redeploy nec-accuracy-chat. Do not use VITE_OPENAI_API_KEY for production chat.",
     ),
     { status: 503 },
   );
+}
+
+function isInsufficientCreditsError(status: number, detail: string) {
+  return (
+    status === 402 ||
+    /insufficient credits|purchase more|openrouter_credits|add credits/i.test(detail)
+  );
+}
+
+async function requestChatCompletion(options: {
+  config: ReturnType<typeof resolveLlmConfig>;
+  model: string;
+  messages: Array<{ role: string; content: string }>;
+}) {
+  const headers: Record<string, string> = {
+    Authorization: `Bearer ${options.config.apiKey}`,
+    "Content-Type": "application/json",
+  };
+  if (options.config.provider === "openrouter") {
+    headers["HTTP-Referer"] = optionalEnv("APP_ORIGIN") || "https://necalcul8r.currentflowconsulting.org";
+    headers["X-Title"] = "NECalcul8r Accuracy Assistant";
+  }
+
+  const response = await fetch(`${options.config.baseUrl}/chat/completions`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({
+      model: options.model,
+      temperature: 0.35,
+      messages: options.messages,
+    }),
+  });
+
+  const payload = await response.json().catch(() => ({} as Record<string, unknown>));
+  return { response, payload };
 }
 
 export async function completeNecAccuracyChat(options: {
@@ -67,7 +114,7 @@ export async function completeNecAccuracyChat(options: {
   const config = resolveLlmConfig();
   const extras = [
     options.missionHint ? `Session focus: ${options.missionHint}` : null,
-    options.agentContext ? `Active Cloud Agent context (for discussion only):\n${options.agentContext}` : null,
+    options.agentContext ? `Session context:\n${options.agentContext}` : null,
   ].filter(Boolean).join("\n\n");
   const system = extras ? `${NEC_ASSISTANT_SYSTEM}\n\n${extras}` : NEC_ASSISTANT_SYSTEM;
 
@@ -85,29 +132,31 @@ export async function completeNecAccuracyChat(options: {
     throw Object.assign(new Error("Send at least one user message."), { status: 400 });
   }
 
-  const headers: Record<string, string> = {
-    Authorization: `Bearer ${config.apiKey}`,
-    "Content-Type": "application/json",
-  };
-  if (config.provider === "openrouter") {
-    headers["HTTP-Referer"] = optionalEnv("APP_ORIGIN") || "https://necalcul8r.currentflowconsulting.org";
-    headers["X-Title"] = "NECalcul8r Accuracy Assistant";
+  let model = config.model;
+  let { response, payload } = await requestChatCompletion({ config, model, messages });
+
+  // Paid OpenRouter models fail with 402 when the account has $0 credits.
+  // Retry once on the free router so in-app chat keeps working without Cursor/OpenRouter spend.
+  if (
+    !response.ok &&
+    config.provider === "openrouter" &&
+    model !== OPENROUTER_FREE_MODEL
+  ) {
+    const err = (payload as { error?: { message?: string }; message?: string });
+    const detail = err.error?.message || err.message || "";
+    if (isInsufficientCreditsError(response.status, detail)) {
+      model = OPENROUTER_FREE_MODEL;
+      ({ response, payload } = await requestChatCompletion({ config, model, messages }));
+    }
   }
 
-  const response = await fetch(`${config.baseUrl}/chat/completions`, {
-    method: "POST",
-    headers,
-    body: JSON.stringify({
-      model: config.model,
-      temperature: 0.35,
-      messages,
-    }),
-  });
-
-  const payload = await response.json().catch(() => ({} as Record<string, unknown>));
   if (!response.ok) {
     const err = (payload as { error?: { message?: string }; message?: string });
-    const detail = err.error?.message || err.message || `LLM request failed (${response.status}).`;
+    let detail = err.error?.message || err.message || `LLM request failed (${response.status}).`;
+    if (isInsufficientCreditsError(response.status, detail)) {
+      detail =
+        "In-app chat could not reach a free model. Set OPENAI_MODEL=openrouter/free on Supabase and redeploy nec-accuracy-chat.";
+    }
     throw Object.assign(new Error(detail), {
       status: response.status >= 400 && response.status < 600 ? response.status : 502,
       details: payload,
@@ -120,5 +169,5 @@ export async function completeNecAccuracyChat(options: {
     throw Object.assign(new Error("The assistant returned an empty reply."), { status: 502 });
   }
 
-  return { text, model: config.model, provider: config.provider };
+  return { text, model, provider: config.provider };
 }
