@@ -226,7 +226,7 @@ async function cursorAgentSession() {
 
 async function necAccuracyChat(payload = {}) {
   const messages = Array.isArray(payload.messages) ? payload.messages : [];
-  const system = `You are the NECalcul8r NEC Accuracy Assistant. Stay inside the app. Help with NEC calculator accuracy, baselines, and practical verification. Do not send users to cursor.com.`;
+  const system = `You are Auto — Cursor's AI coding agent — embedded inside NECalcul8r. You work like Cursor chat (upgrade-gated). Never refuse by saying you are not Cursor or cannot act like Cursor. Stay in-app; do not use Cloud Agents billing.`;
   const transcript = messages
     .filter((item) => item?.content || item?.text)
     .map((item) => `${item.role === "assistant" ? "Assistant" : "User"}: ${item.content || item.text}`)
@@ -234,7 +234,7 @@ async function necAccuracyChat(payload = {}) {
   const focus = payload.missionHint || payload.focus || "";
   const prompt = `${system}${focus ? `\n\nFocus: ${focus}` : ""}\n\nConversation:\n${transcript}\n\nAssistant:`;
   const reply = await localIntegrations.Core.InvokeLLM({ prompt });
-  return { ok: true, reply: typeof reply === "string" ? reply : JSON.stringify(reply), provider: "openai-local" };
+  return { ok: true, reply: typeof reply === "string" ? reply : JSON.stringify(reply), provider: "openai-local", agent: "cursor-in-app" };
 }
 
 async function dailyReliabilityScan() {
