@@ -177,14 +177,14 @@ export default function NecAccuracyChat({
             Conversation
           </h2>
           {!compact && (
-            <p className="mt-1 text-sm text-muted-foreground">
-              Chat back and forth here the same way you would with a coding agent — ask, clarify, iterate.
-              Replies are immediate. Cloud Agent runs (if any) stay optional and do not block this discussion.
-            </p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Chat back and forth here the same way you would with a coding agent — ask, clarify, iterate.
+            Replies are immediate and do not use Cursor Cloud Agent credits.
+          </p>
           )}
           {compact && (
             <p className="mt-0.5 text-xs text-muted-foreground">
-              Stay on this screen — chat while you work.
+              Stay on this screen — chat while you work. No Cursor credits.
             </p>
           )}
         </div>
