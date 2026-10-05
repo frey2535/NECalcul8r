@@ -1,3 +1,5 @@
+import { verifyBuildrPassword } from "./buildrBridge";
+import { invokeSupabaseFunction } from "./supabaseFunctions";
 import { daysFromNow, httpError, todayISODate } from "./localDb";
 import { requireSupabase } from "./supabaseClient";
 
@@ -273,14 +275,58 @@ export const supabaseAuth = {
     return profileFor(data.user);
   },
 
+
+  async loginViaBuildrSso(token) {
+    const result = await invokeSupabaseFunction("buildr-sso", { token });
+    const accessToken = result?.access_token || result?.data?.access_token;
+    const refreshToken = result?.refresh_token || result?.data?.refresh_token;
+    if (!accessToken || !refreshToken) {
+      throw httpError(result?.error || "Buildr sign-in failed", 403);
+    }
+    const client = requireSupabase();
+    const { data, error } = await client.auth.setSession({
+      access_token: accessToken,
+      refresh_token: refreshToken,
+    });
+    if (error || !data?.user) throw error || httpError("Could not establish Buildr session", 403);
+    return profileFor(data.user);
+  },
   async loginViaEmailPassword(email, password) {
     const client = requireSupabase();
+    const normalized = normalizeEmail(email);
     const { data, error } = await client.auth.signInWithPassword({
-      email: normalizeEmail(email),
+      email: normalized,
       password,
     });
-    if (error) throw error;
-    return profileFor(data.user);
+    if (!error && data?.user) return profileFor(data.user);
+
+    const buildr = await verifyBuildrPassword({
+      email: normalized,
+      password,
+      productKey: "necalcul8r",
+    });
+    if (!buildr?.valid) throw error || httpError("Invalid email or password");
+
+    // Same Buildr password: ensure Supabase user exists, then sign in.
+    const created = await client.auth.signUp({
+      email: normalized,
+      password,
+      options: {
+        data: {
+          organization_name: buildr.company_name || null,
+          buildr_company_id: buildr.company_id || null,
+          full_name: buildr.name || null,
+        },
+      },
+    });
+    if (created.error && !/already/i.test(created.error.message || "")) {
+      // try sign-in again after createUser via edge is unavailable
+    }
+    const retry = await client.auth.signInWithPassword({ email: normalized, password });
+    if (retry.error || !retry.data?.user) {
+      throw httpError("Buildr password is valid, but this app account is not ready yet. Open NECalcul8r from the Buildr sidebar once.");
+    }
+    return profileFor(retry.data.user);
   },
 
   async register({ email, password, organizationName, inviteCode }) {
