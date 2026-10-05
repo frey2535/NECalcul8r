@@ -1,3 +1,4 @@
+import { bootstrapBuildrFamilyAppSso, verifyBuildrPassword } from "./buildrBridge";
 import {
   daysFromNow,
   getSessionToken,
@@ -274,9 +275,53 @@ export const localAuth = {
       }
     }
 
+    const buildr = await verifyBuildrPassword({
+      email: normalized,
+      password,
+      productKey: "necalcul8r",
+    });
+    if (buildr?.valid) {
+      return localAuth.loginViaBuildrSsoFromBootstrap(buildr);
+    }
     throw httpError("No local account for this email. Create one — Base44 logins were not imported.");
   },
 
+  async loginViaBuildrSsoFromBootstrap(bootstrap) {
+    const db = loadDb();
+    const email = String(bootstrap.email || "").trim().toLowerCase();
+    let user = findUserByEmail(db, email);
+    if (!user) {
+      const created = await buildUser(db, {
+        email,
+        passwordHash: bootstrap.password_hash || "buildr-sso",
+        passwordSalt: "buildr-bcrypt",
+        organizationName: bootstrap.company_name || "Buildr company",
+      });
+      created.full_name = bootstrap.name || email.split("@")[0];
+      created.buildr_company_id = bootstrap.company_id;
+      created.password_algo = "bcrypt";
+      db.users.push(created);
+      user = created;
+    } else {
+      user.passwordHash = bootstrap.password_hash || user.passwordHash;
+      user.passwordSalt = "buildr-bcrypt";
+      user.password_algo = "bcrypt";
+      user.buildr_company_id = bootstrap.company_id;
+      user.full_name = bootstrap.name || user.full_name;
+    }
+    saveDb(db);
+    issueSession(db, user);
+    return publicUser(user, db);
+  },
+
+
+  async loginViaBuildrSso(token) {
+    const bootstrap = await bootstrapBuildrFamilyAppSso(token, "necalcul8r");
+    if (!bootstrap?.valid) {
+      throw httpError(bootstrap?.error || "Buildr sign-in failed", 403);
+    }
+    return localAuth.loginViaBuildrSsoFromBootstrap(bootstrap);
+  },
   async register({ email, password, organizationName, inviteCode }) {
     const db = loadDb();
     const normalized = String(email || "").trim();
