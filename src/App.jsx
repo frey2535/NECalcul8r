@@ -8,6 +8,7 @@ import Login from '@/pages/Login';
 import Register from '@/pages/Register';
 import ForgotPassword from '@/pages/ForgotPassword';
 import ResetPassword from '@/pages/ResetPassword';
+import FromBuildr from '@/pages/FromBuildr';
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import { NECYearProvider } from '@/context/NECYearContext';
@@ -201,6 +202,7 @@ const AuthenticatedApp = () => {
         <Route path="/register" element={<Register />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/from-buildr" element={<FromBuildr />} />
         <Route element={<ProtectedRoute unauthenticatedElement={<Navigate to="/landing" replace />} />}>
           <Route element={<AppLayout trialStatus={trialStatus} />}>
             <Route path="/" element={<NECCalculator />} />
