@@ -23,6 +23,7 @@ const spaFallbackRoutes = [
   "register",
   "forgot-password",
   "reset-password",
+  "from-buildr",
   "landing",
   "privacy",
   "terms",
