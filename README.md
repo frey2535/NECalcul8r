@@ -55,6 +55,8 @@ browser or device.
 
 For Android production submission steps, see [`docs/google-play-production-checklist.md`](docs/google-play-production-checklist.md).
 
+For iOS / App Store production submission steps, see [`docs/apple-app-store-production-checklist.md`](docs/apple-app-store-production-checklist.md).
+
 To sell outside Google Play (Stripe website + license keys), see [`docs/direct-sales.md`](docs/direct-sales.md).
 
 See [`docs/commercial-access.md`](docs/commercial-access.md) and [`supabase/schema.sql`](supabase/schema.sql).

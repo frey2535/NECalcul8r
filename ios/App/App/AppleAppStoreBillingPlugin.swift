@@ -120,7 +120,9 @@ public class AppleAppStoreBillingPlugin: CAPPlugin, CAPBridgedPlugin {
         if let expiration = transaction.expirationDate {
             payload["expirationDate"] = ISO8601DateFormatter().string(from: expiration)
         }
-        payload["signedTransaction"] = transaction.jsonRepresentation.base64EncodedString()
+        // Prefer the App Store JWS so the server can verify with App Store Server API.
+        payload["signedTransaction"] = transaction.jwsRepresentation
+        payload["transactionJsonBase64"] = transaction.jsonRepresentation.base64EncodedString()
         return payload
     }
 }

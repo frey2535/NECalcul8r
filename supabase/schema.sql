@@ -115,6 +115,24 @@ create table if not exists public.google_play_purchases (
   unique (package_name, purchase_token)
 );
 
+create table if not exists public.apple_app_store_purchases (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references public.profiles(id) on delete cascade,
+  bundle_id text not null,
+  product_id text not null,
+  transaction_id text not null,
+  original_transaction_id text not null,
+  environment text,
+  purchase_state text not null,
+  started_at timestamptz,
+  expires_at timestamptz,
+  last_verified_at timestamptz,
+  raw_status jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (bundle_id, original_transaction_id)
+);
+
 create table if not exists public.license_keys (
   id uuid primary key default gen_random_uuid(),
   code text not null unique,
@@ -165,6 +183,9 @@ create index if not exists entitlements_profile_id_idx on public.entitlements(pr
 create index if not exists entitlements_org_id_idx on public.entitlements(org_id);
 create index if not exists google_play_purchases_user_id_idx on public.google_play_purchases(user_id);
 create index if not exists google_play_purchases_product_id_idx on public.google_play_purchases(product_id);
+create index if not exists apple_app_store_purchases_user_id_idx on public.apple_app_store_purchases(user_id);
+create index if not exists apple_app_store_purchases_product_id_idx on public.apple_app_store_purchases(product_id);
+create index if not exists apple_app_store_purchases_transaction_id_idx on public.apple_app_store_purchases(transaction_id);
 create index if not exists license_keys_code_idx on public.license_keys(code);
 create index if not exists license_keys_status_idx on public.license_keys(status);
 create index if not exists access_grants_user_id_idx on public.access_grants(user_id);
@@ -179,6 +200,7 @@ alter table public.subscriptions enable row level security;
 alter table public.entitlements enable row level security;
 alter table public.purchase_events enable row level security;
 alter table public.google_play_purchases enable row level security;
+alter table public.apple_app_store_purchases enable row level security;
 alter table public.license_keys enable row level security;
 alter table public.access_grants enable row level security;
 alter table public.app_records enable row level security;
@@ -673,6 +695,14 @@ create policy "google play purchases read platform admin or own"
     or user_id = auth.uid()
   );
 
+drop policy if exists "apple purchases read platform admin or own" on public.apple_app_store_purchases;
+create policy "apple purchases read platform admin or own"
+  on public.apple_app_store_purchases for select
+  using (
+    public.current_is_platform_admin()
+    or user_id = auth.uid()
+  );
+
 drop policy if exists "memberships read own org" on public.organization_memberships;
 create policy "memberships read own org"
   on public.organization_memberships for select
@@ -781,6 +811,7 @@ grant select on public.subscriptions to authenticated;
 grant select on public.entitlements to authenticated;
 grant select, insert on public.purchase_events to authenticated;
 grant select on public.google_play_purchases to authenticated;
+grant select on public.apple_app_store_purchases to authenticated;
 grant select on public.access_grants to authenticated;
 grant select, insert, update, delete on public.app_records to authenticated;
 
