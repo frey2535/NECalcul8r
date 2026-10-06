@@ -74,6 +74,7 @@ To move to a real backend later (Supabase, Postgres, etc.), replace `src/api/loc
 
 ```bash
 npm run build
+npm run ios:sync
 npm run verify:dwelling-optional
 npm run audit:calculator-verification
 ```
