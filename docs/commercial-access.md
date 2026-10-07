@@ -501,16 +501,22 @@ Input:
 
 ```json
 {
-  "receiptData": "base64-receipt",
+  "productId": "individual_36_plus",
   "transactionId": "apple-transaction-id",
+  "originalTransactionId": "apple-original-transaction-id",
+  "signedTransaction": "eyJhbGciOiJFUzI1NiIs...",
   "source": "apple_app_store"
 }
 ```
 
+Requires Supabase secrets: `APPLE_BUNDLE_ID`, `APPLE_APP_STORE_CONNECT_ISSUER_ID`,
+`APPLE_APP_STORE_CONNECT_KEY_ID`, `APPLE_APP_STORE_CONNECT_PRIVATE_KEY`.
+Apply `supabase/fixes/add-apple-app-store-purchases.sql` before first production use.
+
 Output:
 
 ```json
-{ "ok": true, "access_status": "active" }
+{ "ok": true, "access_status": "active", "plan_key": "individual_36_plus" }
 ```
 
 ## App-store policy shape

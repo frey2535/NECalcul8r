@@ -30,6 +30,18 @@ supabase secrets set GOOGLE_PLAY_BASE_PLAN_ID=monthly
 supabase secrets set GOOGLE_PLAY_RTDN_TOKEN=optional-shared-secret
 ```
 
+Required secrets for Apple App Store (In-App Purchase verification):
+
+```bash
+supabase secrets set APPLE_BUNDLE_ID=com.currentflow.necalcul8r
+supabase secrets set APPLE_APP_STORE_CONNECT_ISSUER_ID=<issuer-id>
+supabase secrets set APPLE_APP_STORE_CONNECT_KEY_ID=<key-id>
+supabase secrets set APPLE_APP_STORE_CONNECT_PRIVATE_KEY="$(cat AuthKey_XXXXX.p8)"
+```
+
+Apply SQL first: `supabase/fixes/add-apple-app-store-purchases.sql`.
+See `docs/apple-app-store-production-checklist.md`.
+
 Required secrets for Stripe:
 
 ```bash
@@ -125,3 +137,5 @@ Stripe Billing Portal so paid access continues through the already-paid period.
 
 Apple and Google purchase verification functions are intentionally fail-closed
 until production store credentials and package/bundle IDs are configured.
+`verify-apple-purchase` requires App Store Connect API secrets and looks up
+transactions via the App Store Server API (production, then sandbox fallback).
