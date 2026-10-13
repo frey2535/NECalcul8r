@@ -8,6 +8,7 @@ import Login from '@/pages/Login';
 import Register from '@/pages/Register';
 import ForgotPassword from '@/pages/ForgotPassword';
 import ResetPassword from '@/pages/ResetPassword';
+import FromBuildr from '@/pages/FromBuildr';
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import { NECYearProvider } from '@/context/NECYearContext';
@@ -201,6 +202,7 @@ const AuthenticatedApp = () => {
         <Route path="/register" element={<Register />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/from-buildr" element={<FromBuildr />} />
         <Route element={<ProtectedRoute unauthenticatedElement={<Navigate to="/landing" replace />} />}>
           <Route element={<AppLayout trialStatus={trialStatus} />}>
             <Route path="/" element={<NECCalculator />} />
@@ -212,6 +214,8 @@ const AuthenticatedApp = () => {
             <Route path="/results" element={<Results />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/purchase" element={<Purchase />} />
+            <Route path="/accuracy-assistant" element={<CursorAgent />} />
+            <Route path="/admin/cursor-agent" element={<CursorAgent />} />
             <Route element={<AdminRoute allowOrgOwner />}>
               <Route path="/admin/users" element={<UserManagement />} />
             </Route>
@@ -223,7 +227,6 @@ const AuthenticatedApp = () => {
               <Route path="/admin/verification" element={<CalculatorVerification />} />
               <Route path="/admin/calculator-tiers" element={<CalculatorTierManager />} />
               <Route path="/admin/revenue" element={<RevenueDashboard />} />
-              <Route path="/admin/cursor-agent" element={<CursorAgent />} />
             </Route>
           </Route>
         </Route>

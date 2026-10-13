@@ -97,6 +97,7 @@ async function verifyApplePurchases(purchases) {
     verified.push(await base44.commerce.verifyApplePurchase({
       productId,
       transactionId: purchase.transactionId,
+      originalTransactionId: purchase.originalTransactionId,
       signedTransaction: purchase.signedTransaction,
       receiptData: purchase.receiptData,
       source: "apple_app_store",

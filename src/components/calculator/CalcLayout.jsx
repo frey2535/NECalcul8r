@@ -126,6 +126,8 @@ export function CalcLayout({ category, children, result, trace, necYear, inputVa
       )}
       <div className="flex bg-muted rounded-xl p-1 sm:hidden gap-1">
         <button
+          type="button"
+          data-view-only-allow="true"
           onClick={() => setTab("inputs")}
           className={cn(
             "flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-bold transition-all",
@@ -136,6 +138,8 @@ export function CalcLayout({ category, children, result, trace, necYear, inputVa
           Inputs
         </button>
         <button
+          type="button"
+          data-view-only-allow="true"
           onClick={() => setTab("results")}
           className={cn(
             "flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-bold transition-all",
@@ -160,6 +164,8 @@ export function CalcLayout({ category, children, result, trace, necYear, inputVa
           <div className="space-y-4">{children}</div>
           {/* Mobile shortcut to results */}
           <button
+            type="button"
+            data-view-only-allow="true"
             onClick={() => setTab("results")}
             className="sm:hidden mt-4 w-full h-11 rounded-xl bg-gradient-to-r from-blue-600 to-violet-600 text-white text-sm font-bold shadow-md shadow-blue-200 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
           >

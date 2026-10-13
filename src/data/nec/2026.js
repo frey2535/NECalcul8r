@@ -219,3 +219,51 @@ export const POOL_PUMP_GFCI_NOTE =
 export const DWELLING_MIN_SERVICE_AMPS = 100;  // 230.79(C)
 
 export const VERIFIED = false;  // ← CRITICAL: 2026 is NOT verified
+
+// ─── Generator Sizing / Dwelling Load Rules (NEC 2026) ─────────────
+// GeneratorSizing uses the final 2026 Article 120 organization for these
+// targeted load-calculation rules. Branch-circuit floor-area sizing remains a
+// separate 3 VA/ft² rule; feeder/service dwelling load here uses 2 VA/ft².
+export const GENERATOR_SIZING_RULES = {
+  codeYear: "2026",
+  loadCalculationArticle: "Article 120",
+  dwellingGeneral: {
+    unitLoadArticle: "120.41",
+    vaPerSqFt: 2,
+    smallApplianceArticle: "120.52(A)",
+    smallApplianceVA: 1500,
+    minimumSmallApplianceCircuits: 2,
+    laundryArticle: "120.52(B)",
+    laundryVA: 1500,
+    minimumLaundryCircuits: 1,
+    demandTableArticle: "Table 120.45",
+    demandTiers: [
+      { bandVA: 3000, factor: 1.00 },
+      { bandVA: 117000, factor: 0.35 },
+      { bandVA: Infinity, factor: 0.25 },
+    ],
+  },
+  fixedAppliances: {
+    article: "120.53",
+    minimumCountForDemandFactor: 4,
+    demandFactor: 0.75,
+    excludedCategories: ["ranges", "clothes dryers", "space heating", "air-conditioning"],
+  },
+  dryer: { article: "120.54", tableArticle: "Table 120.54", singleDryerMinimumVA: 5000 },
+  cooking: {
+    article: "120.55",
+    tableArticle: "Table 120.55",
+    singleRangeUpTo12kWDemandKW: 8,
+    note1MaxRangeKW: 27,
+    note1IncreasePerKW: 0.05,
+  },
+  noncoincident: { article: "120.60", method: "largest_applicable_load" },
+  motor: { article: "120.50 / 430.24", largestMotorAdderFactor: 0.25 },
+  standby: {
+    article: "702.4",
+    automaticTransferArticle: "702.4(A)(2)",
+    fullLoadArticle: "702.4(A)(2)(a)",
+    loadManagementArticle: "702.4(A)(2)(b)",
+  },
+  sourceStatus: "NEC-year-owned-2026-targeted-verified",
+};

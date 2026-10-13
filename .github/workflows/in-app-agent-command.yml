@@ -1,0 +1,102 @@
+name: In-app agent command runner
+
+# Runs allowlisted npm commands requested by the in-app Cursor agent.
+# Triggered by writing agent-jobs/requests/<id>.json on the agent-runner branch.
+
+on:
+  push:
+    branches: [agent-runner]
+    paths:
+      - "agent-jobs/requests/**"
+
+concurrency:
+  group: in-app-agent-command
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout agent-runner
+        uses: actions/checkout@v4
+        with:
+          ref: agent-runner
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Execute requested command
+        id: exec
+        run: |
+          set -euo pipefail
+          REQ_FILE=$(ls -1t agent-jobs/requests/*.json | head -1)
+          echo "Using request: $REQ_FILE"
+          JOB_ID=$(node -e "const j=require('./'+process.argv[1]); process.stdout.write(String(j.id||''))" "$REQ_FILE")
+          CMD=$(node -e "const j=require('./'+process.argv[1]); process.stdout.write(String(j.command||''))" "$REQ_FILE")
+          if [ -z "$JOB_ID" ] || [ -z "$CMD" ]; then
+            echo "Invalid request file"
+            exit 1
+          fi
+          echo "job_id=$JOB_ID" >> "$GITHUB_OUTPUT"
+
+          ALLOW='^(npm run (verify:[a-z0-9:_-]+|lint|typecheck|verify:nec-accuracy:json|verify:nec-accuracy|verify:release)|node scripts/run-nec-accuracy-guardian\.mjs( --json)?)$'
+          if ! echo "$CMD" | grep -Eq "$ALLOW"; then
+            mkdir -p agent-jobs/results
+            node -e "
+              const fs=require('fs');
+              const id=process.argv[1];
+              const cmd=process.argv[2];
+              fs.writeFileSync('agent-jobs/results/'+id+'.json', JSON.stringify({
+                id, command: cmd, ok:false, status:'rejected',
+                exitCode: 1,
+                output: 'Command not allowlisted for in-app agent execution.',
+                finishedAt: new Date().toISOString(),
+              }, null, 2));
+            " "$JOB_ID" "$CMD"
+            exit 0
+          fi
+
+          mkdir -p agent-jobs/results /tmp/agent-out
+          set +e
+          bash -lc "$CMD" > /tmp/agent-out/stdout.txt 2> /tmp/agent-out/stderr.txt
+          CODE=$?
+          set -e
+          node -e "
+            const fs=require('fs');
+            const id=process.argv[1];
+            const cmd=process.argv[2];
+            const code=Number(process.argv[3]);
+            const stdout=fs.readFileSync('/tmp/agent-out/stdout.txt','utf8');
+            const stderr=fs.readFileSync('/tmp/agent-out/stderr.txt','utf8');
+            const output=(stdout + (stderr ? '\n' + stderr : '')).slice(0, 120000);
+            fs.writeFileSync('agent-jobs/results/'+id+'.json', JSON.stringify({
+              id,
+              command: cmd,
+              ok: code === 0,
+              status: 'finished',
+              exitCode: code,
+              output,
+              finishedAt: new Date().toISOString(),
+            }, null, 2));
+          " "$JOB_ID" "$CMD" "$CODE"
+
+      - name: Commit result
+        run: |
+          git config user.name "NECalcul8r In-App Agent"
+          git config user.email "agent@necalcul8r.local"
+          git add agent-jobs/results
+          if git diff --cached --quiet; then
+            echo "No result changes"
+            exit 0
+          fi
+          git commit -m "agent-job result: ${{ steps.exec.outputs.job_id }}"
+          git push origin HEAD:agent-runner

@@ -3,7 +3,9 @@
 Use this checklist to take the Capacitor iOS app from this repo to TestFlight / App Store.
 
 Bundle ID: `com.currentflow.necalcul8r`  
-App name: `NECalcul8r`
+App name: `NECalcul8r`  
+Marketing version: `1.0.6` (matches Android)  
+iOS build: `9`
 
 ## 1. Apple Developer + App Store Connect
 
@@ -12,6 +14,7 @@ App name: `NECalcul8r`
 3. Enable **In-App Purchase** capability for that App ID.
 4. Create the app record in App Store Connect with the same bundle ID.
 5. Create a distribution certificate and App Store provisioning profile (Xcode can manage this automatically when signed in).
+6. In Users and Access → Integrations → App Store Connect API, create an **In-App Purchase** key (`.p8`). Note Issuer ID and Key ID for Supabase secrets.
 
 ## 2. Subscription products
 
@@ -29,7 +32,33 @@ Use monthly pricing that matches the web/Play tiers.
 
 Company plans stay on the website (Stripe / license keys). Do **not** sell company digital access through iOS IAP, and do **not** open Stripe Checkout for individual digital goods inside the iOS app.
 
-## 3. Mac build machine steps
+## 3. Supabase Apple verification
+
+Apply the purchase ledger migration if not already applied:
+
+```bash
+# SQL editor or psql — contents of:
+# supabase/fixes/add-apple-app-store-purchases.sql
+```
+
+Deploy the verifier:
+
+```bash
+supabase functions deploy verify-apple-purchase --project-ref gqdxvctvufalunaaopyj
+```
+
+Set App Store Server API secrets (required — fail-closed without them):
+
+```bash
+supabase secrets set APPLE_BUNDLE_ID=com.currentflow.necalcul8r --project-ref gqdxvctvufalunaaopyj
+supabase secrets set APPLE_APP_STORE_CONNECT_ISSUER_ID=<issuer-id> --project-ref gqdxvctvufalunaaopyj
+supabase secrets set APPLE_APP_STORE_CONNECT_KEY_ID=<key-id> --project-ref gqdxvctvufalunaaopyj
+supabase secrets set APPLE_APP_STORE_CONNECT_PRIVATE_KEY="$(cat AuthKey_XXXXX.p8)" --project-ref gqdxvctvufalunaaopyj
+```
+
+The iOS StoreKit plugin sends `productId`, `transactionId`, `originalTransactionId`, and `signedTransaction` (JWS). The edge function looks up the transaction via the App Store Server API and writes `apple_app_store_purchases` + entitlements.
+
+## 4. Mac build machine steps
 
 These commands need macOS + Xcode:
 
@@ -43,8 +72,9 @@ In Xcode:
 
 1. Select the **App** target → Signing & Capabilities → your Team.
 2. Confirm Bundle Identifier is `com.currentflow.necalcul8r`.
-3. Add capability **In-App Purchase** if Xcode did not add it automatically.
-4. Product → Archive → Distribute App → App Store Connect / TestFlight.
+3. Confirm **In-App Purchase** capability is present (entitlements file is wired).
+4. Confirm Marketing Version `1.0.6` and Build `9` (or bump build for each upload).
+5. Product → Archive → Distribute App → App Store Connect / TestFlight.
 
 Optional local script after sync:
 
@@ -52,35 +82,17 @@ Optional local script after sync:
 npm run ios:sync
 ```
 
-## 4. Supabase Apple verification
-
-Deploy / finish:
-
-```bash
-supabase functions deploy verify-apple-purchase --project-ref <your-ref>
-```
-
-Set secrets (App Store Server API preferred):
-
-- `APPLE_BUNDLE_ID=com.currentflow.necalcul8r`
-- `APPLE_APP_STORE_CONNECT_ISSUER_ID`
-- `APPLE_APP_STORE_CONNECT_KEY_ID`
-- `APPLE_APP_STORE_CONNECT_PRIVATE_KEY` (`.p8` contents)
-- or legacy `APPLE_APP_SHARED_SECRET` only if you still use verifyReceipt
-
-The current function is a secure stub until those credentials and the Server API verification flow are finished. Purchases from the iOS plugin will call it with `productId`, `transactionId`, and `signedTransaction`.
-
 ## 5. App Store Connect forms
 
 Complete:
 
-- App Privacy / Privacy Policy URL (`/privacy`)
+- App Privacy / Privacy Policy URL (`https://<your-domain>/privacy`) — matches `PrivacyInfo.xcprivacy`
 - Terms of Use / EULA (`/terms`, `/eula`)
 - Age rating
-- Screenshots for required device sizes
+- Screenshots for required device sizes (6.7", 6.5", 5.5" iPhone; 12.9" iPad if you keep iPad support)
 - App Review information + demo account (same style as Play reviewer login)
 - Subscription information / paid apps agreements / banking / tax
-- Export compliance answers
+- Export compliance — repo sets `ITSAppUsesNonExemptEncryption=false` (standard HTTPS only)
 
 Suggested App Review notes:
 
@@ -108,18 +120,22 @@ Install from TestFlight and verify:
 - Account deletion still works
 - Privacy / Terms / EULA open
 
-## 7. What this PR already added in the repo
+## 7. What this repo already includes
 
-- Capacitor `ios/` project
-- StoreKit 2 plugin `AppleAppStoreBillingPlugin`
+- Capacitor `ios/` project (`com.currentflow.necalcul8r`)
+- StoreKit 2 plugin `AppleAppStoreBillingPlugin` (sends JWS `signedTransaction`)
 - JS bridge `src/lib/appleAppStoreBilling.js`
 - Purchase page gates Stripe/license redemption on iOS and uses IAP for individual plans
 - Matching App Store product IDs on pricing plans
+- `verify-apple-purchase` Edge Function + `_shared/apple-app-store.ts` (Server API)
+- `apple_app_store_purchases` table (schema + `supabase/fixes/add-apple-app-store-purchases.sql`)
+- `App.entitlements`, `PrivacyInfo.xcprivacy`, export-compliance plist flag
 - `npm run ios:sync` script
 
 ## 8. Still required outside the repo
 
-- Apple Developer account actions above
-- Xcode archive on a Mac
-- Finish `verify-apple-purchase` Server API verification
-- App Store Connect metadata + TestFlight review
+- Apple Developer account + App Store Connect app record
+- Create the four auto-renewable subscription products
+- Create App Store Connect API key and set Supabase secrets
+- Apply SQL migration + deploy `verify-apple-purchase`
+- Xcode archive on a Mac → TestFlight → App Review

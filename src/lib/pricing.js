@@ -338,6 +338,13 @@ export function getResolvedEntitlement(user) {
   return normalizedEntitlement(getPlan(FREE_PLAN_KEY));
 }
 
+/** In-app NEC Accuracy Assistant: paid upgrades (same boundary as NEC Tables) or platform admin. */
+export function canUseNecAccuracyAssistant(user) {
+  if (!user || user.access_status === "disabled") return false;
+  if (user.is_platform_admin || hasOwnerFullAccess(user)) return true;
+  return getResolvedEntitlement(user).hasNecTables === true;
+}
+
 function sourceForUser(user, plan) {
   if (user.purchase_source === "google_play" || user.access_type === "google_play") return "google_play";
   if (user.purchase_source === "apple_app_store" || user.access_type === "apple_app_store" || user.access_type === "app_store") return "stripe";

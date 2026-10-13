@@ -1066,3 +1066,48 @@ export const VERIFICATION_NOTE =
   "step-by-step math validation, Calculation Trace validation, and Testing Agent validation. " +
   "See PENDING_IMPACT_LIST for open research items not yet implemented — this file is NOT " +
   "represented as an exhaustive account of every 2017→2020 change affecting these calculators.";
+
+// ─── Generator Sizing / Dwelling Load Rules (NEC 2020) ─────────────
+export const GENERATOR_SIZING_RULES = {
+  codeYear: "2020",
+  loadCalculationArticle: "Article 220",
+  dwellingGeneral: {
+    unitLoadArticle: "Table 220.12",
+    vaPerSqFt: 3,
+    smallApplianceArticle: "220.52(A)",
+    smallApplianceVA: 1500,
+    minimumSmallApplianceCircuits: 2,
+    laundryArticle: "220.52(B)",
+    laundryVA: 1500,
+    minimumLaundryCircuits: 1,
+    demandTableArticle: "Table 220.42",
+    demandTiers: [
+      { bandVA: 3000, factor: 1.00 },
+      { bandVA: 117000, factor: 0.35 },
+      { bandVA: Infinity, factor: 0.25 },
+    ],
+  },
+  fixedAppliances: {
+    article: "220.53",
+    minimumCountForDemandFactor: 4,
+    demandFactor: 0.75,
+    excludedCategories: ["ranges", "clothes dryers", "space heating", "air-conditioning"],
+  },
+  dryer: { article: "220.54", tableArticle: "Table 220.54", singleDryerMinimumVA: 5000 },
+  cooking: {
+    article: "220.55",
+    tableArticle: "Table 220.55",
+    singleRangeUpTo12kWDemandKW: 8,
+    note1MaxRangeKW: 27,
+    note1IncreasePerKW: 0.05,
+  },
+  noncoincident: { article: "220.60", method: "largest_applicable_load" },
+  motor: { article: "220.50 / 430.24", largestMotorAdderFactor: 0.25 },
+  standby: {
+    article: "702.4",
+    automaticTransferArticle: "702.4(B)(2)",
+    fullLoadArticle: "702.4(B)(2)(a)",
+    loadManagementArticle: "702.4(B)(2)(b)",
+  },
+  sourceStatus: "NEC-year-owned",
+};

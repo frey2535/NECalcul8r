@@ -16,6 +16,9 @@ supabase functions deploy activate-license-key
 supabase functions deploy generate-license-key
 supabase functions deploy verify-apple-purchase
 supabase functions deploy create-cursor-agent
+supabase functions deploy cursor-agent-session
+supabase functions deploy nec-accuracy-chat
+supabase functions deploy daily-reliability-scan
 ```
 
 Required secrets for Google Play:
@@ -27,6 +30,18 @@ supabase secrets set GOOGLE_PLAY_BASE_PLAN_ID=monthly
 supabase secrets set GOOGLE_PLAY_RTDN_TOKEN=optional-shared-secret
 ```
 
+Required secrets for Apple App Store (In-App Purchase verification):
+
+```bash
+supabase secrets set APPLE_BUNDLE_ID=com.currentflow.necalcul8r
+supabase secrets set APPLE_APP_STORE_CONNECT_ISSUER_ID=<issuer-id>
+supabase secrets set APPLE_APP_STORE_CONNECT_KEY_ID=<key-id>
+supabase secrets set APPLE_APP_STORE_CONNECT_PRIVATE_KEY="$(cat AuthKey_XXXXX.p8)"
+```
+
+Apply SQL first: `supabase/fixes/add-apple-app-store-purchases.sql`.
+See `docs/apple-app-store-production-checklist.md`.
+
 Required secrets for Stripe:
 
 ```bash
@@ -37,9 +52,9 @@ supabase secrets set STRIPE_WEBHOOK_SECRET=whsec_...
 Required secrets for the platform-owner Cursor Agent tool:
 
 ```bash
-supabase secrets set CURSOR_API_KEY=...
-supabase secrets set CURSOR_REPO_URL=https://github.com/frey2535/NECalcul8r
-supabase secrets set CURSOR_DEFAULT_BRANCH=main
+supabase secrets set CURSOR_API_KEY=... --project-ref gqdxvctvufalunaaopyj
+supabase secrets set CURSOR_REPO_URL=https://github.com/frey2535/NECalcul8r --project-ref gqdxvctvufalunaaopyj
+supabase secrets set CURSOR_DEFAULT_BRANCH=main --project-ref gqdxvctvufalunaaopyj
 ```
 
 `CURSOR_API_KEY` must be a Cursor API key with access to create Cloud Agents for
@@ -47,11 +62,63 @@ the repository. The key is used only inside the Supabase Edge Function and must
 not be exposed as a Vite/browser environment variable. The edge function authenticates
 to `https://api.cursor.com/v1/agents` with Basic auth (`API_KEY:`).
 
-After changing `create-cursor-agent`, redeploy:
+**Primary in-app assistant (recommended — no Cursor Cloud Agents billing):**
 
 ```bash
-supabase functions deploy create-cursor-agent --project-ref gqdxvctvufalunaaopyj
+# Option A: OpenAI
+supabase secrets set OPENAI_API_KEY=... --project-ref gqdxvctvufalunaaopyj
+supabase secrets set OPENAI_MODEL=gpt-4o-mini --project-ref gqdxvctvufalunaaopyj
+
+# Option B: OpenRouter (preferred for credit-free in-app chat)
+# Use openrouter/free so chat works with $0 OpenRouter balance.
+supabase secrets set OPENROUTER_API_KEY=... --project-ref gqdxvctvufalunaaopyj
+supabase secrets set OPENAI_MODEL=openrouter/free --project-ref gqdxvctvufalunaaopyj
+# Paid OpenRouter slugs need credits; the function falls back to openrouter/free on 402.
+
+supabase functions deploy nec-accuracy-chat --project-ref gqdxvctvufalunaaopyj
 ```
+
+`nec-accuracy-chat` powers the in-app Cursor Agent (`/accuracy-assistant` and the side panel).
+It is included with paid upgrades (same boundary as NEC Tables) and for platform admins.
+It uses OpenRouter free models (no Cursor Cloud Agents billing) and can read the public GitHub repo
+with tools. Optional write/commit support:
+
+```bash
+supabase secrets set GITHUB_TOKEN=ghp_... --project-ref gqdxvctvufalunaaopyj
+```
+
+Do **not** rely on `VITE_OPENAI_API_KEY` for production chat.
+
+`create-cursor-agent` accepts optional `missionId` (`nec_accuracy_guardian`,
+`daily_full_scan`, `proactive_audit`, `fix_known`, `suggest_only`,
+`calculator_hardening`, `mobile_pwa`, `commerce_access`) and wraps the operator
+prompt with a server-side NEC Accuracy Guardian doctrine so agents treat baseline
+failures as critical and prioritize high-confidence calculator corrections.
+
+`daily-reliability-scan` is invoked by GitHub Actions cron (or manually by a
+platform admin). It probes Edge Function deploys, accepts CI/NEC findings,
+notifies platform admins, optionally emails via Resend, and can start a Cursor
+agent. Required secrets: `RELIABILITY_SCAN_SECRET` (shared with GitHub Actions),
+plus the Cursor secrets above. Optional: `RESEND_API_KEY`,
+`PLATFORM_OWNER_NOTIFY_EMAIL`, `APP_ORIGIN`.
+
+Apply SQL first: `supabase/fixes/add-reliability-scans.sql`.
+
+**Required before the in-app NEC Accuracy Assistant works:** deploy `nec-accuracy-chat`
+and set `OPENAI_API_KEY`. This is the default assistant path — no Cursor Cloud Agents.
+
+`create-cursor-agent` / `cursor-agent-session` remain optional (advanced, Cursor-billed).
+
+```bash
+supabase functions deploy nec-accuracy-chat --project-ref gqdxvctvufalunaaopyj
+supabase functions deploy create-cursor-agent --project-ref gqdxvctvufalunaaopyj
+supabase functions deploy cursor-agent-session --project-ref gqdxvctvufalunaaopyj
+supabase functions deploy daily-reliability-scan --project-ref gqdxvctvufalunaaopyj
+```
+
+Or add GitHub secret `SUPABASE_ACCESS_TOKEN` and run the
+`Deploy create-cursor-agent` workflow (`.github/workflows/deploy-create-cursor-agent.yml`).
+Also set GitHub `RELIABILITY_SCAN_SECRET` for `.github/workflows/daily-reliability-scan.yml`.
 
 The frontend also needs Stripe Vite variables configured with price IDs for
 every purchase package shown in the app. If you want to override the default
@@ -70,3 +137,5 @@ Stripe Billing Portal so paid access continues through the already-paid period.
 
 Apple and Google purchase verification functions are intentionally fail-closed
 until production store credentials and package/bundle IDs are configured.
+`verify-apple-purchase` requires App Store Connect API secrets and looks up
+transactions via the App Store Server API (production, then sandbox fallback).
