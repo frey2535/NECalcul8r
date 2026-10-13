@@ -40,7 +40,8 @@
     "verify:nec-accuracy": "node scripts/run-nec-accuracy-guardian.mjs",
     "verify:nec-accuracy:json": "node scripts/run-nec-accuracy-guardian.mjs --json",
     "ios:sync": "npm run build && npx cap sync ios",
-    "ios:open": "npx cap open ios"
+    "ios:open": "npx cap open ios",
+    "smoke:calculators": "node scripts/smoke-render-calculators.mjs"
   },
   "dependencies": {
     "@capacitor/android": "^8.5.1",
