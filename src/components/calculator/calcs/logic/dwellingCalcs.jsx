@@ -215,7 +215,7 @@ export function calcDwellingOptional(v, nec) {
   const generalArticle = nec.OPTIONAL_GENERAL_LOAD_ARTICLE || "220.82(B)";
   const dwellingLightingArticle = nec.DWELLING_LIGHTING_ARTICLE || "Table 220.12";
   const islandPeninsulaArticle = nec.ISLAND_PENINSULA_ARTICLE || "210.52(C)(2)";
-  const remainderFactor = nec.OPTIONAL_DEMAND_FACTOR;
+  const remainderFactor = nec.OPTIONAL_DEMAND_FACTOR ?? 0.4;
   const remainderPct = Math.round(remainderFactor * 100);
 
   // ─── General load per 220.82(B) ───────────────────────────────────
