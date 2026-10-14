@@ -81,7 +81,10 @@ supabase functions deploy nec-accuracy-chat --project-ref gqdxvctvufalunaaopyj
 `nec-accuracy-chat` powers the in-app Cursor Agent (`/accuracy-assistant` and the side panel).
 It is included with paid upgrades (same boundary as NEC Tables) and for platform admins.
 It uses OpenRouter free models (no Cursor Cloud Agents billing) and can read the public GitHub repo
-with tools. Optional write/commit support:
+with tools. Each chat turn also receives live screen/app context from the client
+(route, open calculator, NEC year, visible fields/errors, app map) plus optional `screenContext`
+JSON so the agent can correct what the user is looking at without re-asking.
+Optional write/commit support:
 
 ```bash
 supabase secrets set GITHUB_TOKEN=ghp_... --project-ref gqdxvctvufalunaaopyj

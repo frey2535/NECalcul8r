@@ -1,9 +1,17 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { ExternalLink, MessageSquare, RefreshCw, Send, X } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { askAssistant } from "@/components/NecAccuracyChat";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { useAuth } from "@/lib/AuthContext";
+import { useNECYear } from "@/context/NECYearContext";
+import { getResolvedEntitlement } from "@/lib/pricing";
+import {
+  collectAgentScreenContext,
+  formatAgentScreenContext,
+} from "@/lib/agentScreenContext";
 
 const STORAGE_KEY = "necalcul8r-cursor-agent-session-v1";
 const ACTIVE_RUN = new Set(["CREATING", "RUNNING", "QUEUED", "PENDING"]);
@@ -42,6 +50,10 @@ export default function CursorAgentChat({
   onClear,
   discussAllowed = true,
 }) {
+  const location = useLocation();
+  const { user } = useAuth();
+  const { year } = useNECYear();
+  const entitlement = getResolvedEntitlement(user);
   const [session, setSession] = useState(() => initialSession || loadStoredSession());
   const [draft, setDraft] = useState("");
   const [busy, setBusy] = useState(false);
@@ -174,9 +186,18 @@ export default function CursorAgentChat({
         .filter((item) => item.role === "user" || item.role === "assistant")
         .slice(-30)
         .map((item) => ({ role: item.role, content: item.text }));
+      const screen = collectAgentScreenContext({
+        pathname: location.pathname,
+        search: location.search,
+        hash: location.hash,
+        necYear: year,
+        user,
+        entitlementLabel: entitlement?.label || entitlement?.planKey || "",
+      });
       const reply = await askAssistant({
         messages: history,
-        agentContext,
+        agentContext: [agentContext, formatAgentScreenContext(screen)].filter(Boolean).join("\n\n"),
+        screenContext: screen,
       });
       appendMessage({
         id: `assistant-discuss-${Date.now()}`,

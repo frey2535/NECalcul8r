@@ -67,6 +67,7 @@ Deno.serve(async (req) => {
     const payload = await req.json().catch(() => ({}));
     const missionHint = optionalString(payload.missionHint) || optionalString(payload.focus);
     const agentContext = optionalString(payload.agentContext);
+    const screenContext = payload.screenContext ?? null;
     const rawMessages = Array.isArray(payload.messages) ? payload.messages : [];
     const messages = rawMessages.slice(-30).map((item: Record<string, unknown>) => ({
       role: item.role === "assistant" ? "assistant" as const : "user" as const,
@@ -74,7 +75,12 @@ Deno.serve(async (req) => {
     }));
 
     try {
-      const result = await completeNecAccuracyChat({ messages, missionHint, agentContext });
+      const result = await completeNecAccuracyChat({
+        messages,
+        missionHint,
+        agentContext,
+        screenContext,
+      });
       return jsonResponse({
         ok: true,
         reply: result.text,

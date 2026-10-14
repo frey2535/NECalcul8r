@@ -16,6 +16,12 @@ Identity (non-negotiable):
 - Never send the user to cursor.com, Cloud Agents, or ask them to buy Cursor credits. This chat does not use Cursor Cloud Agents billing.
 - Never tell the user they must leave NECalcul8r to continue.
 
+Live visibility (non-negotiable):
+- Every user message may include auto-captured LIVE SCREEN CONTEXT: current route, open calculator, NEC year, visible headings/text, form field values, on-screen errors, viewport, and an app route/calculator map.
+- Treat that context as what the user is looking at RIGHT NOW. Do not ask them to restate the page, calculator name, or field values if already present.
+- When fixing UI/calculator bugs: (1) read the screen context, (2) search_code / read_file the matching source (CalculatorPanel MAP → calc component + logic), (3) apply the smallest durable fix with write_file when appropriate, (4) run_command verify for that calculator when a suite exists.
+- Prefer using repo tools over guessing. Shorten correction loops by inspecting code immediately.
+
 Execution rules (non-negotiable):
 - You CAN execute allowlisted project commands via the run_command tool (verification suites, lint, typecheck), the same way Cursor runs a terminal.
 - When the user asks to run verify/tests/scripts, IMMEDIATELY call run_command. If it returns status=running, call get_command_result until finished, then report the results.
@@ -32,7 +38,14 @@ How you work:
 Domain priorities:
 - NEC calculator correctness vs frozen baselines (verify:nec-accuracy / verify:*) is critical.
 - Prefer durable fixes in code over workarounds.
-- Keep UX inside the app (side-panel chat, view-only calculators, upgrades).`;
+- Keep UX inside the app (side-panel chat, view-only calculators, upgrades).
+
+App map cheat-sheet:
+- / calculator list; /calculator/:calcId open calculator; /nec-tables; /projects; /purchase; /profile; /accuracy-assistant
+- Calculator UI: src/components/calculator/CalculatorPanel.jsx MAP → src/components/calculator/calcs/*
+- Calculator logic: src/components/calculator/calcs/logic/*
+- Catalog: src/data/calculatorCatalog.js
+- Edge chat: supabase/functions/nec-accuracy-chat + _shared/nec-accuracy-*.ts`;
 
 export type ChatMessage = {
   role: "user" | "assistant" | "system" | "tool";
@@ -201,16 +214,34 @@ async function completeWithModel(options: {
   return { model, payload };
 }
 
+function formatScreenContextPayload(screenContext: unknown) {
+  if (!screenContext) return null;
+  if (typeof screenContext === "string" && screenContext.trim()) return screenContext.trim().slice(0, 14000);
+  if (typeof screenContext === "object") {
+    try {
+      return JSON.stringify(screenContext, null, 2).slice(0, 14000);
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
+
 export async function completeNecAccuracyChat(options: {
   messages: ChatMessage[];
   missionHint?: string | null;
   agentContext?: string | null;
+  screenContext?: unknown;
 }) {
   const config = resolveLlmConfig();
+  const screenBlock = formatScreenContextPayload(options.screenContext);
   const extras = [
     `Repository: ${resolveRepoSlug()}`,
     options.missionHint ? `Session focus: ${options.missionHint}` : null,
     options.agentContext ? `Session context:\n${options.agentContext}` : null,
+    screenBlock && !String(options.agentContext || "").includes("Live app / screen context")
+      ? `Live screen JSON:\n${screenBlock}`
+      : null,
   ].filter(Boolean).join("\n\n");
   const system = extras ? `${NEC_ASSISTANT_SYSTEM}\n\n${extras}` : NEC_ASSISTANT_SYSTEM;
 
