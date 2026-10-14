@@ -1,17 +1,24 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { Lock, MessageSquare, Send, ShoppingCart, Sparkles, Trash2 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { useAuth } from "@/lib/AuthContext";
+import { useNECYear } from "@/context/NECYearContext";
+import { getResolvedEntitlement } from "@/lib/pricing";
+import {
+  collectAgentScreenContext,
+  formatAgentScreenContext,
+} from "@/lib/agentScreenContext";
 
 const STORAGE_KEY = "necalcul8r-nec-accuracy-assistant-v1";
 
 const STARTERS = [
-  "Let's talk through the generator From Service Size blank on mobile — what should we check first?",
-  "I want to verify dwelling optional heat against the 2020 NEC baseline. Walk with me.",
-  "Commercial kitchen load looks high. Help me reason through the demand factors.",
-  "How would you approach a suspected NEC calculator miss the same way a coding agent would?",
+  "Look at this screen and the open calculator — what's wrong and how do we fix it?",
+  "Read the code for the calculator I'm on and verify it against the NEC baseline.",
+  "I see a blank / wrong result here. Inspect the current fields and source, then correct it.",
+  "Scan the app routes and this page, then propose the smallest durable fix.",
 ];
 
 const DISCUSSION_SYSTEM = `You are Auto — Cursor's AI coding agent in NECalcul8r. You can run verify/lint via tools. Never say you cannot execute commands. Never tell the user to run npm themselves.`;
@@ -27,12 +34,13 @@ function loadMessages() {
   }
 }
 
-async function askAssistant({ messages, focusHint, agentContext }) {
+async function askAssistant({ messages, focusHint, agentContext, screenContext }) {
   try {
     const response = await base44.functions.invoke("nec-accuracy-chat", {
       messages,
       missionHint: focusHint || undefined,
       agentContext: agentContext || undefined,
+      screenContext: screenContext || undefined,
     });
     const payload = response?.data || response || {};
     const reply = payload.reply || payload.text || "";
@@ -83,12 +91,32 @@ export default function NecAccuracyChat({
   disabledReason = "",
   compact = false,
 }) {
+  const location = useLocation();
+  const { user } = useAuth();
+  const { year } = useNECYear();
+  const entitlement = getResolvedEntitlement(user);
   const [messages, setMessages] = useState(() => loadMessages());
   const [draft, setDraft] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const bottomRef = useRef(null);
   const composerRef = useRef(null);
+
+  const buildLiveContext = () => {
+    const screen = collectAgentScreenContext({
+      pathname: location.pathname,
+      search: location.search,
+      hash: location.hash,
+      necYear: year,
+      user,
+      entitlementLabel: entitlement?.label || entitlement?.planKey || "",
+    });
+    const formatted = formatAgentScreenContext(screen);
+    return {
+      screenContext: screen,
+      agentContext: [agentContext, formatted].filter(Boolean).join("\n\n"),
+    };
+  };
 
   useEffect(() => {
     try {
@@ -122,10 +150,12 @@ export default function NecAccuracyChat({
     setMessages(nextMessages);
     setDraft("");
     try {
+      const live = buildLiveContext();
       const reply = await askAssistant({
         messages: [...apiMessages, { role: "user", content: text }],
         focusHint,
-        agentContext,
+        agentContext: live.agentContext,
+        screenContext: live.screenContext,
       });
       if (!reply) throw new Error("Empty assistant reply.");
       setMessages((current) => [
@@ -168,6 +198,8 @@ export default function NecAccuracyChat({
 
   return (
     <div
+      id="nec-accuracy-assistant-root"
+      data-agent-ignore="true"
       className={`bg-card space-y-3 ${
         compact
           ? "flex h-full min-h-0 flex-col border-0 p-0 shadow-none rounded-none"
@@ -185,13 +217,13 @@ export default function NecAccuracyChat({
           </h2>
           {!compact && (
             <p className="mt-1 text-sm text-muted-foreground">
-              Same role as Cursor chat — ask, clarify, inspect code, implement. Access is via NECalcul8r upgrades.
-              No Cursor Cloud Agent credits.
+              Same role as Cursor chat — sees your current screen, app map, and repo code so corrections take fewer turns.
+              Upgrade-gated; no Cursor Cloud Agent credits.
             </p>
           )}
           {compact && (
             <p className="mt-0.5 text-xs text-muted-foreground">
-              In-app Cursor agent — stay on this screen. Upgrade-gated, no Cloud Agent credits.
+              Sees this screen, app routes, and repo code — stay here while it fixes.
             </p>
           )}
         </div>

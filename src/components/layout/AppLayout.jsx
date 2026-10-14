@@ -373,7 +373,7 @@ export default function AppLayout({ trialStatus }) {
 
       {/* Main Content + optional docked assistant panel (desktop/tablet) */}
       <div className="flex flex-1 min-h-0 w-full">
-        <main className="flex-1 max-w-7xl mx-auto w-full px-3 sm:px-6 lg:px-8 py-4 pb-24 sm:pb-8 min-w-0">
+        <main data-app-main className="flex-1 max-w-7xl mx-auto w-full px-3 sm:px-6 lg:px-8 py-4 pb-24 sm:pb-8 min-w-0">
           <Outlet />
         </main>
 
@@ -401,7 +401,7 @@ export default function AppLayout({ trialStatus }) {
                 <X className="h-4 w-4" />
               </button>
             </div>
-            <div className="flex-1 min-h-0 overflow-hidden px-3 py-3">
+            <div className="flex-1 min-h-0 overflow-hidden px-3 py-3" data-agent-ignore="true">
               <NecAccuracyChat
                 compact
                 allowed={canUseAssistant || isPlatformAdmin}
