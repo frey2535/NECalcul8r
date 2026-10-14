@@ -40,6 +40,7 @@ const CodebookMatrix = lazy(lazyRetry(() => import('@/pages/admin/CodebookMatrix
 const CalculatorVerification = lazy(lazyRetry(() => import('@/pages/admin/CalculatorVerification'), 'CalculatorVerification'));
 const CalculatorTierManager = lazy(lazyRetry(() => import('@/pages/admin/CalculatorTierManager'), 'CalculatorTierManager'));
 const RevenueDashboard = lazy(lazyRetry(() => import('@/pages/admin/RevenueDashboard'), 'RevenueDashboard'));
+const PwaAnalytics = lazy(lazyRetry(() => import('@/pages/admin/PwaAnalytics'), 'PwaAnalytics'));
 const CursorAgent = lazy(lazyRetry(() => import('@/pages/admin/CursorAgent'), 'CursorAgent'));
 const Landing = lazy(lazyRetry(() => import('@/pages/Landing'), 'Landing'));
 const Profile = lazy(lazyRetry(() => import('@/pages/Profile'), 'Profile'));
@@ -227,6 +228,7 @@ const AuthenticatedApp = () => {
               <Route path="/admin/verification" element={<CalculatorVerification />} />
               <Route path="/admin/calculator-tiers" element={<CalculatorTierManager />} />
               <Route path="/admin/revenue" element={<RevenueDashboard />} />
+              <Route path="/admin/pwa-analytics" element={<PwaAnalytics />} />
             </Route>
           </Route>
         </Route>
