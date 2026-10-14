@@ -122,6 +122,11 @@ class CalculatorErrorBoundary extends React.Component {
         <p className="text-sm text-muted-foreground">
           Try another calculation method or refresh the app. Other calculators should still work.
         </p>
+        {this.props.calcId === "dwelling_optional" && (
+          <div role="alert" className="text-left text-xs font-mono whitespace-pre-wrap break-words rounded-lg border border-destructive/30 bg-card p-3">
+            <strong>Dwelling Optional error details:</strong> {this.state.error?.name}: {this.state.error?.message}
+          </div>
+        )}
         <button
           type="button"
           onClick={() => this.setState({ error: null })}
