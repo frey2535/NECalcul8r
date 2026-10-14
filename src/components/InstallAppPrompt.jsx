@@ -4,6 +4,7 @@ import { Capacitor } from "@capacitor/core";
 import { Button } from "@/components/ui/button";
 import { getInstallPlatform, isStandaloneDisplay } from "@/lib/pwa";
 import AppLogo from "@/components/branding/AppLogo";
+import { trackPwaEvent } from "@/lib/pwaAnalytics";
 
 const DISMISS_KEY = "necalcul8r_install_dismissed_at";
 const DISMISS_MS = 7 * 24 * 60 * 60 * 1000;
@@ -44,7 +45,7 @@ export default function InstallAppPrompt() {
     const onPrompt = (event) => {
       event.preventDefault();
       setDeferred(event);
-      if (!wasDismissedRecently()) setOpen(true);
+      if (!wasDismissedRecently()) { setOpen(true); void trackPwaEvent("install_prompt_shown"); }
     };
     const onForceShow = () => {
       if (!isNativeApp()) setOpen(true);
@@ -92,7 +93,7 @@ export default function InstallAppPrompt() {
     try {
       deferred.prompt();
       const result = await deferred.userChoice;
-      if (result?.outcome === "accepted") close();
+      if (result?.outcome === "accepted") { void trackPwaEvent("install_prompt_accepted"); close(); }
       else setOpen(false);
     } catch {
       setOpen(false);

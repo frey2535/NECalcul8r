@@ -1,6 +1,6 @@
 import React, { useState, useRef, useCallback, useEffect } from "react";
 import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
-import { Calculator, BookOpen, UserCircle, Users, Calendar, ShieldCheck, FileCheck, Sun, Moon, FolderOpen, Flag, Lock, RefreshCw, SlidersHorizontal, Bot, DollarSign, X } from "lucide-react";
+import { Calculator, BookOpen, UserCircle, Users, Calendar, ShieldCheck, FileCheck, Sun, Moon, FolderOpen, Flag, Lock, RefreshCw, SlidersHorizontal, Bot, DollarSign, Smartphone, X } from "lucide-react";
 import TrialBanner from "@/components/TrialBanner";
 import { useAuth } from "@/lib/AuthContext";
 import { base44 } from "@/api/base44Client";
@@ -277,6 +277,17 @@ export default function AppLayout({ trialStatus }) {
                     )}>
                       <DollarSign className="w-3.5 h-3.5" />
                       Revenue
+                    </div>
+                  </Link>
+                  <Link to="/admin/pwa-analytics">
+                    <div className={cn(
+                      "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all",
+                      location.pathname === "/admin/pwa-analytics"
+                        ? "bg-blue-600 text-white shadow-md shadow-blue-200"
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                    )}>
+                      <Smartphone className="w-3.5 h-3.5" />
+                      PWA Analytics
                     </div>
                   </Link>
                   <Link to="/admin/codebook">
