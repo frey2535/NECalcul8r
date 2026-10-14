@@ -121,6 +121,13 @@ supabase functions deploy daily-reliability-scan --project-ref gqdxvctvufalunaao
 
 Or add GitHub secret `SUPABASE_ACCESS_TOKEN` and run the
 `Deploy create-cursor-agent` workflow (`.github/workflows/deploy-create-cursor-agent.yml`).
+
+`SUPABASE_ACCESS_TOKEN` must be a **Supabase Personal Access Token** from
+[Account → Access Tokens](https://supabase.com/dashboard/account/tokens)
+(usually starts with `sbp_`). Do **not** use the project `anon` or `service_role`
+JWT keys — those cause `401 Invalid access token` on `supabase functions deploy --use-api`.
+If CI prints that error, rotate the PAT and update the GitHub secret, then re-run the workflow.
+
 Also set GitHub `RELIABILITY_SCAN_SECRET` for `.github/workflows/daily-reliability-scan.yml`.
 
 The frontend also needs Stripe Vite variables configured with price IDs for

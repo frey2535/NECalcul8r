@@ -244,8 +244,10 @@ so `.github/workflows/daily-reliability-scan.yml` can call the Edge Function dai
 
 If these functions are not deployed, the app reports a generic Edge Function
 network/CORS failure instead of a clear 404. Deploy first, then set secrets. You can
-also add GitHub secret `SUPABASE_ACCESS_TOKEN` and run the
-`Deploy create-cursor-agent` workflow.
+also add GitHub secret `SUPABASE_ACCESS_TOKEN` (a Personal Access Token from
+https://supabase.com/dashboard/account/tokens — not the project anon/service_role
+keys) and run the `Deploy create-cursor-agent` workflow. A `401 Invalid access token`
+means the PAT is missing, expired, or the wrong key type — rotate it and update the secret.
 
 Paid users and profiles with `is_platform_admin = true` can use the in-app assistant.
 Only platform admins can launch optional Cursor Cloud Agents.
