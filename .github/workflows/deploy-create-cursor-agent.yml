@@ -27,14 +27,40 @@ jobs:
       - name: Require Supabase access token
         run: |
           if [ -z "$SUPABASE_ACCESS_TOKEN" ]; then
-            echo "::error::Add repository secret SUPABASE_ACCESS_TOKEN (Supabase Account → Access Tokens), then re-run this workflow."
+            echo "::error::GitHub secret SUPABASE_ACCESS_TOKEN is missing. Create a Personal Access Token at https://supabase.com/dashboard/account/tokens (not the anon/service_role API keys), add it as repo secret SUPABASE_ACCESS_TOKEN, then re-run this workflow."
             exit 1
           fi
+          # Reject common mistakes: project API keys look like eyJ... JWTs, not sbp_ PATs.
+          case "$SUPABASE_ACCESS_TOKEN" in
+            eyJ*)
+              echo "::error::SUPABASE_ACCESS_TOKEN looks like a JWT (anon/service_role key). Deploy needs a Supabase Personal Access Token from https://supabase.com/dashboard/account/tokens (usually starts with sbp_)."
+              exit 1
+              ;;
+          esac
 
       - name: Setup Supabase CLI
         uses: supabase/setup-cli@v1
         with:
           version: latest
+
+      - name: Validate Supabase access token
+        run: |
+          set +e
+          HTTP_CODE=$(curl -sS -o /tmp/supabase-whoami.json -w "%{http_code}" \
+            -H "Authorization: Bearer ${SUPABASE_ACCESS_TOKEN}" \
+            "https://api.supabase.com/v1/projects/${PROJECT_REF}")
+          set -e
+          if [ "$HTTP_CODE" = "401" ] || [ "$HTTP_CODE" = "403" ]; then
+            echo "::error::Supabase rejected SUPABASE_ACCESS_TOKEN (HTTP ${HTTP_CODE}: Invalid/expired access token). Rotate it: https://supabase.com/dashboard/account/tokens → generate a new token → GitHub repo Settings → Secrets → SUPABASE_ACCESS_TOKEN → update → re-run this workflow."
+            cat /tmp/supabase-whoami.json || true
+            exit 1
+          fi
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "::error::Could not reach Supabase Management API for project ${PROJECT_REF} (HTTP ${HTTP_CODE})."
+            cat /tmp/supabase-whoami.json || true
+            exit 1
+          fi
+          echo "Supabase access token is valid for project ${PROJECT_REF}."
 
       - name: Deploy Cursor Edge Functions
         run: |
@@ -48,9 +74,11 @@ jobs:
           echo "After first deploy, set project secrets if missing:"
           echo "  supabase secrets set OPENAI_API_KEY=... --project-ref $PROJECT_REF"
           echo "  supabase secrets set OPENAI_MODEL=gpt-4o-mini --project-ref $PROJECT_REF"
+          echo "  supabase secrets set OPENROUTER_API_KEY=... --project-ref $PROJECT_REF"
+          echo "  supabase secrets set OPENAI_MODEL=openrouter/free --project-ref $PROJECT_REF"
           echo "  supabase secrets set CURSOR_API_KEY=... --project-ref $PROJECT_REF"
           echo "  supabase secrets set CURSOR_REPO_URL=https://github.com/frey2535/NECalcul8r --project-ref $PROJECT_REF"
           echo "  supabase secrets set CURSOR_DEFAULT_BRANCH=main --project-ref $PROJECT_REF"
           echo "  supabase secrets set RELIABILITY_SCAN_SECRET=... --project-ref $PROJECT_REF"
           echo "Also apply SQL: supabase/fixes/add-reliability-scans.sql"
-          echo "Primary in-app assistant uses OPENAI_API_KEY (nec-accuracy-chat). Cursor Cloud Agents are optional."
+          echo "Primary in-app assistant uses OPENROUTER/OPENAI (nec-accuracy-chat). Cursor Cloud Agents are optional."
