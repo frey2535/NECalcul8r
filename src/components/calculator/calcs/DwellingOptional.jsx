@@ -8,14 +8,13 @@ import { getNecData } from "@/data/nec";
 import { calcDwellingOptional } from "./logic/dwellingCalcs";
 
 function formulasFor(nec) {
-  const hvac = nec.OPTIONAL_HVAC || {};
+  const hvac = nec?.OPTIONAL_HVAC || {};
   const lt4 = Math.round((hvac.spaceHeatLt4Factor ?? 0.65) * 100);
   const ge4 = Math.round((hvac.spaceHeatGe4Factor ?? 0.40) * 100);
   const supp = Math.round((hvac.supplementalHeatFactor ?? 0.65) * 100);
-  const remainder = Math.round((nec.OPTIONAL_DEMAND_FACTOR ?? 0.4) * 100);
-  const lightingArticle = nec.DWELLING_LIGHTING_ARTICLE || "Table 220.12";
-  const islandPeninsulaArticle = nec.ISLAND_PENINSULA_ARTICLE || "210.52(C)(2)";
-  const genArt = nec.OPTIONAL_GENERAL_LOAD_ARTICLE || "220.82(B)";
+  const remainder = Math.round((nec?.OPTIONAL_DEMAND_FACTOR ?? 0.4) * 100);
+  const lightingArticle = nec?.DWELLING_LIGHTING_ARTICLE || "Table 220.12";
+  const genArt = nec?.OPTIONAL_GENERAL_LOAD_ARTICLE || "220.82(B)";
   return [
     { label: `General Demand (NEC ${genArt})`, formula: `Demand = 100%(first 10kVA) + ${remainder}%(remainder)`, description: `Applied to general loads at nameplate: lighting (${lightingArticle}) + small appliance + laundry + appliances (range, dryer, water heater, etc.)` },
     { label: "AC / Heat Pump Compressor (NEC 220.82(C)(1)(2))", formula: "Cooling = max(AC, Heat Pump compressor) at 100%", description: "Air conditioning and heat pump compressor at nameplate rating" },
@@ -27,9 +26,49 @@ function formulasFor(nec) {
   ];
 }
 
+function emptyResult() {
+  return {
+    hvacLoad_VA: 0,
+    acLoad_VA: 0,
+    electricHeatLoad_VA: 0,
+    heatPumpCompressorLoad_VA: 0,
+    supplementalHeatLoad_VA: 0,
+    spaceHeaterLoad_VA: 0,
+    heatPumpSystemLoad_VA: 0,
+    coolingLoad_VA: 0,
+    heatingLoad_VA: 0,
+    heatDemandFactor: 0.65,
+    spaceHeatArticle: "220.82(C)(4)",
+    noncoincidentSelected: "cooling",
+    generalLighting_VA: 0,
+    generalTotal_VA: 0,
+    generalDemand_VA: 0,
+    totalVA: 0,
+    totalAmps: 0,
+    minService_A: 100,
+    steps: [],
+    trace: null,
+  };
+}
+
 export default function DwellingOptional({ category, necYear = "2023" }) {
-  const nec = getNecData(necYear);
-  const TABLES = getTablesById(["220_42_lighting_demand", "220_54_dryer_demand", "220_55_cooking_demand"], necYear);
+  let nec;
+  let necError = null;
+  try {
+    nec = getNecData(necYear);
+  } catch (error) {
+    necError = error;
+    nec = {};
+  }
+
+  const TABLES = (() => {
+    try {
+      return getTablesById(["220_42_lighting_demand", "220_54_dryer_demand", "220_55_cooking_demand"], necYear) || [];
+    } catch {
+      return [];
+    }
+  })();
+
   const [v, setV] = useCalculatorInputs({
     sqft: 2000, airCond: 5000, heatStrip: 0, heatPump: 0,
     heatUnits: 1, supplementalHeat: 0, supplementalSimultaneous: false, spaceHeater: 0,
@@ -37,22 +76,41 @@ export default function DwellingOptional({ category, necYear = "2023" }) {
   });
   const set = k => val => setV(p => ({ ...p, [k]: val }));
 
-  const r = calcDwellingOptional(v, nec);
+  let r = emptyResult();
+  let calcError = necError;
+  if (!calcError) {
+    try {
+      r = calcDwellingOptional(v, nec) || emptyResult();
+    } catch (error) {
+      calcError = error;
+      r = emptyResult();
+    }
+  }
+
   const {
-    hvacLoad_VA: hvacLoad,
-    acLoad_VA: acLoad, electricHeatLoad_VA: electricHeatLoad,
-    heatPumpCompressorLoad_VA: heatPumpCompressorLoad,
-    supplementalHeatLoad_VA: supplementalHeatLoad,
-    spaceHeaterLoad_VA: spaceHeaterLoad,
-    heatPumpSystemLoad_VA: heatPumpSystemLoad,
-    coolingLoad_VA: coolingLoad, heatingLoad_VA: heatingLoad,
-    heatDemandFactor, spaceHeatArticle, noncoincidentSelected,
-    generalLighting_VA: generalLighting,
-    generalTotal_VA: generalTotal, generalDemand_VA: generalDemand,
-    totalVA, totalAmps, minService_A: minService, steps,
+    hvacLoad_VA: hvacLoad = 0,
+    acLoad_VA: acLoad = 0,
+    electricHeatLoad_VA: electricHeatLoad = 0,
+    heatPumpCompressorLoad_VA: heatPumpCompressorLoad = 0,
+    supplementalHeatLoad_VA: supplementalHeatLoad = 0,
+    spaceHeaterLoad_VA: spaceHeaterLoad = 0,
+    heatPumpSystemLoad_VA: heatPumpSystemLoad = 0,
+    coolingLoad_VA: coolingLoad = 0,
+    heatingLoad_VA: heatingLoad = 0,
+    heatDemandFactor = 0.65,
+    spaceHeatArticle = "220.82(C)(4)",
+    noncoincidentSelected = "cooling",
+    generalLighting_VA: generalLighting = 0,
+    generalTotal_VA: generalTotal = 0,
+    generalDemand_VA: generalDemand = 0,
+    totalVA = 0,
+    totalAmps = 0,
+    minService_A: minService = 100,
+    steps = [],
   } = r;
-  const laundry = nec.LAUNDRY_VA;
-  const smallAppliance = 2 * nec.SMALL_APPLIANCE_VA;
+
+  const laundry = nec.LAUNDRY_VA ?? 1500;
+  const smallAppliance = 2 * (nec.SMALL_APPLIANCE_VA ?? 1500);
   const other = parseFloat(v.otherLoads) || 0;
   const hvac = nec.OPTIONAL_HVAC || {};
   const lt4 = Math.round((hvac.spaceHeatLt4Factor ?? 0.65) * 100);
@@ -60,18 +118,27 @@ export default function DwellingOptional({ category, necYear = "2023" }) {
   const suppPct = Math.round((hvac.supplementalHeatFactor ?? 0.65) * 100);
   const remainderPct = ((nec.OPTIONAL_DEMAND_FACTOR ?? 0.4) * 100).toFixed(0);
   const lightingArticle = nec.DWELLING_LIGHTING_ARTICLE || "Table 220.12";
+  // Must be declared in this component scope — using a nested-helper binding crashes render.
   const islandPeninsulaArticle = nec.ISLAND_PENINSULA_ARTICLE || "210.52(C)(2)";
   const genArt = nec.OPTIONAL_GENERAL_LOAD_ARTICLE || "220.82(B)";
   const applyArt = nec.OPTIONAL_APPLICABILITY_ARTICLE || "220.82(A)";
   const bothHeatSystems = (parseFloat(v.heatStrip) || 0) > 0 && (parseFloat(v.spaceHeater) || 0) > 0;
+  const heatPctLabel = Number.isFinite(heatDemandFactor) ? (heatDemandFactor * 100).toFixed(0) : "65";
 
   return (
     <CalcLayout category={category} necYear={necYear} inputValues={v} outputValues={r} trace={r.trace} result={
       <div className="space-y-2">
+        {calcError && (
+          <div role="alert" className="rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950">
+            <p className="font-bold">Dwelling Optional could not finish this calculation.</p>
+            <p className="mt-1 font-mono text-xs break-words">{String(calcError?.message || calcError)}</p>
+            <p className="mt-2 text-xs">Inputs still work — change a field or switch NEC year, then retry.</p>
+          </div>
+        )}
         <ResultSection title="HVAC — Largest of 220.82(C)(1)–(C)(6)">
           <ResultRow label="Air Conditioning (100%) — (C)(1)" value={acLoad} unit="VA" />
           <ResultRow label="Heat Pump Compressor (100%) — (C)(2)" value={heatPumpCompressorLoad} unit="VA" />
-          <ResultRow label={`Electric Heat (${(heatDemandFactor * 100).toFixed(0)}%) — ${spaceHeatArticle}`} value={electricHeatLoad} unit="VA" />
+          <ResultRow label={`Electric Heat (${heatPctLabel}%) — ${spaceHeatArticle}`} value={electricHeatLoad} unit="VA" />
           {supplementalHeatLoad > 0 && <ResultRow label={`Supplemental Heat (${suppPct}%) — (C)(3)`} value={supplementalHeatLoad} unit="VA" />}
           {spaceHeaterLoad > 0 && <ResultRow label="Thermal Storage (100%) — (C)(6)" value={spaceHeaterLoad} unit="VA" />}
           {heatPumpSystemLoad > 0 && <ResultRow label="Heat Pump System selection" value={heatPumpSystemLoad} unit="VA" />}
@@ -93,14 +160,16 @@ export default function DwellingOptional({ category, necYear = "2023" }) {
           <ResultRow label="Minimum Service Size" value={`${minService}A`} highlight />
         </ResultSection>
         <FormulaBox steps={steps} formulas={formulasFor(nec)} />
-        {TABLES.map(t => <NECTableDisplay key={t.id} title={t.article} headers={t.headers} rows={t.rows} note={t.note} compact />)}
+        {TABLES.filter(Boolean).map((t) => (
+          <NECTableDisplay key={t.id} title={t.article} headers={t.headers} rows={t.rows} note={t.note} compact />
+        ))}
         <NoteBox>
           <ul className="list-disc pl-3.5 space-y-1">
             <li>NEC {necYear} {applyArt}: optional method for one- and two-family dwellings (and the dwelling portion of a farm service as used) served by a single 120/240 V or 120/208 V 3-wire service or feeder rated 100 A or more.</li>
             <li>NEC {necYear} {genArt}: general loads (lighting per {lightingArticle}, small-appliance, laundry, and nameplate appliances such as range, dryer, water heater, dishwasher) — first 10,000 VA at 100%, remainder at {remainderPct}%. Table 220.55 / 220.54 demand factors are not used in this method.</li>
             <li>NEC {necYear} 220.82(C): HVAC is the <strong>largest</strong> of (C)(1)–(C)(6) — AC 100%, heat-pump compressor 100%, compressor + {suppPct}% supplemental (omit compressor from that selection if they cannot run together), space heat {lt4}% if fewer than 4 separately controlled units or {ge4}% if 4 or more, thermal storage / continuous heating 100%. Do not add heating and cooling.</li>
             {bothHeatSystems && <li>Electric space heating and thermal storage are both entered. A system that qualifies under (C)(6) must not also be calculated under (C)(4) or (C)(5). The calculator takes the larger selection; it does not add them.</li>}
-            <li>Minimum one-family dwelling service: {nec.DWELLING_MIN_SERVICE_AMPS}A per 230.79(C).</li>
+            <li>Minimum one-family dwelling service: {nec.DWELLING_MIN_SERVICE_AMPS ?? 100}A per 230.79(C).</li>
             {nec.DWELLING_SPD_REQUIRED && <li><strong>230.67 ({necYear}):</strong> SPD Type 1 or 2 required for this dwelling unit service.</li>}
             {nec.DWELLING_OUTDOOR_DISCONNECT_REQUIRED && <li><strong>230.85 ({necYear}):</strong> Outdoor emergency disconnect required for one- and two-family dwellings.</li>}
             {nec.GFCI_SCOPE_DWELLING && <li><strong>210.8(A) GFCI scope ({necYear}):</strong> {nec.GFCI_SCOPE_DWELLING}</li>}
