@@ -1,0 +1,49 @@
+name: Prepare dependency security fixes
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Apply non-breaking npm security fixes
+        run: npm audit fix
+        continue-on-error: true
+      - name: Check app after remediation
+        run: |
+          npm run lint
+          npm run typecheck
+          npm run verify:release
+          npm run build
+      - name: Record remaining advisories
+        run: |
+          npm audit --json > npm-audit-remaining.json || true
+          node -e "const a=require('./npm-audit-remaining.json'); console.log(JSON.stringify({vulnerabilities:a.metadata?.vulnerabilities, packages:Object.keys(a.vulnerabilities||{})},null,2))"
+      - name: Open review-only remediation PR
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: fix/npm-audit-lockfile
+          delete-branch: true
+          commit-message: 'fix: apply npm audit non-breaking dependency updates'
+          title: 'fix: update vulnerable dependencies without forced major upgrades'
+          body: |
+            Automated non-forced npm audit fix.
+            Lint, typecheck, release calculator tests, and build passed before opening.
+            Remaining advisories (especially Tailwind 3 transitive dependencies) require separate review.
+            Do not merge unless normal security audit passes or remaining risks have been explicitly reviewed.
+          add-paths: |
+            package-lock.json
+            package.json
