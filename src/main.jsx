@@ -3,8 +3,10 @@ import ReactDOM from 'react-dom/client'
 import App from '@/App.jsx'
 import '@/index.css'
 import { registerServiceWorker } from '@/lib/pwa'
+import { startPwaAnalytics } from '@/lib/pwaAnalytics'
 
 registerServiceWorker()
+startPwaAnalytics()
 
 try {
   const redirect = window.sessionStorage.getItem("necalcul8r_redirect");
