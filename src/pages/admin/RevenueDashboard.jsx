@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { DollarSign, RefreshCw, Smartphone, Users, WalletCards } from "lucide-react";
 import { base44 } from "@/api/base44Client";
@@ -185,7 +185,20 @@ function SummaryCard({ icon: Icon, label, value, detail }) {
   );
 }
 
+const TEST_KEY = "necalcul8r:revenue:test-records:v1";
+function loadTestIds() {
+  try { return new Set(JSON.parse(localStorage.getItem(TEST_KEY) || "[]")); }
+  catch { return new Set(); }
+}
 export default function RevenueDashboard() {
+  const [testIds, setTestIds] = useState(loadTestIds);
+  const [showTests, setShowTests] = useState(false);
+  const [realPurchaseId, setRealPurchaseId] = useState("");
+  const recordKey = (row) => row.source + ":" + row.id;
+  const saveTestIds = (next) => {
+    localStorage.setItem(TEST_KEY, JSON.stringify([...next]));
+    setTestIds(new Set(next));
+  };
   const { data, isLoading, error, refetch, isFetching } = useQuery({
     queryKey: ["revenue-dashboard"],
     queryFn: loadRevenueData,
@@ -201,7 +214,8 @@ export default function RevenueDashboard() {
     const otherRows = entitlementRows(data?.entitlements || [], users, existingRevenueKeys);
     const rows = [...subscriptionRows, ...playRows, ...otherRows]
       .sort((a, b) => new Date(b.updatedAt || 0).getTime() - new Date(a.updatedAt || 0).getTime());
-    const activeRows = rows.filter((row) => row.active);
+    const liveRows = rows.filter((row) => !testIds.has(recordKey(row)));
+    const activeRows = liveRows.filter((row) => row.active);
     const recurringRows = rows.filter((row) => row.active && row.recurring);
     const revenueRows = activeRows.filter((row) => ["stripe", "google_play", "apple_app_store"].includes(row.source));
 
@@ -218,6 +232,7 @@ export default function RevenueDashboard() {
 
     return {
       rows,
+      liveRows,
       activeRows,
       recurringRows,
       revenueRows,
@@ -225,7 +240,7 @@ export default function RevenueDashboard() {
       grossMonthlyTarget: revenueRows.reduce((total, row) => total + row.monthlyTarget, 0),
       activeUsers: users.filter((user) => user.access_status === "active" && !user.is_platform_admin).length,
     };
-  }, [data]);
+  }, [data, testIds]);
 
   return (
     <div className="mx-auto max-w-6xl space-y-5 pb-16">
@@ -259,6 +274,19 @@ export default function RevenueDashboard() {
         Use Stripe and Google Play for final payout, tax, refund, and fee reconciliation.
       </div>
 
+      <div className="rounded-xl border bg-card p-4 space-y-3">
+        <h2 className="font-bold">Test subscriptions</h2>
+        <p className="text-sm text-muted-foreground">Choose the genuine Google Play purchase, then exclude all other records from this browser's revenue dashboard. No billing records are deleted or canceled. Classification is local to this browser.</p>
+        <select aria-label="Genuine Google Play purchase" value={realPurchaseId} onChange={(e) => setRealPurchaseId(e.target.value)} className="w-full rounded-lg border bg-background p-2">
+          <option value="">Select genuine Google Play purchase</option>
+          {dashboard.rows.filter((row) => row.source === "google_play").map((row) => <option key={recordKey(row)} value={recordKey(row)}>{row.customer} - {row.planLabel} - {row.id}</option>)}
+        </select>
+        <button type="button" disabled={!realPurchaseId} className="rounded-lg bg-blue-600 px-3 py-2 text-white disabled:opacity-50" onClick={() => {
+          if (!window.confirm("Exclude every record except the selected Google Play purchase from this browser's revenue totals?")) return;
+          saveTestIds(new Set(dashboard.rows.filter((row) => recordKey(row) !== realPurchaseId).map(recordKey)));
+        }}>Mark all others as test</button>
+        <label className="ml-3 text-sm"><input type="checkbox" checked={showTests} onChange={(e) => setShowTests(e.target.checked)} /> Show test records</label>
+      </div>
       {!data?.supabaseReady && !isLoading && (
         <div className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800 dark:border-blue-900/60 dark:bg-blue-950/30 dark:text-blue-200">
           Live subscription totals require Supabase configuration. Local/demo mode can only show user access records.
@@ -341,12 +369,19 @@ export default function RevenueDashboard() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border/60">
-                  {dashboard.rows.length ? dashboard.rows.map((row) => {
+                  {dashboard.rows.filter((row) => showTests || !testIds.has(recordKey(row))).length ? dashboard.rows.filter((row) => showTests || !testIds.has(recordKey(row))).map((row) => {
                     const source = BILLING_SOURCES[row.source] || BILLING_SOURCES.other;
                     return (
                       <tr key={`${row.source}-${row.id}`} className={!row.active ? "opacity-60" : undefined}>
                         <td className="whitespace-nowrap px-4 py-3 font-semibold text-foreground">
                           {row.customer}
+                          {testIds.has(recordKey(row)) && <span className="ml-2 text-xs">TEST</span>}
+                          <button type="button" className="ml-2 text-xs underline" onClick={() => {
+                            const next = new Set(testIds);
+                            if (next.has(recordKey(row))) next.delete(recordKey(row));
+                            else next.add(recordKey(row));
+                            saveTestIds(next);
+                          }}>{testIds.has(recordKey(row)) ? "Restore" : "Mark test"}</button>
                           {row.note && <p className="text-xs font-normal text-muted-foreground">{row.note}</p>}
                         </td>
                         <td className="whitespace-nowrap px-4 py-3">
