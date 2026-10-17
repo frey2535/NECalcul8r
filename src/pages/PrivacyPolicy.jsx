@@ -20,7 +20,7 @@ export default function PrivacyPolicy() {
           </div>
           <h1 className="text-2xl sm:text-3xl font-bold font-heading">Privacy Policy</h1>
         </div>
-        <p className="text-sm text-muted-foreground mb-2">Last updated: August 10, 2026</p>
+        <p className="text-sm text-muted-foreground mb-2">Last updated: October 17, 2026</p>
         <p className="text-sm text-muted-foreground mb-8">
           This Privacy Policy describes how NECalcul8r ("we", "us", "the app") collects, uses, shares,
           safeguards, and handles your information when you use our mobile application and related
@@ -72,6 +72,12 @@ export default function PrivacyPolicy() {
                 <strong className="text-foreground">Device and technical data:</strong> Limited
                 technical information such as app version and platform may be collected for
                 compatibility and diagnostic purposes.
+              </li>
+              <li>
+                <strong className="text-foreground">Purchase history:</strong> When you subscribe,
+                we store the plan, product identifier, and transaction identifier returned by Apple,
+                Google Play, or Stripe so we can unlock the matching calculators. Card numbers stay
+                with the store or payment provider.
               </li>
             </ul>
           </section>

@@ -347,7 +347,7 @@ export function canUseNecAccuracyAssistant(user) {
 
 function sourceForUser(user, plan) {
   if (user.purchase_source === "google_play" || user.access_type === "google_play") return "google_play";
-  if (user.purchase_source === "apple_app_store" || user.access_type === "apple_app_store" || user.access_type === "app_store") return "stripe";
+  if (user.purchase_source === "apple_app_store" || user.access_type === "apple_app_store" || user.access_type === "app_store") return "apple_app_store";
   if (plan.planKey === OWNER_FULL_ACCESS_PLAN_KEY || user.access_type === "permanent") return "owner_grant";
   return "stripe";
 }
