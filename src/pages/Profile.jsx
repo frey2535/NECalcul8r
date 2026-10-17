@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { isStandaloneDisplay, refreshApp } from "@/lib/pwa";
 import { isAndroidNativeApp, openGooglePlaySubscriptionManagement } from "@/lib/googlePlayBilling";
+import { isIosNativeApp, openAppleAppStoreSubscriptionManagement } from "@/lib/appleAppStoreBilling";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -47,8 +48,18 @@ export default function Profile() {
   const canUseAssistant = canUseNecAccuracyAssistant(user);
   const profileBadgeLabel = getProfileBadgeLabel(user);
   const isGooglePlayBillingUser = user?.purchase_source === "google_play" || user?.access_type === "google_play";
+  const isAppleBillingUser = user?.purchase_source === "apple_app_store"
+    || user?.access_type === "apple_app_store"
+    || user?.access_type === "app_store";
   const isAndroidNative = isAndroidNativeApp();
-  const canManageBilling = isGooglePlayBillingUser || (!isAndroidNative && base44.commerce?.isConfigured);
+  const isIosNative = isIosNativeApp();
+  const canManageBilling = isGooglePlayBillingUser
+    || isAppleBillingUser
+    || isIosNative
+    || (!isAndroidNative && !isIosNative && base44.commerce?.isConfigured);
+  let billingActionLabel = "Manage Billing";
+  if (isGooglePlayBillingUser) billingActionLabel = "Manage Google Play Subscription";
+  else if (isAppleBillingUser || isIosNative) billingActionLabel = "Manage App Store Subscription";
 
   useEffect(() => {
     base44.auth.me().then(setUser).catch(() => {});
@@ -75,6 +86,11 @@ export default function Profile() {
     try {
       if (isGooglePlayBillingUser) {
         openGooglePlaySubscriptionManagement(user?.plan_key || user?.calculator_tier_id);
+        setBillingLoading(false);
+        return;
+      }
+      if (isAppleBillingUser || isIosNative) {
+        openAppleAppStoreSubscriptionManagement();
         setBillingLoading(false);
         return;
       }
@@ -120,7 +136,7 @@ export default function Profile() {
         </div>
       </div>
 
-      {!isStandaloneDisplay() && !isAndroidNative && (
+      {!isStandaloneDisplay() && !isAndroidNative && !isIosNative && (
       <button
         type="button"
         onClick={() => window.dispatchEvent(new Event("necalcul8r-show-install"))}
@@ -182,7 +198,7 @@ export default function Profile() {
             className="w-full flex items-center gap-3 px-5 py-4 text-sm font-semibold text-foreground hover:bg-muted active:bg-muted/80 disabled:opacity-60 transition-colors border-t border-border/40"
           >
             <CreditCard className="w-4 h-4 text-muted-foreground" />
-            {isGooglePlayBillingUser ? "Manage Google Play Subscription" : "Manage Billing"}
+            {billingActionLabel}
           </button>
         )}
         {billingError && (
@@ -279,6 +295,12 @@ export default function Profile() {
                 <>
                   <br />
                   Deleting your NECalcul8r account does not cancel your Google Play subscription. Manage or cancel it in Google Play before deleting your account if you want billing to stop.
+                </>
+              )}
+              {(isAppleBillingUser || isIosNative) && (
+                <>
+                  <br />
+                  Deleting your NECalcul8r account does not cancel your App Store subscription. Manage or cancel it in Settings → Apple ID → Subscriptions before deleting your account if you want billing to stop.
                 </>
               )}
             </AlertDialogDescription>

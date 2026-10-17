@@ -20,7 +20,7 @@ export default function EULA() {
           </div>
           <h1 className="text-2xl sm:text-3xl font-bold font-heading">End User License Agreement</h1>
         </div>
-        <p className="text-sm text-muted-foreground mb-8">Last updated: September 10, 2026</p>
+        <p className="text-sm text-muted-foreground mb-8">Last updated: October 17, 2026</p>
 
         <div className="space-y-8 text-sm sm:text-base leading-relaxed">
           <section>
@@ -33,12 +33,32 @@ export default function EULA() {
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold mb-3">2. Google Play purchases</h2>
+            <h2 className="text-lg font-semibold mb-3">2. Store purchases</h2>
             <p className="text-muted-foreground">
               Individual subscriptions purchased through the Android app are billed by Google Play.
               Manage, cancel, or request refunds through Google Play account settings according to
-              Google&apos;s policies. Company plans and license keys sold outside Google Play are
-              billed separately (for example via Stripe on the website).
+              Google&apos;s policies.
+            </p>
+            <p className="text-muted-foreground mt-2">
+              Individual subscriptions purchased through the iOS app are auto-renewable monthly
+              subscriptions billed by Apple. The subscription title, one-month length, and price are
+              shown in the app before purchase. Manage or cancel in Settings → Apple ID →
+              Subscriptions. Deleting your NECalcul8r account does not cancel an App Store
+              subscription. Refunds follow Apple&apos;s policies. Company plans and license keys are
+              sold on the website and are not purchased inside the iOS app.
+            </p>
+            <p className="text-muted-foreground mt-2">
+              These store terms are in addition to Apple&apos;s Licensed Application End User License
+              Agreement at{" "}
+              <a
+                className="underline underline-offset-2"
+                href="https://www.apple.com/legal/internet-services/itunes/dev/stdeula/"
+                target="_blank"
+                rel="noreferrer"
+              >
+                apple.com/legal/internet-services/itunes/dev/stdeula
+              </a>
+              .
             </p>
           </section>
 
