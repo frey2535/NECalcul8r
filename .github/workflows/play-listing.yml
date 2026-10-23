@@ -1,0 +1,26 @@
+name: Google Play listing metadata
+on:
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: 'Commit listing update to Play Console (not automatically sent for review)'
+        required: true
+        type: boolean
+        default: false
+permissions:
+  contents: read
+jobs:
+  listing:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate and preview metadata
+        run: node scripts/publish-play-listing.mjs
+      - name: Commit listing metadata to Play Console
+        if: ${{ inputs.publish }}
+        env:
+          GOOGLE_PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
+        run: node scripts/publish-play-listing.mjs --publish
