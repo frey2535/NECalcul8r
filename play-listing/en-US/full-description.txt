@@ -1,0 +1,14 @@
+NECalcul8r is an electrical calculator and learning tool for electricians, electrical contractors, apprentices, inspectors, technicians, and electrical engineering students.
+
+Perform NEC-based electrical calculations and learn how the results are determined with step-by-step math and electrical code references.
+
+Built for the jobsite and the classroom:
+• Electrical calculators for practical field and learning applications
+• Step-by-step calculation explanations
+• NEC tables and references where supported
+• Tools to help understand electrical design and installation calculations
+• Mobile-friendly access for electricians and apprentices
+
+Whether you're learning electrical fundamentals, reviewing a calculation, or planning an installation, NECalcul8r helps you understand the math behind the answer.
+
+Always verify results against the locally adopted National Electrical Code edition, applicable amendments, manufacturer instructions, and your authority having jurisdiction. NEC is a registered trademark of the National Fire Protection Association (NFPA). NECalcul8r is not affiliated with or endorsed by NFPA.
