@@ -30,7 +30,22 @@ const { access_token: token } = await tokenResponse.json();
 const api = 'https://androidpublisher.googleapis.com/androidpublisher/v3/applications/' + packageName + '/edits';
 const call = async (url, method, body) => {
   const response = await fetch(url, { method, headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' }, body: body ? JSON.stringify(body) : undefined });
-  if (!response.ok) throw new Error('Play API request failed: HTTP ' + response.status + ' at ' + method + ' ' + url.split('?')[0]);
+  if (!response.ok) {
+    // Google error responses may contain credentials or other sensitive details.
+    // Emit only the documented reason and status, never request headers or tokens.
+    let reason = 'unknown';
+    let message = '';
+    try {
+      const payload = await response.json();
+      const detail = payload?.error;
+      reason = String(detail?.errors?.[0]?.reason ?? detail?.status ?? 'unknown').slice(0, 100);
+      message = String(detail?.message ?? '').replace(/[\r\n]+/g, ' ').slice(0, 400);
+    } catch {}
+    const hint = response.status === 403
+      ? ' Verify the service account has Play Console app access and the required Store presence permission for this package; also confirm the Android Publisher API is enabled for its Google Cloud project.'
+      : '';
+    throw new Error('Play API HTTP ' + response.status + ' (' + reason + ') at ' + method + ' ' + url.split('?')[0] + (message ? ': ' + message : '') + hint);
+  }
   return response.json();
 };
 const edit = await call(api, 'POST');
