@@ -5,6 +5,7 @@ import { useAuth } from "@/lib/AuthContext";
 import { COMPANY_PLANS, DEFAULT_PAID_PLAN_KEY, INDIVIDUAL_PLANS, getPlanOption, isPlanUpgrade } from "@/lib/pricing";
 import { isAndroidNativeApp, isGooglePlayBillingPluginMissing, openPlayStoreListing, purchaseGooglePlayPlan, queryGooglePlayProducts, restoreGooglePlayPurchases } from "@/lib/googlePlayBilling";
 import { isIosNativeApp, purchaseAppleAppStorePlan, queryAppleAppStoreProducts, restoreAppleAppStorePurchases } from "@/lib/appleAppStoreBilling";
+import AppleSubscriptionDisclosure from "@/components/billing/AppleSubscriptionDisclosure";
 import { cn } from "@/lib/utils";
 
 function TierButton({ active, title, subtitle, onClick }) {
@@ -352,9 +353,7 @@ export default function Purchase() {
               </p>
             )}
             {usesAppleIap && (
-              <p className="text-xs text-muted-foreground mt-2">
-                iOS individual purchases use Apple In-App Purchase. Manage or cancel in Settings → Apple ID → Subscriptions.
-              </p>
+              <AppleSubscriptionDisclosure planLabel={selected.label} priceLabel={displayPrice(selected)} />
             )}
             {companyOnStore && (
               <p className="text-xs text-amber-700 dark:text-amber-300 mt-2">

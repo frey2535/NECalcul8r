@@ -20,7 +20,7 @@ export default function TermsOfService() {
           </div>
           <h1 className="text-2xl sm:text-3xl font-bold font-heading">Terms of Service</h1>
         </div>
-        <p className="text-sm text-muted-foreground mb-8">Last updated: September 10, 2026</p>
+        <p className="text-sm text-muted-foreground mb-8">Last updated: October 17, 2026</p>
 
         <div className="space-y-8 text-sm sm:text-base leading-relaxed">
           <section>
@@ -111,15 +111,25 @@ export default function TermsOfService() {
                 subscriptions. Refunds follow Google Play&apos;s refund policies.
               </li>
               <li>
+                <strong className="text-foreground">Apple App Store (iOS app):</strong> Individual
+                subscriptions are auto-renewable monthly subscriptions billed by Apple. The title,
+                one-month length, and price are shown on the purchase screen before you confirm.
+                Payment is charged to your Apple ID. The subscription renews unless you cancel at
+                least 24 hours before the current period ends. Manage or cancel in Settings → Apple
+                ID → Subscriptions. Deleting your NECalcul8r account does not cancel the App Store
+                subscription. Refunds follow Apple&apos;s policies.
+              </li>
+              <li>
                 <strong className="text-foreground">Website / Stripe:</strong> Web and company
                 subscriptions are billed by Stripe. Cancel or change plans from Manage Billing in the
-                app, or via the Stripe customer portal. Refunds follow Stripe and applicable law.
+                web app, or via the Stripe customer portal. Refunds follow Stripe and applicable law.
+                The iOS app does not sell these plans with Stripe.
               </li>
               <li>
                 <strong className="text-foreground">License keys:</strong> Keys sold by invoice,
                 Payment Link, or reseller unlock access when redeemed through the web app and may
                 have their own expiry stated on the invoice. License keys are not redeemed inside
-                the Android app.
+                the Android or iOS app.
               </li>
             </ul>
             <p className="text-muted-foreground mt-2">

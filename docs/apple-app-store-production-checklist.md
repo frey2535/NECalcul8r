@@ -115,9 +115,11 @@ Install from TestFlight and verify:
 - Locked calculator opens App Store purchase sheet
 - Successful purchase unlocks the selected tier
 - Restore purchases
+- Purchase screen shows the subscription title, 1-month length, price, and working Privacy Policy, Terms of Use, and EULA links before purchase (Guideline 3.1.2)
+- Profile → Manage App Store Subscription opens Apple subscription management and does not open Stripe
 - Cancelled subscription remains active through the paid period
 - Company CTA does **not** open Stripe Checkout in-app
-- Account deletion still works
+- Account deletion still works and warns that deletion does not cancel the App Store subscription
 - Privacy / Terms / EULA open
 
 ## 7. What this repo already includes
@@ -126,6 +128,9 @@ Install from TestFlight and verify:
 - StoreKit 2 plugin `AppleAppStoreBillingPlugin` (sends JWS `signedTransaction`)
 - JS bridge `src/lib/appleAppStoreBilling.js`
 - Purchase page gates Stripe/license redemption on iOS and uses IAP for individual plans
+- iOS purchase screen states auto-renewable monthly title, length, and price, with in-app Privacy Policy, Terms of Use, and EULA links
+- Profile sends Apple subscribers (and the iOS app) to App Store subscription management, not the Stripe portal
+- Terms and EULA describe App Store auto-renewal and link Apple’s standard Licensed Application EULA
 - Matching App Store product IDs on pricing plans
 - `verify-apple-purchase` Edge Function + `_shared/apple-app-store.ts` (Server API)
 - `apple_app_store_purchases` table (schema + `supabase/fixes/add-apple-app-store-purchases.sql`)

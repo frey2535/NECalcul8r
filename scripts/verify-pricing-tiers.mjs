@@ -1,4 +1,5 @@
 import {
+  APPLE_APP_STORE_PRODUCT_IDS,
   GOOGLE_PLAY_PRODUCT_IDS,
   getCalculatorAccess,
   getPlanUpgradeRank,
@@ -128,5 +129,17 @@ assert(
   GOOGLE_PLAY_PRODUCT_IDS.join(",") === "individual_6_15,individual_16_25,individual_26_35,individual_36_plus",
   "Google Play product IDs should match the active individual products",
 );
+assert(
+  APPLE_APP_STORE_PRODUCT_IDS.join(",") === GOOGLE_PLAY_PRODUCT_IDS.join(","),
+  "App Store product IDs should match the Google Play individual products",
+);
+const appleSubscriber = {
+  access_type: "apple_app_store",
+  access_status: "active",
+  purchase_source: "apple_app_store",
+  plan_key: "individual_16_25",
+};
+assert(getResolvedEntitlement(appleSubscriber).source === "apple_app_store", "App Store subscribers should keep the apple_app_store entitlement source");
+assert(getResolvedEntitlement(appleSubscriber).planKey === "individual_16_25", "App Store subscribers should keep their purchased calculator tier");
 
 console.log("Pricing tier verification passed.");
