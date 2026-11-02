@@ -34,6 +34,10 @@ async function main() {
     const { runDwellingOptionalBaseline } = await server.ssrLoadModule(
       "/src/data/nec/dwellingOptionalBaseline.js"
     );
+    const { calcDwellingOptional } = await server.ssrLoadModule(
+      "/src/components/calculator/calcs/logic/dwellingCalcs.jsx"
+    );
+    const { getNecData } = await server.ssrLoadModule("/src/data/nec/index.js");
 
     const results = runDwellingOptionalBaseline();
     const dateStr = new Date().toISOString();
@@ -84,17 +88,60 @@ async function main() {
       }
     }
 
+    // ─── Load-path never-throw (empty/partial NEC data) ───
+    console.log("");
+    console.log("─── Load-path hardening (must not throw) ───");
+    const defaultUiInputs = {
+      sqft: 2000, airCond: 5000, heatStrip: 0, heatPump: 0,
+      heatUnits: 1, supplementalHeat: 0, supplementalSimultaneous: false, spaceHeater: 0,
+      otherLoads: 8000, voltage: 240,
+    };
+    const loadPathCases = [
+      { id: "empty-nec", inputs: {}, nec: {} },
+      { id: "default-ui-empty-nec", inputs: defaultUiInputs, nec: {} },
+      { id: "missing-hvac-table", inputs: defaultUiInputs, nec: { OPTIONAL_HVAC: null, STD_OCPD_SIZES: null } },
+      ...["2017", "2020", "2023", "2026"].map((year) => ({
+        id: `year-${year}`,
+        inputs: defaultUiInputs,
+        nec: getNecData(year),
+      })),
+    ];
+    const loadPathFailures = [];
+    for (const test of loadPathCases) {
+      try {
+        const out = calcDwellingOptional(test.inputs, test.nec);
+        const finite = [out.totalVA, out.totalAmps, out.minService_A, out.hvacLoad_VA, out.generalDemand_VA]
+          .every((n) => Number.isFinite(n));
+        if (!finite) {
+          loadPathFailures.push(`${test.id}: non-finite load outputs ${JSON.stringify({
+            totalVA: out.totalVA, totalAmps: out.totalAmps, minService_A: out.minService_A,
+          })}`);
+          console.log(`  ✗ FAIL  ${test.id} — non-finite load outputs`);
+        } else {
+          console.log(`  ✓ PASS  ${test.id} — ${out.totalVA} VA / ${out.totalAmps} A / ${out.minService_A} A service`);
+        }
+      } catch (error) {
+        loadPathFailures.push(`${test.id}: ${error?.message || error}`);
+        console.log(`  ✗ FAIL  ${test.id} — threw ${error?.message || error}`);
+      }
+    }
+
     // ─── Summary ───
     console.log("");
     console.log("═══════════════════════════════════════════════════════════════════════════");
-    if (results.allPass) {
-      console.log(`  ✅ ALL ${results.total} TESTS PASS — Status: VERIFIED`);
+    if (results.allPass && loadPathFailures.length === 0) {
+      console.log(`  ✅ ALL ${results.total} BASELINE TESTS PASS — Status: VERIFIED`);
+      console.log("  ✅ Load-path hardening: empty/partial NEC data does not crash");
       console.log("═══════════════════════════════════════════════════════════════════════════");
       console.log("");
       process.exitCode = 0;
     } else {
-      console.log(`  ❌ ${results.failed} TEST(S) FAILED — Status: DEFECT FOUND`);
-      console.log(`  Failing tests: ${results.failures.map((f) => f.id).join(", ")}`);
+      const failing = [
+        ...results.failures.map((f) => f.id),
+        ...loadPathFailures,
+      ];
+      console.log(`  ❌ ${failing.length} TEST(S) FAILED — Status: DEFECT FOUND`);
+      console.log(`  Failing tests: ${failing.join(", ")}`);
       console.log("═══════════════════════════════════════════════════════════════════════════");
       console.log("");
       process.exitCode = 1;
