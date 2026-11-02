@@ -1,3 +1,4 @@
+import { invokeEdgeFunction } from "./edgeFunctionClient";
 import { httpError } from "./localDb";
 import { supabaseAuth } from "./supabaseAuth";
 import { requireSupabase } from "./supabaseClient";
@@ -309,21 +310,21 @@ async function grantAccess(client, profileId, updates, source) {
   if (!rpcError) return;
   if (!isMissingRpc(rpcError)) throw rpcError;
 
-  const { error: functionError } = await client.functions.invoke("grant-access", {
-    body: {
+  try {
+    await invokeEdgeFunction("grant-access", {
       profileId,
       updates,
       source,
-    },
-  });
-  if (!functionError) return;
-
-  const message = [
-    "Access grant failed.",
-    "Install the Supabase helper in supabase/fixes/fix-admin-access-grants.sql or deploy a grant-access Edge Function.",
-    functionError.message || rpcError.message,
-  ].filter(Boolean).join(" ");
-  throw new Error(message);
+    });
+    return;
+  } catch (functionError) {
+    const message = [
+      "Access grant failed.",
+      "Install the Supabase helper in supabase/fixes/fix-admin-access-grants.sql or deploy a grant-access Edge Function.",
+      functionError.message || rpcError.message,
+    ].filter(Boolean).join(" ");
+    throw new Error(message);
+  }
 }
 
 async function listUsers(sort, limit, query) {

@@ -4,6 +4,7 @@ import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/lib/AuthContext";
 import { COMPANY_PLANS, DEFAULT_PAID_PLAN_KEY, INDIVIDUAL_PLANS, getPlanOption, isPlanUpgrade } from "@/lib/pricing";
 import { isAndroidNativeApp, isGooglePlayBillingPluginMissing, openPlayStoreListing, purchaseGooglePlayPlan, queryGooglePlayProducts, restoreGooglePlayPurchases } from "@/lib/googlePlayBilling";
+import { refreshApp } from "@/lib/pwa";
 import { isIosNativeApp, purchaseAppleAppStorePlan, queryAppleAppStoreProducts, restoreAppleAppStorePurchases } from "@/lib/appleAppStoreBilling";
 import AppleSubscriptionDisclosure from "@/components/billing/AppleSubscriptionDisclosure";
 import { cn } from "@/lib/utils";
@@ -202,7 +203,10 @@ export default function Purchase() {
         });
       }
     } catch (purchaseError) {
-      setError(purchaseError.message || "Could not start checkout.");
+      const message = purchaseError.message || "Could not start checkout.";
+      setError(/network\/CORS|failed to send a request to the edge function/i.test(message)
+        ? `${message} If this phone still shows an older cached copy, tap Refresh app below and try checkout again.`
+        : message);
       setLoading(false);
     }
   };
@@ -405,8 +409,18 @@ export default function Purchase() {
           </button>
         )}
         {error && (
-          <div className="mt-4 rounded-xl bg-destructive/10 text-destructive text-sm px-4 py-3">
-            {error}
+          <div className="mt-4 rounded-xl bg-destructive/10 text-destructive text-sm px-4 py-3 space-y-3">
+            <p>{error}</p>
+            {/network\/CORS|failed to send a request to the edge function|Refresh app/i.test(error) && (
+              <button
+                type="button"
+                onClick={() => refreshApp()}
+                className="inline-flex items-center justify-center gap-2 rounded-xl border border-destructive/30 bg-background px-3 py-2 text-xs font-bold text-foreground hover:bg-muted"
+              >
+                <RefreshCw className="w-3.5 h-3.5" />
+                Refresh app
+              </button>
+            )}
           </div>
         )}
         {success && (

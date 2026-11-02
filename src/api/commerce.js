@@ -1,4 +1,5 @@
-import { isSupabaseConfigured, requireSupabase } from "./supabaseClient";
+import { invokeEdgeFunction } from "./edgeFunctionClient";
+import { isSupabaseConfigured } from "./supabaseClient";
 import { Capacitor } from "@capacitor/core";
 
 const individualPriceId = import.meta.env?.VITE_STRIPE_PRICE_INDIVIDUAL_36_PLUS
@@ -16,45 +17,14 @@ function clientPlatform() {
 }
 
 async function invokeCommerceFunction(functionName, payload = {}) {
-  const client = requireSupabase();
-  // Put platform in the JSON body only. A custom header triggers browser/WebView
-  // CORS preflights, and production Edge Functions still omit that header from
-  // Access-Control-Allow-Headers, which surfaces as "Failed to send a request to
-  // the Edge Function" on Android and stale PWAs.
-  const invokeOptions = {
-    body: {
-      ...payload,
-      clientPlatform: clientPlatform(),
-    },
-  };
-  const { data, error } = await client.functions.invoke(functionName, invokeOptions);
-  if (error) {
-    const response = error.context;
-    if (response && typeof response.clone === "function") {
-      let body = null;
-      try {
-        body = await response.clone().json();
-      } catch {
-        body = null;
-      }
-      if (body?.error) throw new Error(body.error);
-      if (body?.code === "NOT_FOUND" || /not found/i.test(String(body?.message || ""))) {
-        throw new Error(
-          `${functionName} is not deployed in Supabase yet. Deploy that Edge Function and retry.`
-        );
-      }
-      if (body?.message) throw new Error(body.message);
-    }
-    const message = error.message || `${functionName} failed.`;
-    if (/failed to send a request to the edge function/i.test(message)) {
-      throw new Error(
-        `${functionName} could not be reached (network/CORS). If this is an upgrade, confirm update-stripe-subscription is deployed.`
-      );
-    }
-    throw new Error(message);
-  }
-  if (data?.error) throw new Error(data.error);
-  return data;
+  // Put platform in the JSON body and use a CORS-safe fetch. supabase-js adds
+  // x-supabase-api-version, which production Edge Functions still omit from
+  // Access-Control-Allow-Headers, causing "Failed to send a request to the
+  // Edge Function" in Chrome and other browsers.
+  return invokeEdgeFunction(functionName, {
+    ...payload,
+    clientPlatform: clientPlatform(),
+  });
 }
 
 async function redirectToCheckout(payload) {
