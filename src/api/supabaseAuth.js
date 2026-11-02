@@ -1,3 +1,4 @@
+import { invokeEdgeFunction } from "./edgeFunctionClient";
 import { daysFromNow, httpError, todayISODate } from "./localDb";
 import { requireSupabase } from "./supabaseClient";
 
@@ -345,20 +346,7 @@ export const supabaseAuth = {
 
   async deleteAccount() {
     const client = requireSupabase();
-    const { data, error } = await client.functions.invoke("delete-account", { body: {} });
-    if (error) {
-      const response = error.context;
-      if (response && typeof response.clone === "function") {
-        try {
-          const body = await response.clone().json();
-          if (body?.error) throw new Error(body.error);
-        } catch (bodyError) {
-          if (bodyError?.message) throw bodyError;
-        }
-      }
-      throw new Error(error.message || "Account deletion failed.");
-    }
-    if (data?.error) throw new Error(data.error);
+    const data = await invokeEdgeFunction("delete-account", {});
     await client.auth.signOut().catch(() => undefined);
     if (typeof window !== "undefined") window.location.href = "/landing";
     return data || { ok: true };
