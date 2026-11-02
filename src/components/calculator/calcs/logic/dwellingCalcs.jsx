@@ -180,14 +180,37 @@ export function calcDwellingStandard(v, nec) {
   });
 }
 
-function getOptionalHvac(nec) {
-  const hvac = nec.OPTIONAL_HVAC;
-  if (!hvac) {
-    throw new Error(
-      `[calcDwellingOptional] OPTIONAL_HVAC missing for NEC ${nec.year || "unknown"}. Year data must define 220.82(C) factors.`
-    );
-  }
-  return hvac;
+const FALLBACK_OPTIONAL_HVAC = {
+  acFactor: 1.00,
+  heatPumpOnlyFactor: 1.00,
+  supplementalHeatFactor: 0.65,
+  spaceHeatLt4Factor: 0.65,
+  spaceHeatGe4Factor: 0.40,
+  thermalStorageFactor: 1.00,
+  spaceHeatUnitThreshold: 4,
+};
+
+const FALLBACK_OCPD_SIZES = [15, 20, 25, 30, 35, 40, 45, 50, 60, 70, 80, 90, 100, 110, 125, 150, 175, 200, 225, 250, 300, 350, 400];
+
+function getOptionalHvac(nec = {}) {
+  const hvac = nec?.OPTIONAL_HVAC && typeof nec.OPTIONAL_HVAC === "object"
+    ? nec.OPTIONAL_HVAC
+    : FALLBACK_OPTIONAL_HVAC;
+  return {
+    ...FALLBACK_OPTIONAL_HVAC,
+    ...hvac,
+  };
+}
+
+function factorPct(factor, fallback = 0) {
+  const value = Number(factor);
+  return Number.isFinite(value) ? (value * 100).toFixed(0) : fallback.toFixed(0);
+}
+
+function nextOcpdSize(sizes, amps) {
+  const list = Array.isArray(sizes) && sizes.length ? sizes : FALLBACK_OCPD_SIZES;
+  const load = Number.isFinite(amps) ? amps : 0;
+  return list.find((size) => size >= load) || list[list.length - 1] || 400;
 }
 
 /**
@@ -210,19 +233,24 @@ function getOptionalHvac(nec) {
  *                       heating VA, 100% per (C)(6); do not also enter that
  *                       same system under heatStrip
  */
-export function calcDwellingOptional(v, nec) {
+export function calcDwellingOptional(v = {}, nec = {}) {
   const optHvac = getOptionalHvac(nec);
   const generalArticle = nec.OPTIONAL_GENERAL_LOAD_ARTICLE || "220.82(B)";
   const dwellingLightingArticle = nec.DWELLING_LIGHTING_ARTICLE || "Table 220.12";
   const islandPeninsulaArticle = nec.ISLAND_PENINSULA_ARTICLE || "210.52(C)(2)";
-  const remainderFactor = nec.OPTIONAL_DEMAND_FACTOR ?? 0.4;
+  const remainderFactor = Number.isFinite(Number(nec.OPTIONAL_DEMAND_FACTOR))
+    ? Number(nec.OPTIONAL_DEMAND_FACTOR)
+    : 0.4;
   const remainderPct = Math.round(remainderFactor * 100);
 
   // ─── General load per 220.82(B) ───────────────────────────────────
   const sqft = Math.max(0, parseFloat(v.sqft) || 0);
-  const generalLighting = sqft * nec.DWELLING_LIGHTING_VA_PER_SQFT;
-  const smallAppliance = 2 * nec.SMALL_APPLIANCE_VA;
-  const laundry = nec.LAUNDRY_VA;
+  const lightingVaPerSqft = Number(nec.DWELLING_LIGHTING_VA_PER_SQFT);
+  const generalLighting = sqft * (Number.isFinite(lightingVaPerSqft) ? lightingVaPerSqft : 3);
+  const smallApplianceVa = Number(nec.SMALL_APPLIANCE_VA);
+  const smallAppliance = 2 * (Number.isFinite(smallApplianceVa) ? smallApplianceVa : 1500);
+  const laundryVa = Number(nec.LAUNDRY_VA);
+  const laundry = Number.isFinite(laundryVa) ? laundryVa : 1500;
   const other = Math.max(0, parseFloat(v.otherLoads) || 0);
   const generalTotal = generalLighting + smallAppliance + laundry + other;
 
@@ -285,14 +313,17 @@ export function calcDwellingOptional(v, nec) {
   const voltage = parseFloat(v.voltage) || 240;
   const totalAmps = totalVA / voltage;
 
-  const minServiceFromLoad = nec.STD_OCPD_SIZES.find(s => s >= totalAmps) || 400;
+  const minServiceFromLoad = nextOcpdSize(nec.STD_OCPD_SIZES, totalAmps);
   const minService = Math.max(minServiceFromLoad, nec.DWELLING_MIN_SERVICE_AMPS || 100);
 
-  const heatPct = (heatDemandFactor * 100).toFixed(0);
-  const suppPct = (optHvac.supplementalHeatFactor * 100).toFixed(0);
+  const heatPct = factorPct(heatDemandFactor, 65);
+  const suppPct = factorPct(optHvac.supplementalHeatFactor, 65);
+  const lightingVaLabel = Number.isFinite(lightingVaPerSqft) ? lightingVaPerSqft : 3;
+  const smallApplianceLabel = Number.isFinite(smallApplianceVa) ? smallApplianceVa : 1500;
+  const laundryLabel = Number.isFinite(laundryVa) ? laundryVa : 1500;
   const steps = [
-    { label: `General Lighting (${dwellingLightingArticle})`, formula: "VA = sqft × 3 VA/ft²", expression: `${sqft} ft² × ${nec.DWELLING_LIGHTING_VA_PER_SQFT}`, result: Math.round(generalLighting), unit: "VA" },
-    { label: "General Load Total", formula: "Total = lighting + small app + laundry + other nameplate (220.82(B))", expression: `${Math.round(generalLighting)} + ${2 * nec.SMALL_APPLIANCE_VA} + ${nec.LAUNDRY_VA} + ${other}`, result: Math.round(generalTotal), unit: "VA" },
+    { label: `General Lighting (${dwellingLightingArticle})`, formula: "VA = sqft × 3 VA/ft²", expression: `${sqft} ft² × ${lightingVaLabel}`, result: Math.round(generalLighting), unit: "VA" },
+    { label: "General Load Total", formula: "Total = lighting + small app + laundry + other nameplate (220.82(B))", expression: `${Math.round(generalLighting)} + ${2 * smallApplianceLabel} + ${laundryLabel} + ${other}`, result: Math.round(generalTotal), unit: "VA" },
     { label: `General Demand (${generalArticle})`, formula: `Demand = first 10,000 @ 100% + remainder @ ${remainderPct}%`, expression: generalTotal <= 10000 ? `${Math.round(generalTotal)} @ 100%` : `10,000 + (${Math.round(generalTotal)} − 10,000) × ${remainderFactor}`, result: Math.round(generalDemand), unit: "VA" },
     { label: "AC Load (220.82(C)(1))", formula: "AC at 100%", expression: `${ac} VA`, result: Math.round(acLoad), unit: "VA" },
     { label: `Electric Heat (${spaceHeatArticle})`, formula: `Heat at ${heatPct}% (${heatUnits} unit${heatUnits !== 1 ? "s" : ""})`, expression: `${heatStrip} × ${heatDemandFactor}`, result: Math.round(electricHeatLoad), unit: "VA" },

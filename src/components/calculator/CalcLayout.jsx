@@ -49,7 +49,14 @@ function splitReferenceTables(node) {
 
 export function CalcLayout({ category, children, result, trace, necYear, inputValues, outputValues }) {
   const isValidYear = VALID_YEARS.includes(necYear);
-  const necData = isValidYear ? getNecData(necYear) : null;
+  let necData = null;
+  if (isValidYear) {
+    try {
+      necData = getNecData(necYear);
+    } catch {
+      necData = null;
+    }
+  }
   const [tab, setTab] = useState("inputs");
   const [showSave, setShowSave] = useState(false);
   const [showReport, setShowReport] = useState(false);
@@ -58,9 +65,9 @@ export function CalcLayout({ category, children, result, trace, necYear, inputVa
   const restore = useCalcRestore();
 
   // Compute verification gate from live records
-  const calcDef = getCalculator(category.id);
+  const calcDef = category?.id ? getCalculator(category.id) : null;
   const gate = isValidYear
-    ? computeGate(category.id, calcDef?.articles, necYear, verificationMap || {})
+    ? computeGate(category?.id, calcDef?.articles, necYear, verificationMap || {})
     : "invalid";
   const gateMeta = GATE_META[gate];
   const splitResult = result

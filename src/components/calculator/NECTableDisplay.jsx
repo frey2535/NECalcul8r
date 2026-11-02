@@ -32,15 +32,18 @@ export default function NECTableDisplay({ title, headers, rows, note, compact = 
             </thead>
           )}
           <tbody>
-            {rows.map((row, ri) => (
+            {rows.map((row, ri) => {
+              const cells = Array.isArray(row) ? row : [row];
+              return (
               <tr key={ri} className={cn("border-b border-slate-100 last:border-0 transition-colors duration-150 hover:bg-blue-50/70", ri % 2 === 0 ? "bg-white" : "bg-slate-50/50")}>
-                {row.map((cell, ci) => (
+                {cells.map((cell, ci) => (
                   <td key={ci} className={cn("px-3 text-slate-700 font-medium align-top", fitColumns ? "whitespace-normal" : "whitespace-nowrap", compact ? "py-1.5 text-[10px]" : "py-2 text-xs")}>
                     {cell}
                   </td>
                 ))}
               </tr>
-            ))}
+              );
+            })}
           </tbody>
         </table>
       </div>
