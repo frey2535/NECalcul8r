@@ -33,7 +33,7 @@ supabase secrets set GOOGLE_PLAY_RTDN_TOKEN=optional-shared-secret
 Required secrets for Apple App Store (In-App Purchase verification):
 
 ```bash
-supabase secrets set APPLE_BUNDLE_ID=com.currentflow.necalcul8r
+supabase secrets set APPLE_BUNDLE_ID=org.currentflowconsulting.necalcul8r
 supabase secrets set APPLE_APP_STORE_CONNECT_ISSUER_ID=<issuer-id>
 supabase secrets set APPLE_APP_STORE_CONNECT_KEY_ID=<key-id>
 supabase secrets set APPLE_APP_STORE_CONNECT_PRIVATE_KEY="$(cat AuthKey_XXXXX.p8)"

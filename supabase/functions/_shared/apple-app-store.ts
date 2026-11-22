@@ -84,7 +84,7 @@ export async function createAppStoreConnectToken() {
   const issuerId = Deno.env.get("APPLE_APP_STORE_CONNECT_ISSUER_ID");
   const keyId = Deno.env.get("APPLE_APP_STORE_CONNECT_KEY_ID");
   const privateKeyRaw = Deno.env.get("APPLE_APP_STORE_CONNECT_PRIVATE_KEY");
-  const bundleId = Deno.env.get("APPLE_BUNDLE_ID") || "com.currentflow.necalcul8r";
+  const bundleId = Deno.env.get("APPLE_BUNDLE_ID") || "org.currentflowconsulting.necalcul8r";
   if (!issuerId || !keyId || !privateKeyRaw) {
     throw new Error("Missing App Store Connect API credentials.");
   }
@@ -182,7 +182,7 @@ export async function syncApplePurchaseForUser(
   const plan = APPLE_PRODUCT_PLANS[productId];
   if (!plan) throw new Error("Unsupported App Store product ID.");
 
-  const bundleId = Deno.env.get("APPLE_BUNDLE_ID") || "com.currentflow.necalcul8r";
+  const bundleId = Deno.env.get("APPLE_BUNDLE_ID") || "org.currentflowconsulting.necalcul8r";
   let transactionId = String(options.transactionId || "").trim();
   let originalTransactionId = String(options.originalTransactionId || "").trim();
   const signedTransaction = String(options.signedTransaction || "").trim();
