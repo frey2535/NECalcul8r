@@ -2,17 +2,18 @@
 
 Use this checklist to take the Capacitor iOS app from this repo to TestFlight / App Store.
 
-Bundle ID: `com.currentflow.necalcul8r`  
-App name: `NECalcul8r`  
-Marketing version: `1.0.6` (matches Android)  
+- Bundle ID: `org.currentflowconsulting.necalcul8r`
+- App name: `NECalcul8r`
+- App Store Connect record: `6836483803`
+- Marketing version: `1.0.6` (matches Android)
 iOS build: `9`
 
 ## 1. Apple Developer + App Store Connect
 
 1. Enroll in the Apple Developer Program.
-2. In Certificates, Identifiers & Profiles, create an App ID with bundle ID `com.currentflow.necalcul8r`.
+2. In Certificates, Identifiers & Profiles, locate the existing App ID for `org.currentflowconsulting.necalcul8r`.
 3. Enable **In-App Purchase** capability for that App ID.
-4. Create the app record in App Store Connect with the same bundle ID.
+4. Use the existing App Store Connect record, Apple ID `6836483803`.
 5. Create a distribution certificate and App Store provisioning profile (Xcode can manage this automatically when signed in).
 6. In Users and Access → Integrations → App Store Connect API, create an **In-App Purchase** key (`.p8`). Note Issuer ID and Key ID for Supabase secrets.
 
@@ -27,8 +28,7 @@ Create auto-renewable subscriptions that match the Android product IDs:
 | Individual 26-35 | `individual_26_35` |
 | Individual 36+ | `individual_36_plus` |
 
-Put them in one subscription group (for example `necalcul8r_individual`).  
-Use monthly pricing that matches the web/Play tiers.
+Use the four monthly products in the existing **NECalcul8r Individual** group.
 
 Company plans stay on the website (Stripe / license keys). Do **not** sell company digital access through iOS IAP, and do **not** open Stripe Checkout for individual digital goods inside the iOS app.
 
@@ -50,7 +50,7 @@ supabase functions deploy verify-apple-purchase --project-ref gqdxvctvufalunaaop
 Set App Store Server API secrets (required — fail-closed without them):
 
 ```bash
-supabase secrets set APPLE_BUNDLE_ID=com.currentflow.necalcul8r --project-ref gqdxvctvufalunaaopyj
+supabase secrets set APPLE_BUNDLE_ID=org.currentflowconsulting.necalcul8r --project-ref gqdxvctvufalunaaopyj
 supabase secrets set APPLE_APP_STORE_CONNECT_ISSUER_ID=<issuer-id> --project-ref gqdxvctvufalunaaopyj
 supabase secrets set APPLE_APP_STORE_CONNECT_KEY_ID=<key-id> --project-ref gqdxvctvufalunaaopyj
 supabase secrets set APPLE_APP_STORE_CONNECT_PRIVATE_KEY="$(cat AuthKey_XXXXX.p8)" --project-ref gqdxvctvufalunaaopyj
@@ -60,7 +60,7 @@ The iOS StoreKit plugin sends `productId`, `transactionId`, `originalTransaction
 
 ## 4. Mac build machine steps
 
-These commands need macOS + Xcode:
+Use macOS with Xcode. Provide the production `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` in the build environment before running `npm run ios:sync` so the installed app can authenticate the reviewer account.
 
 ```bash
 npm ci
@@ -71,7 +71,7 @@ npx cap open ios
 In Xcode:
 
 1. Select the **App** target → Signing & Capabilities → your Team.
-2. Confirm Bundle Identifier is `com.currentflow.necalcul8r`.
+2. Confirm Bundle Identifier is `org.currentflowconsulting.necalcul8r`.
 3. Confirm **In-App Purchase** capability is present (entitlements file is wired).
 4. Confirm Marketing Version `1.0.6` and Build `9` (or bump build for each upload).
 5. Product → Archive → Distribute App → App Store Connect / TestFlight.
@@ -89,18 +89,15 @@ Complete:
 - App Privacy / Privacy Policy URL (`https://<your-domain>/privacy`) — matches `PrivacyInfo.xcprivacy`
 - Terms of Use / EULA (`/terms`, `/eula`)
 - Age rating
-- Screenshots for required device sizes (6.7", 6.5", 5.5" iPhone; 12.9" iPad if you keep iPad support)
-- App Review information + demo account (same style as Play reviewer login)
+- App Store screenshots for the required iPhone and iPad display sizes shown in the draft
+- Verify the dedicated demo account saved under App Review Information works on the installed iOS build
 - Subscription information / paid apps agreements / banking / tax
 - Export compliance — repo sets `ITSAppUsesNonExemptEncryption=false` (standard HTTPS only)
 
 Suggested App Review notes:
 
 ```text
-Sign in with email and password (not Sign in with Apple unless enabled).
-
-Email: googleplayreview@currentflowconsulting.org
-Password: <current reviewer password>
+Sign in with the dedicated reviewer email and password in App Review Information.
 
 Individual upgrades use Apple In-App Purchase only.
 Company plans are sold on the website, not inside the iOS app.
@@ -124,7 +121,7 @@ Install from TestFlight and verify:
 
 ## 7. What this repo already includes
 
-- Capacitor `ios/` project (`com.currentflow.necalcul8r`)
+- Capacitor `ios/` project (`org.currentflowconsulting.necalcul8r`)
 - StoreKit 2 plugin `AppleAppStoreBillingPlugin` (sends JWS `signedTransaction`)
 - JS bridge `src/lib/appleAppStoreBilling.js`
 - Purchase page gates Stripe/license redemption on iOS and uses IAP for individual plans
@@ -139,8 +136,6 @@ Install from TestFlight and verify:
 
 ## 8. Still required outside the repo
 
-- Apple Developer account + App Store Connect app record
-- Create the four auto-renewable subscription products
 - Create App Store Connect API key and set Supabase secrets
 - Apply SQL migration + deploy `verify-apple-purchase`
 - Xcode archive on a Mac → TestFlight → App Review

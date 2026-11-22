@@ -1,6 +1,7 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
+  // The iOS bundle identifier is set in ios/App/App.xcodeproj.
   appId: 'com.currentflow.necalcul8r',
   appName: 'NECalcul8r',
   webDir: 'dist',

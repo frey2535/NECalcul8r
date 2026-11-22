@@ -3,7 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { APPLE_APP_STORE_PRODUCT_IDS } from "@/lib/pricing";
 
 const AppleAppStoreBilling = registerPlugin("AppleAppStoreBilling");
-const IOS_BUNDLE_ID = import.meta.env?.VITE_IOS_BUNDLE_ID || "com.currentflow.necalcul8r";
+const IOS_BUNDLE_ID = import.meta.env?.VITE_IOS_BUNDLE_ID || "org.currentflowconsulting.necalcul8r";
 
 export function isIosNativeApp() {
   return Capacitor.getPlatform?.() === "ios" && Capacitor.isNativePlatform?.();
