@@ -66,8 +66,7 @@ public class AppleAppStoreBillingPlugin: CAPPlugin, CAPBridgedPlugin {
                 let result = try await product.purchase()
                 switch result {
                 case .success(let verification):
-                    let transaction = try checkVerified(verification)
-                    let purchase = try await purchasePayload(from: transaction)
+                    let (transaction, purchase) = try verifiedPurchase(from: verification)
                     await transaction.finish()
                     call.resolve(["purchases": [purchase]])
                 case .userCancelled:
@@ -89,8 +88,8 @@ public class AppleAppStoreBillingPlugin: CAPPlugin, CAPBridgedPlugin {
                 try await AppStore.sync()
                 var purchases: [[String: Any]] = []
                 for await entitlement in Transaction.currentEntitlements {
-                    let transaction = try checkVerified(entitlement)
-                    purchases.append(try await purchasePayload(from: transaction))
+                    let (_, purchase) = try verifiedPurchase(from: entitlement)
+                    purchases.append(purchase)
                 }
                 call.resolve(["purchases": purchases])
             } catch {
@@ -99,30 +98,32 @@ public class AppleAppStoreBillingPlugin: CAPPlugin, CAPBridgedPlugin {
         }
     }
 
-    private func checkVerified<T>(_ result: VerificationResult<T>) throws -> T {
+    private func verifiedPurchase(
+        from result: VerificationResult<Transaction>
+    ) throws -> (Transaction, [String: Any]) {
+        let transaction: Transaction
         switch result {
         case .unverified(_, let error):
             throw error
-        case .verified(let safe):
-            return safe
+        case .verified(let verifiedTransaction):
+            transaction = verifiedTransaction
         }
-    }
 
-    private func purchasePayload(from transaction: Transaction) async throws -> [String: Any] {
         var payload: [String: Any] = [
             "productId": transaction.productID,
             "products": [transaction.productID],
             "transactionId": String(transaction.id),
             "originalTransactionId": String(transaction.originalID),
             "purchaseDate": ISO8601DateFormatter().string(from: transaction.purchaseDate),
-            "environment": String(describing: transaction.environment)
+            "signedTransaction": result.jwsRepresentation,
+            "transactionJsonBase64": transaction.jsonRepresentation.base64EncodedString()
         ]
+        if #available(iOS 16.0, *) {
+            payload["environment"] = String(describing: transaction.environment)
+        }
         if let expiration = transaction.expirationDate {
             payload["expirationDate"] = ISO8601DateFormatter().string(from: expiration)
         }
-        // Prefer the App Store JWS so the server can verify with App Store Server API.
-        payload["signedTransaction"] = transaction.jwsRepresentation
-        payload["transactionJsonBase64"] = transaction.jsonRepresentation.base64EncodedString()
-        return payload
+        return (transaction, payload)
     }
 }
